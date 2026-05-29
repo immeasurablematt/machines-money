@@ -8,13 +8,24 @@ This file tracks the setup needed before running a weekly Machines & Money resea
 - Research queue: [Research Queue - Machines & Money](https://docs.google.com/spreadsheets/d/17JihtnYqzhLJ2nf5B7cRZkUwFKxQSk0l-v9a_W-t0P4/edit?gid=0#gid=0)
 - Dossier template: [Research Dossier Template - Machines & Money](https://docs.google.com/document/d/1aIWbXgyIw2lECk5xb4s_fLzf7Uy4aAV0zepWCBSRMO0/edit?tab=t.0)
 
-The queue currently includes Nova Markets as the pilot candidate:
+Keep the top-level Drive folder as the control room only:
 
-- Project: Nova Markets
-- X handle: https://x.com/novadotmarkets
-- Website/app: https://nova.markets/
-- Target Friday: 2026-06-05
-- Status: Queued
+- Research Queue
+- Dossier Template
+- One subfolder per project
+
+Each project folder should contain that project's:
+
+- Formatted Google Doc dossier
+- Formatted Google Sheet tables
+- Raw Markdown/CSV/JSON backups
+- Transcript files
+- Screenshots or exported artifacts, if any
+
+Current project folders:
+
+- [Nova Markets](https://drive.google.com/drive/folders/196_4y0MK19sYM8VdIcHUKKlefEJyexfJ)
+- [Turtle](https://drive.google.com/drive/folders/1sgMbiNlPFvzBLnCCaxfW4_Nv-0OmRZIo)
 
 ## Verified Setup
 
@@ -52,11 +63,13 @@ The queue currently includes Nova Markets as the pilot candidate:
 ## Weekly Run Flow
 
 1. Read the next queued row in the Research Queue.
-2. Copy the Dossier Template into a new project-specific Google Doc in the Drive folder.
-3. Collect written sources: docs, website/app, project blog, announcements.
-4. Collect X/Twitter sources from the last 6 months.
-5. Collect YouTube/X audio-video sources from the last 6 months only.
-6. Pull metrics from DeFiLlama, Dune, Blockworks, project dashboards, and app-native stats.
-7. Fill the dossier and source ledger.
-8. Run the quality gate.
-9. Update the queue row with status, dossier link, headline metrics, top differentiator, and open questions.
+2. Create or reuse a project subfolder under the Drive folder.
+3. Create the project-specific Google Doc and Google Sheet inside that project folder.
+4. Save raw Markdown, CSV, JSON, transcript, and screenshot backups inside the same project folder.
+5. Collect written sources: docs, website/app, project blog, announcements.
+6. Collect X/Twitter sources from the last 6 months.
+7. Collect YouTube/X audio-video sources from the last 6 months only.
+8. Pull metrics from DeFiLlama, Dune, Blockworks, project dashboards, and app-native stats.
+9. Fill the dossier and source ledger.
+10. Run the quality gate.
+11. Update the queue row with status, dossier link, project folder link, headline metrics, top differentiator, and open questions.
