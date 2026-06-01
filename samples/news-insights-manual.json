@@ -1,0 +1,80 @@
+{
+  "source_list_id": "2011849979095138608",
+  "posts": [
+    {
+      "post_id": "sample-001",
+      "post_url": "https://x.com/MapleFinance/status/sample001",
+      "author_handle": "MapleFinance",
+      "posted_at": "2026-06-01T13:15:00Z",
+      "project_names": ["Maple"],
+      "classification": "Adoption Stat",
+      "title": "Maple crossed $1.2B in active loans over the past 30 days",
+      "text": "Maple reports $1.2B in active loans over the past 30 days, with institutional credit demand continuing to grow. Dashboard: https://maple.finance/analytics",
+      "urls": [
+        {
+          "url": "https://maple.finance/analytics",
+          "title": "Maple analytics",
+          "source_kind": "primary"
+        },
+        {
+          "url": "https://x.com/MapleFinance/status/sample001",
+          "title": "Maple X post",
+          "source_kind": "reposted"
+        }
+      ],
+      "recommended_action": "save chart/stat",
+      "notes": "Sample fixture item for adoption-stat extraction."
+    },
+    {
+      "post_id": "sample-002",
+      "post_url": "https://x.com/Centrifuge/status/sample002",
+      "author_handle": "Centrifuge",
+      "posted_at": "2026-06-01T11:30:00Z",
+      "project_names": ["Centrifuge"],
+      "classification": "Announcement",
+      "title": "Centrifuge announced a new tokenized credit vault integration",
+      "text": "Centrifuge announced a new tokenized credit vault integration for onchain RWA allocators. Details: https://centrifuge.io/blog/tokenized-credit-vault-integration",
+      "urls": [
+        {
+          "url": "https://centrifuge.io/blog/tokenized-credit-vault-integration",
+          "title": "Centrifuge announcement",
+          "source_kind": "primary"
+        }
+      ],
+      "recommended_action": "short mention",
+      "notes": "Sample fixture item for announcement handling."
+    },
+    {
+      "post_id": "sample-003",
+      "post_url": "https://x.com/researcher/status/sample003",
+      "author_handle": "researcher",
+      "posted_at": "2026-06-01T09:45:00Z",
+      "project_names": ["Morpho"],
+      "classification": "Deep Dive/Article",
+      "title": "Deep dive: how Morpho vault curators change the lending market structure",
+      "text": "Deep dive on how Morpho vault curators change DeFi lending market structure and why that matters for asset managers. Article: https://example.com/morpho-vault-curators-deep-dive",
+      "urls": [
+        {
+          "url": "https://example.com/morpho-vault-curators-deep-dive",
+          "title": "Morpho vault curators deep dive",
+          "source_kind": "primary"
+        }
+      ],
+      "recommended_action": "save read",
+      "notes": "Sample fixture item for optional dossier seed behavior."
+    },
+    {
+      "post_id": "sample-004",
+      "post_url": "https://x.com/random/status/sample004",
+      "author_handle": "random",
+      "posted_at": "2026-06-01T08:00:00Z",
+      "project_names": [],
+      "classification": "Skip",
+      "title": "GM, vibes are back",
+      "text": "GM, vibes are back. No source, no metric, no claim.",
+      "urls": [],
+      "recommended_action": "skip",
+      "notes": "Sample fixture item for low-signal collapse."
+    }
+  ]
+}

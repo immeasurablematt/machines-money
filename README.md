@@ -29,6 +29,20 @@ The goal is not to replace Ian's judgment or writing. The goal is to automate th
 
 Future projects may support other parts of the newsletter operation, such as audience growth, content repurposing, paid subscription packaging, or research library management.
 
+## News & Insights Scanner
+
+The repo also includes an MVP **X List News & Insights Scanner** for broad feed triage across announcements, adoption stats, charts, and deep dives. It is separate from Research Dossier: most scanner items become mentions, saved reads, chart/stat candidates, project-watch notes, or theme-watch notes instead of single-project dossiers.
+
+Run the sample scanner:
+
+```bash
+PYTHONPATH=src python3 -m news_insights_scanner \
+  --ingestion manual \
+  --input samples/news-insights-manual.json
+```
+
+See `docs/news-insights-scanner/spec.md` and `docs/news-insights-scanner/runbook.md` for the source spec and operating notes.
+
 ## Newsletter Context
 
 Machines & Money currently includes several recurring content formats:
