@@ -161,6 +161,61 @@ class NewsInsightsScannerTests(unittest.TestCase):
         self.assertEqual(result.verification_status, "manual_review_needed")
         self.assertIn("Returned 1 post(s) fetched before the failure", result.warnings[0])
 
+    def test_x_api_ingestion_handles_non_object_payload(self):
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps([]).encode("utf-8")
+
+        with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+            with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", return_value=Response()):
+                result = ingest_x_api(source_list_id="list-1", max_results=1)
+
+        self.assertEqual(result.verification_status, "manual_review_needed")
+        self.assertEqual(result.posts, [])
+        self.assertIn("Expected a JSON object response from X API", result.warnings[0])
+
+    def test_x_api_ingestion_handles_explicit_null_objects(self):
+        payload = {
+            "data": [
+                {
+                    "id": "301",
+                    "author_id": "u1",
+                    "created_at": "2026-06-01T00:00:00Z",
+                    "text": "Project announced a launch.",
+                    "entities": None,
+                }
+            ],
+            "includes": None,
+            "meta": None,
+        }
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(payload).encode("utf-8")
+
+        with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+            with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", return_value=Response()):
+                result = ingest_x_api(source_list_id="list-1", max_results=1)
+
+        self.assertEqual(result.verification_status, "needs_verification")
+        self.assertEqual(len(result.posts), 1)
+        self.assertEqual(result.posts[0].post_id, "301")
+        self.assertEqual(result.posts[0].author_handle, "")
+        self.assertEqual(result.posts[0].urls, [])
+        self.assertEqual(result.warnings, [])
+
     def test_manual_json_non_object_falls_back_to_line_parsing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "posts.json"
