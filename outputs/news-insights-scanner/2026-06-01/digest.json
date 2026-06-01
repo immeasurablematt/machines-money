@@ -1,12 +1,12 @@
 {
-  "captured_at": "2026-06-01T15:40:15+00:00",
+  "captured_at": "2026-06-01T16:15:55+00:00",
   "ingestion_path": "manual",
   "items": [
     {
       "author_handle": "MapleFinance",
-      "captured_at": "2026-06-01T15:40:15+00:00",
+      "captured_at": "2026-06-01T16:15:55+00:00",
       "classification": "Adoption Stat",
-      "confidence": "high",
+      "confidence": "medium",
       "duplicate_count": 1,
       "evidence_urls": [
         "https://maple.finance/analytics",
@@ -23,7 +23,7 @@
           "value": "$1.2B"
         }
       ],
-      "notes": "Sample fixture item for adoption-stat extraction.",
+      "notes": "Sample fixture item for adoption-stat extraction. Needs manual verification before reuse.",
       "post_id": "sample-001",
       "post_url": "https://x.com/MapleFinance/status/sample001",
       "posted_at": "2026-06-01T13:15:00Z",
@@ -32,7 +32,7 @@
         "Maple"
       ],
       "recommended_action": "save chart/stat",
-      "run_id": "news-insights-20260601T154015Z-1d964eab",
+      "run_id": "news-insights-20260601T161555Z-d07571e6",
       "scores": {
         "editorial_value": 5,
         "evidence_quality": 5,
@@ -41,21 +41,21 @@
       },
       "source_list_id": "2011849979095138608",
       "summary": "Maple crossed $1.2B in active loans over the past 30 days",
-      "verification_status": "verified",
+      "verification_status": "needs_verification",
       "why_it_matters": "A dated metric that may support a chart, traction note, or Truth Within Trends angle."
     },
     {
       "author_handle": "Centrifuge",
-      "captured_at": "2026-06-01T15:40:15+00:00",
+      "captured_at": "2026-06-01T16:15:55+00:00",
       "classification": "Announcement",
-      "confidence": "high",
+      "confidence": "medium",
       "duplicate_count": 1,
       "evidence_urls": [
         "https://centrifuge.io/blog/tokenized-credit-vault-integration",
         "https://x.com/Centrifuge/status/sample002"
       ],
       "metrics": [],
-      "notes": "Sample fixture item for announcement handling.",
+      "notes": "Sample fixture item for announcement handling. Needs manual verification before reuse.",
       "post_id": "sample-002",
       "post_url": "https://x.com/Centrifuge/status/sample002",
       "posted_at": "2026-06-01T11:30:00Z",
@@ -64,7 +64,7 @@
         "Centrifuge"
       ],
       "recommended_action": "short mention",
-      "run_id": "news-insights-20260601T154015Z-1d964eab",
+      "run_id": "news-insights-20260601T161555Z-d07571e6",
       "scores": {
         "editorial_value": 4,
         "evidence_quality": 5,
@@ -73,14 +73,14 @@
       },
       "source_list_id": "2011849979095138608",
       "summary": "Centrifuge announced a new tokenized credit vault integration",
-      "verification_status": "verified",
+      "verification_status": "needs_verification",
       "why_it_matters": "Concrete project news that may support a timely newsletter mention or project-watch update."
     },
     {
       "author_handle": "researcher",
-      "captured_at": "2026-06-01T15:40:15+00:00",
+      "captured_at": "2026-06-01T16:15:55+00:00",
       "classification": "Deep Dive/Article",
-      "confidence": "high",
+      "confidence": "medium",
       "dossier_seed": {
         "best_source_links": [
           "https://example.com/morpho-vault-curators-deep-dive",
@@ -108,7 +108,7 @@
         "https://x.com/researcher/status/sample003"
       ],
       "metrics": [],
-      "notes": "Sample fixture item for optional dossier seed behavior.",
+      "notes": "Sample fixture item for optional dossier seed behavior. Needs manual verification before reuse.",
       "post_id": "sample-003",
       "post_url": "https://x.com/researcher/status/sample003",
       "posted_at": "2026-06-01T09:45:00Z",
@@ -117,7 +117,7 @@
         "Morpho"
       ],
       "recommended_action": "save read",
-      "run_id": "news-insights-20260601T154015Z-1d964eab",
+      "run_id": "news-insights-20260601T161555Z-d07571e6",
       "scores": {
         "editorial_value": 4,
         "evidence_quality": 5,
@@ -126,12 +126,12 @@
       },
       "source_list_id": "2011849979095138608",
       "summary": "Deep dive: how Morpho vault curators change the lending market structure",
-      "verification_status": "verified",
+      "verification_status": "needs_verification",
       "why_it_matters": "Substantive analysis that may be worth reading, saving, or using as an article angle."
     },
     {
       "author_handle": "random",
-      "captured_at": "2026-06-01T15:40:15+00:00",
+      "captured_at": "2026-06-01T16:15:55+00:00",
       "classification": "Skip",
       "confidence": "medium",
       "duplicate_count": 1,
@@ -148,7 +148,7 @@
         "Unknown"
       ],
       "recommended_action": "skip",
-      "run_id": "news-insights-20260601T154015Z-1d964eab",
+      "run_id": "news-insights-20260601T161555Z-d07571e6",
       "scores": {
         "editorial_value": 1,
         "evidence_quality": 3,
@@ -162,7 +162,7 @@
     }
   ],
   "lookback_hours": 24,
-  "run_id": "news-insights-20260601T154015Z-1d964eab",
+  "run_id": "news-insights-20260601T161555Z-d07571e6",
   "source_list_id": "2011849979095138608",
   "verification_status": "needs_verification",
   "warnings": []

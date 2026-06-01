@@ -33,10 +33,10 @@ def classify_item(post: CandidatePost) -> str:
     text = " ".join(part for part in (post.title or "", post.text) if part)
     if SKIP_RE.search(text):
         return "Skip"
-    if METRIC_RE.search(text):
-        return "Adoption Stat"
     if ANNOUNCEMENT_RE.search(text):
         return "Announcement"
+    if METRIC_RE.search(text):
+        return "Adoption Stat"
     if DEEP_DIVE_RE.search(text):
         return "Deep Dive/Article"
     return "Skip"

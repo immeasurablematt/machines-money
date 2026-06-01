@@ -55,57 +55,71 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
             ],
         )
 
-    params = urllib.parse.urlencode(
-        {
-            "max_results": str(min(max_results, 100)),
+    posts: list[CandidatePost] = []
+    next_token: str | None = None
+    target_count = max(0, max_results)
+
+    while len(posts) < target_count:
+        page_size = min(max(target_count - len(posts), 10), 100)
+        params: dict[str, str] = {
+            "max_results": str(page_size),
             "tweet.fields": "created_at,author_id,entities",
             "expansions": "author_id",
             "user.fields": "username",
         }
-    )
-    url = f"https://api.x.com/2/lists/{source_list_id}/tweets?{params}"
-    request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        if next_token:
+            params["pagination_token"] = next_token
 
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except Exception as exc:  # pragma: no cover - depends on live X API/network.
-        return IngestionResult(
-            path="x_api",
-            source_list_id=source_list_id,
-            captured_at=captured_at,
-            verification_status="manual_review_needed",
-            posts=[],
-            warnings=[
-                f"X API ingestion failed: {exc}. No posts were fabricated; rerun with credentials or use manual input."
-            ],
-        )
+        query = urllib.parse.urlencode(params)
+        url = f"https://api.x.com/2/lists/{source_list_id}/tweets?{query}"
+        request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
 
-    users_by_id = {
-        user.get("id"): user.get("username", "")
-        for user in payload.get("includes", {}).get("users", [])
-    }
-    posts: list[CandidatePost] = []
-    for tweet in payload.get("data", []):
-        post_id = str(tweet.get("id", ""))
-        author_handle = users_by_id.get(tweet.get("author_id"), "")
-        expanded_urls = [
-            {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
-            for url in tweet.get("entities", {}).get("urls", [])
-            if url.get("expanded_url") or url.get("url")
-        ]
-        posts.append(
-            CandidatePost(
-                post_id=post_id,
-                post_url=f"https://x.com/{author_handle}/status/{post_id}" if author_handle and post_id else "",
-                author_handle=author_handle,
-                posted_at=tweet.get("created_at", ""),
-                text=tweet.get("text", ""),
-                urls=expanded_urls,
-                captured_at=captured_at,
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except Exception as exc:  # pragma: no cover - depends on live X API/network.
+            return IngestionResult(
+                path="x_api",
                 source_list_id=source_list_id,
+                captured_at=captured_at,
+                verification_status="manual_review_needed",
+                posts=[],
+                warnings=[
+                    f"X API ingestion failed: {exc}. No posts were fabricated; rerun with credentials or use manual input."
+                ],
             )
-        )
+
+        users_by_id = {
+            user.get("id"): user.get("username", "")
+            for user in payload.get("includes", {}).get("users", [])
+        }
+        tweets = payload.get("data", [])
+        for tweet in tweets:
+            if len(posts) >= target_count:
+                break
+            post_id = str(tweet.get("id", ""))
+            author_handle = users_by_id.get(tweet.get("author_id"), "")
+            expanded_urls = [
+                {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
+                for url in tweet.get("entities", {}).get("urls", [])
+                if url.get("expanded_url") or url.get("url")
+            ]
+            posts.append(
+                CandidatePost(
+                    post_id=post_id,
+                    post_url=f"https://x.com/{author_handle}/status/{post_id}" if author_handle and post_id else "",
+                    author_handle=author_handle,
+                    posted_at=tweet.get("created_at", ""),
+                    text=tweet.get("text", ""),
+                    urls=expanded_urls,
+                    captured_at=captured_at,
+                    source_list_id=source_list_id,
+                )
+            )
+
+        next_token = payload.get("meta", {}).get("next_token")
+        if not tweets or not next_token:
+            break
 
     return IngestionResult(
         path="x_api",
@@ -152,6 +166,8 @@ def _load_json_posts(raw: str, captured_at: str, default_list_id: str) -> list[C
                     "expected_classification": item.get("classification"),
                     "recommended_action": item.get("recommended_action"),
                     "notes": item.get("notes"),
+                    "verification_status": item.get("verification_status"),
+                    "source_verified": item.get("source_verified"),
                 },
             )
         )

@@ -63,7 +63,7 @@ def _build_item(run_id: str, post: CandidatePost) -> dict:
     metrics = extract_metrics(post, evidence_urls)
     scores = score_item(post, classification, evidence_urls, metrics)
     item_priority = priority(scores)
-    verification_status = _item_verification_status(classification, evidence_urls, metrics)
+    verification_status = _item_verification_status(post, classification, evidence_urls, metrics)
     summary = _summary(post)
     item = {
         "run_id": run_id,
@@ -79,7 +79,7 @@ def _build_item(run_id: str, post: CandidatePost) -> dict:
         "evidence_urls": evidence_urls,
         "metrics": metrics,
         "scores": scores,
-        "confidence": _confidence_label(scores),
+        "confidence": _confidence_label(scores, verification_status),
         "priority": item_priority,
         "recommended_action": _recommended_action(classification, item_priority, metrics, post),
         "verification_status": verification_status,
@@ -127,14 +127,21 @@ def _project_names(post: CandidatePost) -> list[str]:
     return words[:3] or ["Unknown"]
 
 
-def _item_verification_status(classification: str, evidence_urls: list[str], metrics: list[dict]) -> str:
+def _item_verification_status(
+    post: CandidatePost, classification: str, evidence_urls: list[str], metrics: list[dict]
+) -> str:
+    explicit_status = post.metadata.get("verification_status")
+    if explicit_status in {"verified", "needs_verification", "manual_review_needed"}:
+        return str(explicit_status)
+    if post.metadata.get("source_verified") is True:
+        return "verified"
     if classification == "Skip":
         return "needs_verification"
     if not evidence_urls:
         return "needs_verification"
     if classification == "Adoption Stat" and not metrics:
         return "needs_verification"
-    return "verified"
+    return "needs_verification"
 
 
 def _recommended_action(classification: str, item_priority: str, metrics: list[dict], post: CandidatePost) -> str:
@@ -154,7 +161,9 @@ def _recommended_action(classification: str, item_priority: str, metrics: list[d
     return "verify"
 
 
-def _confidence_label(scores: dict[str, int]) -> str:
+def _confidence_label(scores: dict[str, int], verification_status: str) -> str:
+    if verification_status != "verified":
+        return "medium" if scores["evidence_quality"] >= 3 else "low"
     if scores["evidence_quality"] >= 5:
         return "high"
     if scores["evidence_quality"] >= 3:

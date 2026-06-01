@@ -53,13 +53,17 @@ Preferred input is JSON:
       "text": "Post text with links",
       "urls": [
         {"url": "https://project.example/blog", "source_kind": "primary"}
-      ]
+      ],
+      "source_verified": false,
+      "verification_status": "needs_verification"
     }
   ]
 }
 ```
 
 Plain newline input also works for quick pasted URLs or notes. Each non-empty line becomes one candidate item.
+
+A primary or dashboard URL improves evidence quality, but it does not make an item verified by itself. Use `source_verified: true` or `verification_status: "verified"` only after a human has checked that the linked source directly supports the claim.
 
 ## Optional X API Run
 
