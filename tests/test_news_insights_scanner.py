@@ -235,6 +235,81 @@ class NewsInsightsScannerTests(unittest.TestCase):
         self.assertEqual(result.posts[0].urls, [])
         self.assertEqual(result.warnings, [])
 
+    def test_x_api_ingestion_handles_explicit_null_nested_lists(self):
+        cases = [
+            (
+                "includes users",
+                {
+                    "data": [
+                        {
+                            "id": "401",
+                            "author_id": "u1",
+                            "created_at": "2026-06-01T00:00:00Z",
+                            "text": "Project announced a launch.",
+                        }
+                    ],
+                    "includes": {"users": None},
+                    "meta": {},
+                },
+                ["401"],
+                "",
+                [],
+            ),
+            (
+                "data",
+                {"data": None, "includes": {"users": []}, "meta": {}},
+                [],
+                None,
+                None,
+            ),
+            (
+                "entities urls",
+                {
+                    "data": [
+                        {
+                            "id": "402",
+                            "author_id": "u2",
+                            "created_at": "2026-06-01T00:00:00Z",
+                            "text": "Project shared a source.",
+                            "entities": {"urls": None},
+                        }
+                    ],
+                    "includes": {"users": [{"id": "u2", "username": "project"}]},
+                    "meta": {},
+                },
+                ["402"],
+                "project",
+                [],
+            ),
+        ]
+
+        class Response:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(self.payload).encode("utf-8")
+
+        for label, payload, expected_post_ids, expected_author, expected_urls in cases:
+            with self.subTest(label=label):
+                with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+                    with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", return_value=Response(payload)):
+                        result = ingest_x_api(source_list_id="list-1", max_results=1)
+
+                self.assertEqual(result.verification_status, "needs_verification")
+                self.assertEqual([post.post_id for post in result.posts], expected_post_ids)
+                self.assertEqual(result.warnings, [])
+                if expected_author is not None:
+                    self.assertEqual(result.posts[0].author_handle, expected_author)
+                if expected_urls is not None:
+                    self.assertEqual(result.posts[0].urls, expected_urls)
+
     def test_manual_json_non_object_falls_back_to_line_parsing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "posts.json"
