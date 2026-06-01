@@ -1,6 +1,8 @@
 import json
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
@@ -113,6 +115,50 @@ class NewsInsightsScannerTests(unittest.TestCase):
         second_query = parse_qs(urlparse(calls[1]).query)
         self.assertNotIn("pagination_token", first_query)
         self.assertEqual(second_query["pagination_token"], ["NEXT"])
+
+    def test_x_api_ingestion_loads_bearer_token_from_dotenv(self):
+        payload = {
+            "data": [
+                {
+                    "id": "201",
+                    "author_id": "u1",
+                    "created_at": "2026-06-01T00:00:00Z",
+                    "text": "Project announced a launch.",
+                }
+            ],
+            "includes": {"users": [{"id": "u1", "username": "project"}]},
+            "meta": {},
+        }
+        captured_auth_headers = []
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(payload).encode("utf-8")
+
+        def fake_urlopen(request, timeout):
+            captured_auth_headers.append(request.headers.get("Authorization"))
+            return Response()
+
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            env_path = Path(tmpdir) / ".env"
+            env_path.write_text('X_BEARER_TOKEN="dotenv-token"\n', encoding="utf-8")
+            os.chdir(tmpdir)
+            try:
+                with mock.patch.dict(os.environ, {}, clear=True):
+                    with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", side_effect=fake_urlopen):
+                        result = ingest_x_api(source_list_id="list-1", max_results=1)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(len(result.posts), 1)
+        self.assertEqual(captured_auth_headers, ["Bearer dotenv-token"])
 
 
 if __name__ == "__main__":

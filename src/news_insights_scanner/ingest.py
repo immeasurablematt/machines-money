@@ -15,6 +15,7 @@ from .models import CandidatePost, DEFAULT_SOURCE_LIST_ID, IngestionResult
 
 
 URL_RE = re.compile(r"https?://[^\s)>\]]+")
+ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def utc_now_iso() -> str:
@@ -41,7 +42,7 @@ def ingest_manual(input_path: str, source_list_id: str = DEFAULT_SOURCE_LIST_ID)
 
 def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int = 100) -> IngestionResult:
     captured_at = utc_now_iso()
-    token = os.environ.get("X_BEARER_TOKEN") or os.environ.get("TWITTER_BEARER_TOKEN")
+    token = _x_bearer_token()
     if not token:
         return IngestionResult(
             path="x_api",
@@ -129,6 +130,41 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
         posts=posts,
         warnings=[],
     )
+
+
+def _x_bearer_token() -> str | None:
+    _load_dotenv()
+    return os.environ.get("X_BEARER_TOKEN") or os.environ.get("TWITTER_BEARER_TOKEN")
+
+
+def _load_dotenv() -> None:
+    configured_path = os.environ.get("NEWS_INSIGHTS_ENV_FILE")
+    env_path = Path(configured_path).expanduser() if configured_path else Path.cwd() / ".env"
+    if not env_path.is_file():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not ENV_KEY_RE.match(key):
+            continue
+        if os.environ.get(key):
+            continue
+        os.environ[key] = _dotenv_value(value)
+
+
+def _dotenv_value(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
 
 
 def _load_json_posts(raw: str, captured_at: str, default_list_id: str) -> list[CandidatePost] | None:

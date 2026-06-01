@@ -73,6 +73,14 @@ Official X API ingestion is present but optional. To use it, set a bearer token 
 X_BEARER_TOKEN=... PYTHONPATH=src python3 -m news_insights_scanner --ingestion x_api
 ```
 
+For repeated local runs, create a private `.env` file in the repo root:
+
+```bash
+cp .env.example .env
+```
+
+Then set `X_BEARER_TOKEN` inside `.env`. The scanner loads `.env` automatically and `.gitignore` keeps it out of Git. To use a different env file path, set `NEWS_INSIGHTS_ENV_FILE=/path/to/file`.
+
 If `--ingestion x_api` is selected without `X_BEARER_TOKEN` or `TWITTER_BEARER_TOKEN`, the scanner writes an empty digest with run-level `verification_status: manual_review_needed` and an ingestion warning. It never fabricates posts.
 
 ## Review Checklist
