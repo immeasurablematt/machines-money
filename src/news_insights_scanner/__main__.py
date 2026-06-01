@@ -36,8 +36,24 @@ def main() -> int:
             max_ingest_pages=args.max_ingest_pages,
         )
     )
-    print(json.dumps(output.__dict__, indent=2, sort_keys=True))
+    cli_payload = {
+        "run_id": output.run_id,
+        "markdown_path": output.markdown_path,
+        "json_path": output.json_path,
+        "item_count": output.item_count,
+        "review_status": _review_status_label(output.verification_status),
+        "warnings": output.warnings,
+    }
+    print(json.dumps(cli_payload, indent=2, sort_keys=True))
     return 0
+
+
+def _review_status_label(status: str) -> str:
+    if status == "verified":
+        return "source checked"
+    if status == "manual_review_needed":
+        return "needs setup attention"
+    return "ready for Ian review; check sources before publishing"
 
 
 if __name__ == "__main__":

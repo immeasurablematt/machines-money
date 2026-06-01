@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
+from news_insights_scanner.__main__ import _review_status_label
 from news_insights_scanner.classify_items import classify_item
 from news_insights_scanner.ingest import ingest_manual, ingest_x_api
 from news_insights_scanner.models import CandidatePost, ScannerConfig
@@ -15,6 +16,12 @@ from news_insights_scanner.score_items import _timeliness
 
 
 class NewsInsightsScannerTests(unittest.TestCase):
+    def test_cli_review_status_uses_reader_friendly_language(self):
+        self.assertEqual(
+            _review_status_label("needs_verification"),
+            "ready for Ian review; check sources before publishing",
+        )
+
     def test_funding_and_partnership_post_is_an_announcement(self):
         post = CandidatePost(
             post_id="1",
