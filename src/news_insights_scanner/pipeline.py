@@ -100,10 +100,13 @@ def _filter_lookback(posts: list[CandidatePost], lookback_hours: int) -> list[Ca
             filtered.append(post)
             continue
         try:
-            posted_at = datetime.fromisoformat(post.posted_at.replace("Z", "+00:00")).astimezone(timezone.utc)
+            posted_at = datetime.fromisoformat(post.posted_at.replace("Z", "+00:00"))
         except ValueError:
             filtered.append(post)
             continue
+        if posted_at.tzinfo is None:
+            posted_at = posted_at.replace(tzinfo=timezone.utc)
+        posted_at = posted_at.astimezone(timezone.utc)
         if posted_at >= cutoff:
             filtered.append(post)
     return filtered

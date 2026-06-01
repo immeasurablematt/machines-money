@@ -57,6 +57,8 @@ def _timeliness(posted_at: str) -> int:
         parsed = datetime.fromisoformat(posted_at.replace("Z", "+00:00"))
     except ValueError:
         return 3
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
     age_hours = (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds() / 3600
     if age_hours <= 48:
         return 5
