@@ -26,6 +26,8 @@ Current project folders:
 
 - [Nova Markets](https://drive.google.com/drive/folders/196_4y0MK19sYM8VdIcHUKKlefEJyexfJ)
 - [Turtle](https://drive.google.com/drive/folders/1sgMbiNlPFvzBLnCCaxfW4_Nv-0OmRZIo)
+- [Lite Strategy](https://drive.google.com/drive/folders/1DJLo5DmlmEE5AwYmYJN3YmzTOcvYSbl9)
+- [Boros](https://drive.google.com/drive/folders/1wFcckmktyPLaA8ajwApCat2K6150sAj5)
 
 ## Verified Setup
 
@@ -53,6 +55,11 @@ Current project folders:
 
 ## Required Dossier Guardrails
 
+- Start every dossier with a Source Map pass before writing or synthesis.
+- Do not start the dossier narrative until native metrics, current video, docs/app, social, and third-party sources have been searched and classified.
+- Prefer project-native metrics over parent-protocol or ecosystem metrics.
+- Parent-protocol metrics are allowed only as clearly labeled context after checking for project-native metrics.
+- Current video/transcript sources are first-class narrative sources, not optional extras.
 - Every material claim needs a dated source link.
 - Every metric needs value, period, source URL, pulled date, and confidence.
 - Missing metrics must be marked missing, not guessed.
@@ -60,16 +67,74 @@ Current project folders:
 - Conflicting source data must be shown rather than silently resolved.
 - Codex must not connect wallets, sign messages, trade, stake, deposit, or withdraw.
 
+## Source Map Pass
+
+Before creating the dossier, build a source map for the project. The source map is the evidence plan; it decides what gets used and what still needs verification.
+
+Create a `Source Map` tab in the project Google Sheet and a raw CSV backup in the project folder with these columns:
+
+- Source
+- URL
+- Category
+- Relationship
+- Freshness / date
+- What it can answer
+- Confidence
+- Use in dossier
+- Notes
+
+Use these categories:
+
+- `official_site_app`
+- `docs`
+- `native_metrics`
+- `parent_context`
+- `video_transcript`
+- `social_x`
+- `blog_announcement`
+- `dashboard_api`
+- `contracts_github_audits`
+- `third_party_analysis`
+
+Use these relationship labels:
+
+- `native`: the project itself or a project-owned data source.
+- `parent`: parent protocol, ecosystem, or company context.
+- `third_party`: outside analysis, aggregator, index, media, or commentary.
+
+Source priority:
+
+1. Project-native dashboards, APIs, app stats, DefiLlama protocol pages, Token Terminal, Dune, Artemis, or other project-specific metrics.
+2. Current founder/team videos, podcast interviews, demos, livestreams, and transcripts from the last 6 months.
+3. Current official website/app, docs, blog, release notes, and announcements.
+4. X/Twitter posts and replies from the last 6 months.
+5. Contracts, GitHub, audits, risk docs, or protocol specs.
+6. Parent-protocol metrics and ecosystem context.
+7. Third-party analysis and media commentary.
+
+Hard-stop checks before writing:
+
+- Search exact project-native DefiLlama pages, including `https://defillama.com/protocol/<project-slug>`.
+- Search YouTube for `<project>`, `<project> founder`, `<project> demo`, `<project> interview`, `<project> podcast`, and `<project> explainer`.
+- Check whether useful videos have transcripts. Pull full transcripts when available; otherwise flag them as needing manual review.
+- Check for project-native app APIs, public data folders, dashboards, Dune pages, and metrics pages linked from the app/docs/site.
+- Separate project-native metrics from parent/ecosystem metrics in the source map before using either.
+- If parent metrics are used, label them as parent context in the metrics table and prose.
+
+Do not publish the dossier until the source map is complete enough that an obvious native metric or current video source is unlikely to have been missed.
+
 ## Weekly Run Flow
 
 1. Read the next queued row in the Research Queue.
 2. Create or reuse a project subfolder under the Drive folder.
-3. Create the project-specific Google Doc and Google Sheet inside that project folder.
-4. Save raw Markdown, CSV, JSON, transcript, and screenshot backups inside the same project folder.
-5. Collect written sources: docs, website/app, project blog, announcements.
-6. Collect X/Twitter sources from the last 6 months.
-7. Collect YouTube/X audio-video sources from the last 6 months only.
-8. Pull metrics from DeFiLlama, Dune, Blockworks, project dashboards, and app-native stats.
-9. Fill the dossier and source ledger.
-10. Run the quality gate.
-11. Update the queue row with status, dossier link, project folder link, headline metrics, top differentiator, and open questions.
+3. Run the Source Map pass and save it before writing.
+4. Create the project-specific Google Doc and Google Sheet inside that project folder.
+5. Save raw Markdown, CSV, JSON, transcript, and screenshot backups inside the same project folder.
+6. Collect written sources: docs, website/app, project blog, announcements.
+7. Collect X/Twitter sources from the last 6 months.
+8. Collect YouTube/X audio-video sources from the last 6 months only, and pull full transcripts when available.
+9. Pull metrics from project-native dashboards/APIs, exact DefiLlama protocol pages, Dune, Blockworks, Token Terminal, Artemis, and other relevant sources.
+10. Add parent-protocol or ecosystem metrics only after native project metrics are checked and clearly labeled.
+11. Fill the dossier, source ledger, Source Map tab, metrics tables, and transcript/source backups.
+12. Run the quality gate.
+13. Update the queue row with status, dossier link, project folder link, headline metrics, top differentiator, and open questions.

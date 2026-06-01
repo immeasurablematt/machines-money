@@ -57,7 +57,18 @@ Research Dossier starts with the project-focused workflow, but it should fit int
 
 ## Research Process
 
-Each dossier should start from the project's most reliable and current sources.
+Each dossier should start with a **Source Map pass** before any synthesis or writing. The Source Map is a short evidence plan that lists likely sources, classifies them, and decides what is reliable enough to use.
+
+The goal is to avoid writing from the first obvious source. For example, if a project is built by a larger protocol, the dossier must still search for project-native metrics and current project-specific video before falling back to parent-protocol context.
+
+The Source Map should classify each source by:
+
+- Source type: official site/app, docs, native metrics, video/transcript, X/social, blog/announcement, dashboard/API, contracts/GitHub/audits, parent context, third-party analysis
+- Relationship: native, parent, or third-party
+- Freshness/date
+- What it can answer
+- Confidence
+- Whether it should be used in the dossier
 
 ### Main Sources
 
@@ -75,10 +86,43 @@ Audio and video sources:
 
 Visual and metric sources:
 
+- Project-native dashboards, APIs, app stats, and public data endpoints
+- Project-native DefiLlama protocol pages
+- Token Terminal, Artemis, or other protocol-specific analytics
 - Dune dashboards
 - DeFiLlama
 - Blockworks dashboards
 - Metrics pages linked from the project's website or app
+
+Parent or ecosystem metrics:
+
+- Parent-protocol TVL, fees, volume, or token data
+- Ecosystem-wide dashboards
+- Parent-company or parent-protocol docs
+
+Parent metrics are useful context, but they must not be presented as project-native metrics.
+
+### Source Priority
+
+Use this order before writing:
+
+1. Project-native metrics, app data, dashboards, APIs, and exact DefiLlama protocol pages.
+2. Current founder/team videos, interviews, demos, podcasts, livestreams, and transcripts.
+3. Current official site/app, docs, blog, release notes, and announcements.
+4. X/Twitter posts and replies from the last 6 months.
+5. Contracts, GitHub, audits, risk docs, and technical specs.
+6. Parent-protocol metrics and ecosystem context.
+7. Third-party analysis and media commentary.
+
+### Hard Stop Before Drafting
+
+Do not start the dossier narrative until these checks are complete:
+
+- Search `defillama.com/protocol/<project-slug>` and obvious project-name variants.
+- Search YouTube for the project name, founder/team names when known, demo, interview, podcast, and explainer.
+- Pull full transcripts for useful current videos when available.
+- Check the app/site/docs for native APIs, public data folders, dashboards, analytics pages, and metrics links.
+- Separate project-native metrics from parent/ecosystem metrics in the Source Map and final tables.
 
 ### Freshness Rules
 
