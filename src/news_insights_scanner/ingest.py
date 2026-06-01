@@ -85,9 +85,9 @@ def ingest_x_api(
 
             users_by_id = {
                 user.get("id"): user.get("username", "")
-                for user in (payload.get("includes") or {}).get("users", [])
+                for user in (payload.get("includes") or {}).get("users") or []
             }
-            tweets = payload.get("data", [])
+            tweets = payload.get("data") or []
             reached_stop_before = False
             for tweet in tweets:
                 posted_at = _parse_posted_at(str(tweet.get("created_at", "")))
@@ -100,7 +100,7 @@ def ingest_x_api(
                 author_handle = users_by_id.get(tweet.get("author_id"), "")
                 expanded_urls = [
                     {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
-                    for url in (tweet.get("entities") or {}).get("urls", [])
+                    for url in (tweet.get("entities") or {}).get("urls") or []
                     if url.get("expanded_url") or url.get("url")
                 ]
                 posts.append(
