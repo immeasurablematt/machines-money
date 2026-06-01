@@ -41,6 +41,8 @@ class ScannerConfig:
     output_dir: str
     source_list_id: str = DEFAULT_SOURCE_LIST_ID
     lookback_hours: int = 24
+    top_n: int = 12
+    max_ingest_pages: int = 10
     max_items: int | None = None
 
 

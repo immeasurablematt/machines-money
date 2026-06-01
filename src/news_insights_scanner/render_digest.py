@@ -7,13 +7,9 @@ from pathlib import Path
 
 
 SECTIONS = [
-    ("Top Picks", lambda item: item["priority"] == "High" and item["classification"] != "Skip"),
-    ("Announcements", lambda item: item["classification"] == "Announcement"),
-    ("Adoption Stats & Charts", lambda item: item["classification"] == "Adoption Stat"),
-    ("Deep Dives & Articles", lambda item: item["classification"] == "Deep Dive/Article"),
-    ("Follow-Up Candidates", lambda item: item["recommended_action"] in {"track project", "track theme", "optional dossier seed", "save read"}),
-    ("Needs Verification", lambda item: item["verification_status"] != "verified"),
-    ("Skipped/Low-Signal", lambda item: item["classification"] == "Skip" or item["priority"] == "Low"),
+    ("Must Review Today", lambda item: item["priority"] == "High"),
+    ("Worth A Look", lambda item: item["priority"] == "Medium"),
+    ("Low Priority Selected", lambda item: item["priority"] == "Low"),
 ]
 
 
@@ -38,9 +34,30 @@ def render_markdown(payload: dict) -> str:
         f"- Lookback hours: `{payload['lookback_hours']}`",
         f"- Run verification status: `{payload['verification_status']}`",
     ]
+    audit = payload.get("selection_audit") or {}
+    if audit:
+        lines.extend(
+            [
+                f"- Tweets reviewed: `{audit.get('reviewed_tweet_count', 0)}`",
+                f"- Items selected for Ian: `{audit.get('selected_count', 0)}`",
+                f"- Items dropped: `{audit.get('dropped_count', 0)}`",
+            ]
+        )
     if payload.get("warnings"):
         lines.extend(["", "## Ingestion Warnings", ""])
         lines.extend(f"- {warning}" for warning in payload["warnings"])
+
+    if audit:
+        lines.extend(["", "## Selection Summary", ""])
+        lines.append(
+            f"Reviewed {audit.get('reviewed_tweet_count', 0)} tweets from the list and selected "
+            f"{audit.get('selected_count', 0)} for Ian to review."
+        )
+        drop_reasons = audit.get("drop_reasons") or {}
+        if drop_reasons:
+            lines.extend(["", "Dropped items by reason:"])
+            lines.extend(f"- {reason.replace('_', ' ')}: {count}" for reason, count in drop_reasons.items())
+        lines.append("")
 
     items = payload.get("items", [])
     for title, predicate in SECTIONS:
@@ -71,6 +88,8 @@ def _item_lines(item: dict) -> list[str]:
         f"- Scores: relevance {scores.get('relevance')}, timeliness {scores.get('timeliness')}, evidence {scores.get('evidence_quality')}, editorial {scores.get('editorial_value')}",
         f"- Confidence: {item.get('confidence', 'unknown')}",
         f"- Priority: {item['priority']}",
+        f"- Selection score: {item.get('selection_score', 'n/a')}",
+        f"- Selection reasons: {', '.join(item.get('selection_reasons', [])) or 'n/a'}",
         f"- Suggested next action: {item['recommended_action']}",
         f"- Verification: {item['verification_status']}",
     ]

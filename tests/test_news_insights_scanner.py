@@ -9,8 +9,8 @@ from urllib.parse import parse_qs, urlparse
 
 from news_insights_scanner.classify_items import classify_item
 from news_insights_scanner.ingest import ingest_manual, ingest_x_api
-from news_insights_scanner.models import CandidatePost
-from news_insights_scanner.pipeline import _build_item, _filter_lookback
+from news_insights_scanner.models import CandidatePost, ScannerConfig
+from news_insights_scanner.pipeline import _build_item, _filter_lookback, run_scanner
 from news_insights_scanner.score_items import _timeliness
 
 
@@ -26,6 +26,18 @@ class NewsInsightsScannerTests(unittest.TestCase):
         )
 
         self.assertEqual(classify_item(post), "Announcement")
+
+    def test_report_with_numbers_is_a_deep_dive_before_metric(self):
+        post = CandidatePost(
+            post_id="1b",
+            post_url="https://x.com/project/status/1b",
+            author_handle="project",
+            posted_at="2026-06-01T00:00:00Z",
+            text="New report breaks down 10 trends in tokenized private credit.",
+            captured_at="2026-06-01T00:00:00Z",
+        )
+
+        self.assertEqual(classify_item(post), "Deep Dive/Article")
 
     def test_source_link_alone_does_not_verify_item(self):
         post = CandidatePost(
@@ -299,6 +311,68 @@ class NewsInsightsScannerTests(unittest.TestCase):
 
         self.assertEqual(len(result.posts), 1)
         self.assertEqual(captured_auth_headers, ["Bearer dotenv-token"])
+
+    def test_scanner_selects_top_items_instead_of_cataloging_every_post(self):
+        manual_payload = {
+            "posts": [
+                {
+                    "post_id": "announcement",
+                    "posted_at": "2026-06-01T17:00:00Z",
+                    "text": "Maple announced a new institutional lending integration for tokenized credit.",
+                    "urls": ["https://maple.finance/blog/integration"],
+                },
+                {
+                    "post_id": "metric",
+                    "posted_at": "2026-06-01T16:00:00Z",
+                    "text": "Protocol revenue reached $2M over the past 30 days.",
+                    "urls": ["https://project.example/revenue"],
+                },
+                {
+                    "post_id": "retweet",
+                    "posted_at": "2026-06-01T15:00:00Z",
+                    "text": "RT @someone: crazy work keep cooking",
+                    "urls": ["https://x.com/someone/status/1"],
+                },
+                {
+                    "post_id": "promo",
+                    "posted_at": "2026-06-01T14:00:00Z",
+                    "text": "Full episode with our founder is live now.",
+                    "urls": ["https://x.com/project/status/2"],
+                },
+                {
+                    "post_id": "report",
+                    "posted_at": "2026-06-01T13:00:00Z",
+                    "text": "New research report breaks down tokenized real-world asset market structure.",
+                    "urls": ["https://project.example/report"],
+                },
+            ]
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "input.json"
+            output_dir = Path(tmpdir) / "out"
+            input_path.write_text(json.dumps(manual_payload), encoding="utf-8")
+            run_scanner(
+                ScannerConfig(
+                    ingestion="manual",
+                    input_path=str(input_path),
+                    output_dir=str(output_dir),
+                    top_n=2,
+                    lookback_hours=24 * 365,
+                )
+            )
+            payload = json.loads((output_dir / "digest.json").read_text())
+            markdown = (output_dir / "digest.md").read_text()
+
+        selected_ids = {item["post_id"] for item in payload["items"]}
+        self.assertEqual(payload["selection_audit"]["reviewed_tweet_count"], 5)
+        self.assertEqual(payload["selection_audit"]["selected_count"], 2)
+        self.assertEqual(len(payload["items"]), 2)
+        self.assertIn("announcement", selected_ids)
+        self.assertIn("metric", selected_ids)
+        self.assertNotIn("retweet", selected_ids)
+        self.assertIn("Reviewed 5 tweets", markdown)
+        self.assertIn("Items selected for Ian: `2`", markdown)
 
 
 if __name__ == "__main__":

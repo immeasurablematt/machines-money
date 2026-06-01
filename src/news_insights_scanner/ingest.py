@@ -40,7 +40,9 @@ def ingest_manual(input_path: str, source_list_id: str = DEFAULT_SOURCE_LIST_ID)
     )
 
 
-def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int = 100) -> IngestionResult:
+def ingest_x_api(
+    source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int = 100, stop_before: datetime | None = None
+) -> IngestionResult:
     captured_at = utc_now_iso()
     token = _x_bearer_token()
     if not token:
@@ -86,7 +88,12 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
                 for user in (payload.get("includes") or {}).get("users", [])
             }
             tweets = payload.get("data", [])
+            reached_stop_before = False
             for tweet in tweets:
+                posted_at = _parse_posted_at(str(tweet.get("created_at", "")))
+                if stop_before and posted_at and posted_at < stop_before:
+                    reached_stop_before = True
+                    continue
                 if len(posts) >= target_count:
                     break
                 post_id = str(tweet.get("id", ""))
@@ -122,7 +129,7 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
                     "no posts were fabricated. Rerun with credentials or use manual input."
                 ],
             )
-        if not tweets or not next_token:
+        if not tweets or reached_stop_before or not next_token:
             break
 
     return IngestionResult(
@@ -133,6 +140,15 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
         posts=posts,
         warnings=[],
     )
+
+
+def _parse_posted_at(value: str) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
 
 
 def _x_bearer_token() -> str | None:

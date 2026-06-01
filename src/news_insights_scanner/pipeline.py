@@ -13,17 +13,18 @@ from .ingest import ingest_manual, ingest_x_api
 from .models import CandidatePost, ScannerConfig, ScannerOutput
 from .render_digest import render_outputs
 from .score_items import priority, score_item
+from .triage import triage_items
 
 
 def run_scanner(config: ScannerConfig) -> ScannerOutput:
-    ingestion = _ingest(config)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=config.lookback_hours)
+    ingestion = _ingest(config, cutoff)
     run_id = f"news-insights-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
     posts = _filter_lookback(ingestion.posts, config.lookback_hours)
-    if config.max_items:
-        posts = posts[: config.max_items]
 
     items = [_build_item(run_id, post) for post in posts]
     items = dedupe_items(items)
+    selected_items, audit = triage_items(items, config.top_n)
     verification_status = _run_verification_status(ingestion.verification_status, items)
     payload = {
         "run_id": run_id,
@@ -31,28 +32,30 @@ def run_scanner(config: ScannerConfig) -> ScannerOutput:
         "ingestion_path": ingestion.path,
         "captured_at": ingestion.captured_at,
         "lookback_hours": config.lookback_hours,
+        "selection_audit": audit,
         "verification_status": verification_status,
         "warnings": ingestion.warnings,
-        "items": items,
+        "items": selected_items,
     }
     markdown_path, json_path = render_outputs(payload, config.output_dir)
     return ScannerOutput(
         run_id=run_id,
         markdown_path=markdown_path,
         json_path=json_path,
-        item_count=len(items),
+        item_count=len(selected_items),
         verification_status=verification_status,
         warnings=ingestion.warnings,
     )
 
 
-def _ingest(config: ScannerConfig):
+def _ingest(config: ScannerConfig, cutoff: datetime):
     if config.ingestion == "manual":
         if not config.input_path:
             raise ValueError("Manual ingestion requires --input.")
         return ingest_manual(config.input_path, config.source_list_id)
     if config.ingestion == "x_api":
-        return ingest_x_api(config.source_list_id, config.max_items or 100)
+        max_results = max(1, config.max_ingest_pages) * 100
+        return ingest_x_api(config.source_list_id, max_results=max_results, stop_before=cutoff)
     raise ValueError(f"Unsupported ingestion path: {config.ingestion}")
 
 

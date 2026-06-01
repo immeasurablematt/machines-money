@@ -1,52 +1,10 @@
 {
-  "captured_at": "2026-06-01T16:15:55+00:00",
+  "captured_at": "2026-06-01T17:26:41+00:00",
   "ingestion_path": "manual",
   "items": [
     {
-      "author_handle": "MapleFinance",
-      "captured_at": "2026-06-01T16:15:55+00:00",
-      "classification": "Adoption Stat",
-      "confidence": "medium",
-      "duplicate_count": 1,
-      "evidence_urls": [
-        "https://maple.finance/analytics",
-        "https://x.com/MapleFinance/status/sample001"
-      ],
-      "metrics": [
-        {
-          "confidence": "medium",
-          "metric_name": "Active Loans",
-          "period": "past 30 days",
-          "pulled_date": "2026-06-01",
-          "source_kind": "primary",
-          "source_url": "https://maple.finance/analytics",
-          "value": "$1.2B"
-        }
-      ],
-      "notes": "Sample fixture item for adoption-stat extraction. Needs manual verification before reuse.",
-      "post_id": "sample-001",
-      "post_url": "https://x.com/MapleFinance/status/sample001",
-      "posted_at": "2026-06-01T13:15:00Z",
-      "priority": "High",
-      "project_names": [
-        "Maple"
-      ],
-      "recommended_action": "save chart/stat",
-      "run_id": "news-insights-20260601T161555Z-d07571e6",
-      "scores": {
-        "editorial_value": 5,
-        "evidence_quality": 5,
-        "relevance": 3,
-        "timeliness": 5
-      },
-      "source_list_id": "2011849979095138608",
-      "summary": "Maple crossed $1.2B in active loans over the past 30 days",
-      "verification_status": "needs_verification",
-      "why_it_matters": "A dated metric that may support a chart, traction note, or Truth Within Trends angle."
-    },
-    {
       "author_handle": "Centrifuge",
-      "captured_at": "2026-06-01T16:15:55+00:00",
+      "captured_at": "2026-06-01T17:26:41+00:00",
       "classification": "Announcement",
       "confidence": "medium",
       "duplicate_count": 1,
@@ -64,13 +22,21 @@
         "Centrifuge"
       ],
       "recommended_action": "short mention",
-      "run_id": "news-insights-20260601T161555Z-d07571e6",
+      "run_id": "news-insights-20260601T172641Z-ab75a99c",
       "scores": {
         "editorial_value": 4,
         "evidence_quality": 5,
         "relevance": 5,
         "timeliness": 5
       },
+      "selection_reasons": [
+        "concrete announcement language",
+        "source link captured",
+        "primary/dashboard source link",
+        "core Machines & Money theme",
+        "high editorial value"
+      ],
+      "selection_score": 10,
       "source_list_id": "2011849979095138608",
       "summary": "Centrifuge announced a new tokenized credit vault integration",
       "verification_status": "needs_verification",
@@ -78,7 +44,7 @@
     },
     {
       "author_handle": "researcher",
-      "captured_at": "2026-06-01T16:15:55+00:00",
+      "captured_at": "2026-06-01T17:26:41+00:00",
       "classification": "Deep Dive/Article",
       "confidence": "medium",
       "dossier_seed": {
@@ -117,52 +83,89 @@
         "Morpho"
       ],
       "recommended_action": "save read",
-      "run_id": "news-insights-20260601T161555Z-d07571e6",
+      "run_id": "news-insights-20260601T172641Z-ab75a99c",
       "scores": {
         "editorial_value": 4,
         "evidence_quality": 5,
         "relevance": 5,
         "timeliness": 5
       },
+      "selection_reasons": [
+        "deep-dive/report language",
+        "source link captured",
+        "primary/dashboard source link",
+        "core Machines & Money theme",
+        "high editorial value"
+      ],
+      "selection_score": 10,
       "source_list_id": "2011849979095138608",
       "summary": "Deep dive: how Morpho vault curators change the lending market structure",
       "verification_status": "needs_verification",
       "why_it_matters": "Substantive analysis that may be worth reading, saving, or using as an article angle."
     },
     {
-      "author_handle": "random",
-      "captured_at": "2026-06-01T16:15:55+00:00",
-      "classification": "Skip",
+      "author_handle": "MapleFinance",
+      "captured_at": "2026-06-01T17:26:41+00:00",
+      "classification": "Adoption Stat",
       "confidence": "medium",
       "duplicate_count": 1,
       "evidence_urls": [
-        "https://x.com/random/status/sample004"
+        "https://maple.finance/analytics",
+        "https://x.com/MapleFinance/status/sample001"
       ],
-      "metrics": [],
-      "notes": "Sample fixture item for low-signal collapse. Needs manual verification before reuse. Collapsed into low-signal section by MVP classifier.",
-      "post_id": "sample-004",
-      "post_url": "https://x.com/random/status/sample004",
-      "posted_at": "2026-06-01T08:00:00Z",
-      "priority": "Low",
+      "metrics": [
+        {
+          "confidence": "medium",
+          "metric_name": "Active Loans",
+          "period": "past 30 days",
+          "pulled_date": "2026-06-01",
+          "source_kind": "primary",
+          "source_url": "https://maple.finance/analytics",
+          "value": "$1.2B"
+        }
+      ],
+      "notes": "Sample fixture item for adoption-stat extraction. Needs manual verification before reuse.",
+      "post_id": "sample-001",
+      "post_url": "https://x.com/MapleFinance/status/sample001",
+      "posted_at": "2026-06-01T13:15:00Z",
+      "priority": "High",
       "project_names": [
-        "Unknown"
+        "Maple"
       ],
-      "recommended_action": "skip",
-      "run_id": "news-insights-20260601T161555Z-d07571e6",
+      "recommended_action": "save chart/stat",
+      "run_id": "news-insights-20260601T172641Z-ab75a99c",
       "scores": {
-        "editorial_value": 1,
-        "evidence_quality": 3,
-        "relevance": 2,
+        "editorial_value": 5,
+        "evidence_quality": 5,
+        "relevance": 3,
         "timeliness": 5
       },
+      "selection_reasons": [
+        "hard metric extracted",
+        "source link captured",
+        "primary/dashboard source link",
+        "high editorial value"
+      ],
+      "selection_score": 9,
       "source_list_id": "2011849979095138608",
-      "summary": "GM, vibes are back",
+      "summary": "Maple crossed $1.2B in active loans over the past 30 days",
       "verification_status": "needs_verification",
-      "why_it_matters": "Low-signal for the current broad scanner unless Ian is already tracking this project."
+      "why_it_matters": "A dated metric that may support a chart, traction note, or Truth Within Trends angle."
     }
   ],
   "lookback_hours": 24,
-  "run_id": "news-insights-20260601T161555Z-d07571e6",
+  "run_id": "news-insights-20260601T172641Z-ab75a99c",
+  "selection_audit": {
+    "candidate_count": 3,
+    "drop_reasons": {
+      "below_selection_cutoff": 0,
+      "classifier_skip": 1
+    },
+    "dropped_count": 1,
+    "reviewed_tweet_count": 4,
+    "selected_count": 3,
+    "top_n": 12
+  },
   "source_list_id": "2011849979095138608",
   "verification_status": "needs_verification",
   "warnings": []
