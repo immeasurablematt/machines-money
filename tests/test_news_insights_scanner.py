@@ -235,6 +235,62 @@ class NewsInsightsScannerTests(unittest.TestCase):
         self.assertEqual(result.posts[0].urls, [])
         self.assertEqual(result.warnings, [])
 
+    def test_x_api_ingestion_handles_explicit_null_inner_lists(self):
+        """Guard against explicit null on inner list keys like includes.users, data, entities.urls."""
+        payload = {
+            "data": None,
+            "includes": {"users": None},
+            "meta": None,
+        }
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(payload).encode("utf-8")
+
+        with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+            with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", return_value=Response()):
+                result = ingest_x_api(source_list_id="list-1", max_results=1)
+
+        self.assertEqual(result.verification_status, "needs_verification")
+        self.assertEqual(result.posts, [])
+        self.assertEqual(result.warnings, [])
+
+        payload2 = {
+            "data": [
+                {
+                    "id": "401",
+                    "author_id": "u1",
+                    "created_at": "2026-06-01T00:00:00Z",
+                    "text": "Null urls list test.",
+                    "entities": {"urls": None},
+                }
+            ],
+            "includes": {"users": [{"id": "u1", "username": "project"}]},
+        }
+
+        class Response2:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(payload2).encode("utf-8")
+
+        with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+            with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", return_value=Response2()):
+                result2 = ingest_x_api(source_list_id="list-1", max_results=1)
+
+        self.assertEqual(len(result2.posts), 1)
+        self.assertEqual(result2.posts[0].urls, [])
+
     def test_manual_json_non_object_falls_back_to_line_parsing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             input_path = Path(tmpdir) / "posts.json"
