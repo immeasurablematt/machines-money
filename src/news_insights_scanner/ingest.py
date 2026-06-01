@@ -78,47 +78,48 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 payload = json.loads(response.read().decode("utf-8"))
+
+            users_by_id = {
+                user.get("id"): user.get("username", "")
+                for user in payload.get("includes", {}).get("users", [])
+            }
+            tweets = payload.get("data", [])
+            for tweet in tweets:
+                if len(posts) >= target_count:
+                    break
+                post_id = str(tweet.get("id", ""))
+                author_handle = users_by_id.get(tweet.get("author_id"), "")
+                expanded_urls = [
+                    {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
+                    for url in tweet.get("entities", {}).get("urls", [])
+                    if url.get("expanded_url") or url.get("url")
+                ]
+                posts.append(
+                    CandidatePost(
+                        post_id=post_id,
+                        post_url=f"https://x.com/{author_handle}/status/{post_id}" if author_handle and post_id else "",
+                        author_handle=author_handle,
+                        posted_at=tweet.get("created_at", ""),
+                        text=tweet.get("text", ""),
+                        urls=expanded_urls,
+                        captured_at=captured_at,
+                        source_list_id=source_list_id,
+                    )
+                )
+
+            next_token = payload.get("meta", {}).get("next_token")
         except Exception as exc:  # pragma: no cover - depends on live X API/network.
             return IngestionResult(
                 path="x_api",
                 source_list_id=source_list_id,
                 captured_at=captured_at,
                 verification_status="manual_review_needed",
-                posts=[],
+                posts=posts,
                 warnings=[
-                    f"X API ingestion failed: {exc}. No posts were fabricated; rerun with credentials or use manual input."
+                    f"X API ingestion failed: {exc}. Returned {len(posts)} post(s) fetched before the failure; "
+                    "no posts were fabricated. Rerun with credentials or use manual input."
                 ],
             )
-
-        users_by_id = {
-            user.get("id"): user.get("username", "")
-            for user in payload.get("includes", {}).get("users", [])
-        }
-        tweets = payload.get("data", [])
-        for tweet in tweets:
-            if len(posts) >= target_count:
-                break
-            post_id = str(tweet.get("id", ""))
-            author_handle = users_by_id.get(tweet.get("author_id"), "")
-            expanded_urls = [
-                {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
-                for url in tweet.get("entities", {}).get("urls", [])
-                if url.get("expanded_url") or url.get("url")
-            ]
-            posts.append(
-                CandidatePost(
-                    post_id=post_id,
-                    post_url=f"https://x.com/{author_handle}/status/{post_id}" if author_handle and post_id else "",
-                    author_handle=author_handle,
-                    posted_at=tweet.get("created_at", ""),
-                    text=tweet.get("text", ""),
-                    urls=expanded_urls,
-                    captured_at=captured_at,
-                    source_list_id=source_list_id,
-                )
-            )
-
-        next_token = payload.get("meta", {}).get("next_token")
         if not tweets or not next_token:
             break
 
@@ -171,6 +172,8 @@ def _load_json_posts(raw: str, captured_at: str, default_list_id: str) -> list[C
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
         return None
 
     source_list_id = str(payload.get("source_list_id") or default_list_id)

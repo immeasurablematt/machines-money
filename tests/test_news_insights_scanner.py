@@ -2,14 +2,16 @@ import json
 import os
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 from news_insights_scanner.classify_items import classify_item
-from news_insights_scanner.ingest import ingest_x_api
+from news_insights_scanner.ingest import ingest_manual, ingest_x_api
 from news_insights_scanner.models import CandidatePost
-from news_insights_scanner.pipeline import _build_item
+from news_insights_scanner.pipeline import _build_item, _filter_lookback
+from news_insights_scanner.score_items import _timeliness
 
 
 class NewsInsightsScannerTests(unittest.TestCase):
@@ -115,6 +117,89 @@ class NewsInsightsScannerTests(unittest.TestCase):
         second_query = parse_qs(urlparse(calls[1]).query)
         self.assertNotIn("pagination_token", first_query)
         self.assertEqual(second_query["pagination_token"], ["NEXT"])
+
+    def test_x_api_ingestion_returns_partial_posts_after_malformed_later_page(self):
+        payloads = [
+            {
+                "data": [
+                    {
+                        "id": "101",
+                        "author_id": "u1",
+                        "created_at": "2026-06-01T00:00:00Z",
+                        "text": "Project announced a launch.",
+                    }
+                ],
+                "includes": {"users": [{"id": "u1", "username": "project"}]},
+                "meta": {"next_token": "NEXT"},
+            },
+            [],
+        ]
+        calls = []
+
+        class Response:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return json.dumps(self.payload).encode("utf-8")
+
+        def fake_urlopen(request, timeout):
+            calls.append(request.full_url)
+            return Response(payloads[len(calls) - 1])
+
+        with mock.patch.dict(os.environ, {"X_BEARER_TOKEN": "token"}):
+            with mock.patch("news_insights_scanner.ingest.urllib.request.urlopen", side_effect=fake_urlopen):
+                result = ingest_x_api(source_list_id="list-1", max_results=2)
+
+        self.assertEqual([post.post_id for post in result.posts], ["101"])
+        self.assertEqual(result.verification_status, "manual_review_needed")
+        self.assertIn("Returned 1 post(s) fetched before the failure", result.warnings[0])
+
+    def test_manual_json_non_object_falls_back_to_line_parsing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = Path(tmpdir) / "posts.json"
+            input_path.write_text('["https://x.com/project/status/1 adoption stat"]', encoding="utf-8")
+
+            result = ingest_manual(str(input_path))
+
+        self.assertEqual(len(result.posts), 1)
+        self.assertEqual(result.posts[0].post_id, "manual-0001")
+        self.assertEqual(result.posts[0].post_url, "https://x.com/project/status/1")
+
+    def test_timeliness_treats_naive_datetime_as_utc(self):
+        class FixedDatetime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                value = cls(2026, 6, 3, 0, 30, tzinfo=timezone.utc)
+                return value if tz is None else value.astimezone(tz)
+
+        with mock.patch("news_insights_scanner.score_items.datetime", FixedDatetime):
+            self.assertEqual(_timeliness("2026-06-01T00:00:00"), 4)
+
+    def test_filter_lookback_treats_naive_datetime_as_utc(self):
+        class FixedDatetime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                value = cls(2026, 6, 3, 0, 30, tzinfo=timezone.utc)
+                return value if tz is None else value.astimezone(tz)
+
+        post = CandidatePost(
+            post_id="naive",
+            post_url="https://x.com/project/status/naive",
+            author_handle="project",
+            posted_at="2026-06-01T00:00:00",
+            text="Project announced a launch.",
+            captured_at="2026-06-03T00:30:00Z",
+        )
+
+        with mock.patch("news_insights_scanner.pipeline.datetime", FixedDatetime):
+            self.assertEqual(_filter_lookback([post], lookback_hours=48), [])
 
     def test_x_api_ingestion_loads_bearer_token_from_dotenv(self):
         payload = {
