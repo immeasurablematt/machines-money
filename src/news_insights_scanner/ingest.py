@@ -78,10 +78,12 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 payload = json.loads(response.read().decode("utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("Expected a JSON object response from X API")
 
             users_by_id = {
                 user.get("id"): user.get("username", "")
-                for user in payload.get("includes", {}).get("users", [])
+                for user in (payload.get("includes") or {}).get("users", [])
             }
             tweets = payload.get("data", [])
             for tweet in tweets:
@@ -91,7 +93,7 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
                 author_handle = users_by_id.get(tweet.get("author_id"), "")
                 expanded_urls = [
                     {"url": url.get("expanded_url") or url.get("url"), "source_kind": "linked"}
-                    for url in tweet.get("entities", {}).get("urls", [])
+                    for url in (tweet.get("entities") or {}).get("urls", [])
                     if url.get("expanded_url") or url.get("url")
                 ]
                 posts.append(
@@ -107,7 +109,7 @@ def ingest_x_api(source_list_id: str = DEFAULT_SOURCE_LIST_ID, max_results: int 
                     )
                 )
 
-            next_token = payload.get("meta", {}).get("next_token")
+            next_token = (payload.get("meta") or {}).get("next_token")
         except Exception as exc:  # pragma: no cover - depends on live X API/network.
             return IngestionResult(
                 path="x_api",
