@@ -371,8 +371,16 @@ class NewsInsightsScannerTests(unittest.TestCase):
         self.assertIn("announcement", selected_ids)
         self.assertIn("metric", selected_ids)
         self.assertNotIn("retweet", selected_ids)
+        self.assertIn("## Executive Summary", markdown)
         self.assertIn("Reviewed 5 tweets", markdown)
-        self.assertIn("Items selected for Ian: `2`", markdown)
+        self.assertIn("selected 2 high-signal items for Ian", markdown)
+        self.assertIn("Suggested next step:", markdown)
+        self.assertIn("Source account:", markdown)
+        self.assertNotIn("Run verification status", markdown)
+        self.assertNotIn("needs_verification", markdown)
+        self.assertNotIn("Scores:", markdown)
+        self.assertNotIn("Selection reasons:", markdown)
+        self.assertNotIn("Metrics: none captured", markdown)
 
 
 if __name__ == "__main__":

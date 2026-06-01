@@ -97,12 +97,13 @@ The scanner does not render a catalog of every reviewed tweet. For X API runs it
 4. ranks the remaining candidates,
 5. renders only `--top-n` selected items in `digest.md`.
 
-The digest header shows how many tweets were reviewed, selected, and dropped. Drop-reason counts are included so Ian can trust that the scanner did real triage without reading the full feed.
+The digest starts with an executive summary for Ian: reviewed count, selected count, filtered count, and the mix of announcements, adoption stats, and deep reads. Internal scoring, raw verification labels, and drop-reason detail should stay out of the top reader flow. A short narrowing note can appear near the bottom so Ian can trust that the scanner did real triage without reading the full feed.
 
 ## Review Checklist
 
-- Confirm the ingestion path shown at the top of `digest.md`.
-- Confirm `Tweets reviewed` is larger than `Items selected for Ian` on normal X API runs.
+- Confirm the executive summary is short enough to read first.
+- Confirm the reader-facing Markdown does not expose raw labels like `needs_verification`, internal scores, or selection reasons.
+- Confirm the reviewed count is larger than the selected count on normal X API runs.
 - Treat manual and X-post-only claims as needing human review before reuse.
 - Prefer primary source and dashboard URLs over reposted X URLs.
 - Check adoption metrics for value, period, source URL, pulled date, confidence, and source kind in `digest.json`.
