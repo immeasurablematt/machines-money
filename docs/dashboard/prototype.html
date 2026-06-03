@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Machines & Money Dashboard Prototype</title>
+  <style>
+    :root {
+      --bg: #f2f4ef;
+      --panel: #ffffff;
+      --ink: #1c211f;
+      --muted: #66706b;
+      --line: #d9ded8;
+      --line-strong: #c5ccc4;
+      --accent: #0b6b57;
+      --accent-2: #2563a8;
+      --accent-3: #8a5a00;
+      --warn: #9a5b00;
+      --soft: #eef3ef;
+      --spot: #0b6b57;
+      --lending: #2563a8;
+      --derivatives: #7c4d9e;
+      --assets: #9a5b00;
+      --tokenization: #b14b35;
+      --sidebar: #101815;
+      --sidebar-muted: #9ca9a2;
+      --shadow: 0 16px 42px rgba(35, 43, 38, 0.09), 0 1px 2px rgba(35, 43, 38, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 256px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: var(--sidebar);
+      padding: 22px 16px;
+      color: #f4f6f1;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #f4f6f1;
+      color: #111916;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 760;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      flex: 0 0 auto;
+    }
+
+    .brand-copy {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .brand strong {
+      font-size: 16px;
+    }
+
+    .brand span {
+      color: var(--sidebar-muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 7px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--sidebar-muted);
+      text-align: left;
+      padding: 10px 11px;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: #f4f6f1;
+      border-color: #f4f6f1;
+      color: #111916;
+      font-weight: 650;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.26);
+    }
+
+    .nav button:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.07);
+      color: #f4f6f1;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px 28px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: 30px;
+      line-height: 1.15;
+      font-weight: 720;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .subtle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    select {
+      min-width: 132px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 30px 8px 10px;
+      height: 38px;
+    }
+
+    select:focus, button:focus-visible, a:focus-visible {
+      outline: 2px solid rgba(37, 99, 168, 0.35);
+      outline-offset: 2px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-height: 88px;
+      border-top: 3px solid transparent;
+      display: grid;
+      align-content: center;
+      gap: 7px;
+    }
+
+    .stat:nth-child(1) { border-top-color: var(--accent); }
+    .stat:nth-child(2) { border-top-color: var(--accent-2); }
+    .stat:nth-child(3) { border-top-color: var(--accent-3); }
+    .stat:nth-child(4) { border-top-color: var(--warn); }
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 0;
+    }
+
+    .stat strong {
+      font-size: 21px;
+      line-height: 1.2;
+      word-break: keep-all;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfa;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .panel-header span {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .chart-wrap {
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 680px;
+      height: 430px;
+    }
+
+    .axis text {
+      fill: var(--muted);
+      font-size: 11px;
+    }
+
+    .axis line, .axis path, .grid-line {
+      stroke: var(--line);
+      stroke-width: 1;
+    }
+
+    .bar {
+      fill: var(--accent);
+      transition: opacity 160ms ease;
+    }
+
+    .bar-bg {
+      fill: #edf1ec;
+    }
+
+    .bar:hover {
+      opacity: 0.82;
+    }
+
+    .bar-label {
+      fill: var(--ink);
+      font-size: 11.5px;
+      font-weight: 650;
+    }
+
+    .value-label {
+      fill: var(--muted);
+      font-size: 11px;
+    }
+
+    a {
+      color: var(--accent-2);
+      text-decoration: none;
+      font-weight: 650;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .panel table {
+      min-width: 640px;
+    }
+
+    .panel:has(table) {
+      overflow-x: auto;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      background: #fbfcfa;
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    tbody tr:hover {
+      background: #fbfcfa;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: var(--soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .tag.medium, .tag.mixed {
+      background: #f8f0df;
+      color: var(--warn);
+    }
+
+    .sector-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .sector-tag.spot { background: var(--spot); }
+    .sector-tag.lending { background: var(--lending); }
+    .sector-tag.derivatives { background: var(--derivatives); }
+    .sector-tag.asset-management { background: var(--assets); }
+    .sector-tag.tokenization { background: var(--tokenization); }
+
+    .quality-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: -2px 0 14px;
+    }
+
+    .quality-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 42px;
+      padding: 10px 12px;
+      background: #fbfcfa;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      box-shadow: var(--shadow);
+      border-left: 3px solid var(--accent);
+    }
+
+    .quality-item strong {
+      color: var(--ink);
+    }
+
+    .coverage-meter {
+      width: 100%;
+      height: 7px;
+      border-radius: 999px;
+      background: #e6ebe5;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+
+    .coverage-meter span {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .warn {
+      color: var(--warn);
+      font-weight: 650;
+    }
+
+    .ledger {
+      max-height: 390px;
+      overflow: auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .full {
+      display: grid;
+      gap: 14px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.75fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .note-list {
+      margin: 0;
+      padding: 14px 18px 16px 30px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .action-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.2fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfa;
+    }
+
+    .action-row strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .action-row p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: #eef3ef;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      padding: 34px 18px;
+      color: var(--muted);
+      text-align: center;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: #fbfcfa;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .nav button {
+        text-align: center;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .controls {
+        justify-content: flex-start;
+      }
+
+      .stats, .grid, .split, .quality-strip, .action-row {
+        grid-template-columns: 1fr;
+      }
+
+      svg {
+        min-width: 760px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        padding: 14px;
+      }
+
+      .stats {
+        gap: 8px;
+      }
+
+      .stat strong {
+        font-size: 17px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      select {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M&M</div>
+        <div class="brand-copy">
+          <strong>Machines & Money</strong>
+          <span>Dashboard Prototype</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Dashboard sections">
+        <button class="active" type="button" data-view="overview">Overview</button>
+        <button type="button" data-view="compare">Compare</button>
+        <button type="button" data-view="sectors">Sectors</button>
+        <button type="button" data-view="sources">Sources</button>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">Research metrics workspace</p>
+          <h1 id="pageTitle">Protocol Metrics Snapshot</h1>
+          <p class="subtle" id="pageSubtitle">Generated from public DefiLlama records. Aggregation rules are intentionally visible.</p>
+        </div>
+        <div class="controls">
+          <select id="metricFilter" aria-label="Metric filter">
+          </select>
+          <select id="sectorFilter" aria-label="Sector filter">
+            <option value="all">All sectors</option>
+          </select>
+          <select id="projectFilter" aria-label="Project filter">
+            <option value="all">All projects</option>
+          </select>
+          <select id="confidenceFilter" aria-label="Confidence filter">
+            <option value="all">All confidence</option>
+            <option value="high">High only</option>
+            <option value="medium">Medium only</option>
+          </select>
+        </div>
+      </div>
+
+      <section class="stats" aria-label="Snapshot stats">
+        <div class="stat">
+          <span>Visible Records</span>
+          <strong id="visibleRecords">0</strong>
+        </div>
+        <div class="stat">
+          <span id="totalMetricLabel">Total Visible Value</span>
+          <strong id="totalMetric">$0</strong>
+        </div>
+        <div class="stat">
+          <span>Highest Visible Record</span>
+          <strong id="topRecord">-</strong>
+        </div>
+        <div class="stat">
+          <span>Citation Status</span>
+          <strong class="warn" id="citationStatus">Review sources</strong>
+        </div>
+      </section>
+
+      <section class="quality-strip" aria-label="Data quality notes">
+        <div class="quality-item">
+          <span>Data source</span>
+          <strong>DefiLlama</strong>
+        </div>
+        <div class="quality-item">
+          <span>Snapshot date</span>
+          <strong id="snapshotDate">-</strong>
+        </div>
+        <div class="quality-item">
+          <span>Coverage</span>
+          <div>
+            <strong id="coverageSummary">-</strong>
+            <div class="coverage-meter" aria-hidden="true"><span id="coverageMeter"></span></div>
+          </div>
+        </div>
+        <div class="quality-item">
+          <span>Aggregation</span>
+          <strong>No silent rollups</strong>
+        </div>
+      </section>
+
+      <section id="overviewView" class="view active">
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h2 id="chartTitle">Top Product Records</h2>
+              <span id="chartSubtitle">USD</span>
+            </div>
+            <div class="chart-wrap">
+              <svg id="chart" role="img" aria-label="TVL by product record bar chart"></svg>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Source Ledger</h2>
+              <span>Every row keeps source and confidence</span>
+            </div>
+            <div class="ledger">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>Record</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody id="ledgerRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top: 14px;">
+          <div class="panel-header">
+            <h2>Research Action Queue</h2>
+            <span>What this metric suggests checking next</span>
+          </div>
+          <div class="action-list" id="actionRows"></div>
+        </div>
+      </section>
+
+      <section id="compareView" class="view">
+        <div class="split">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Project Comparison</h2>
+              <span>Filtered records rolled up by project</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Records</th>
+                  <th id="compareTotalHeader">Total</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="compareRows"></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Comparison Notes</h2>
+              <span>Review before showing totals</span>
+            </div>
+            <ul class="note-list">
+              <li>Totals are based only on visible product records.</li>
+              <li>Projects with multiple products need clear labels before public use.</li>
+              <li>Medium-confidence records are useful for exploration, not final citation.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="sectorsView" class="view">
+        <div class="full">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Sector Rollup</h2>
+              <span>Filtered records grouped by sector</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Sector</th>
+                  <th>Projects</th>
+                  <th>Records</th>
+                  <th id="sectorTotalHeader">Total</th>
+                  <th>Largest Record</th>
+                </tr>
+              </thead>
+              <tbody id="sectorRows"></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Sector Caveat</h2>
+              <span>Definitions still need discovery</span>
+            </div>
+            <ul class="note-list">
+              <li>Each metric has different source coverage; volume, users, fees, and revenue are not equally available.</li>
+              <li>Some projects span multiple sectors, like Jupiter and Sky.</li>
+              <li>Sector share should wait until the source map confirms comparable definitions.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="sourcesView" class="view">
+        <div class="full">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Source Records</h2>
+              <span>Source URLs, confidence, and record labels</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Record</th>
+                  <th>Sector</th>
+                  <th>Metric</th>
+                  <th>Value</th>
+                  <th>Source</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="sourceRows"></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Aggregation Rule</h2>
+              <span>Important for Ian review</span>
+            </div>
+            <ul class="note-list">
+              <li>No project totals should be shown without record labels.</li>
+              <li>Uniswap V2, V3, and V4 are separate records.</li>
+              <li>Hyperliquid, Ethena, Sky, Ondo, Aerodrome, and Jupiter also split into product records.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="generated-dashboard-data.js"></script>
+  <script>
+    const fallbackRows = [
+      {project:"Uniswap", record:"Uniswap V3", sector:"Spot", metric:"TVL", value:1578425747.37, unit:"USD", period:"current", confidence:"high", source_name:"DefiLlama protocol", source:"https://api.llama.fi/protocol/uniswap-v3", pulled_date:"2026-06-02", notes:"Version-specific record."},
+      {project:"Aave", record:"Aave V3", sector:"Lending", metric:"TVL", value:12707191772.92, unit:"USD", period:"current", confidence:"high", source_name:"DefiLlama protocol", source:"https://api.llama.fi/protocol/aave-v3", pulled_date:"2026-06-02", notes:"Primary Aave MVP record."}
+    ];
+    const rows = (window.dashboardRows || fallbackRows).map(row => ({
+      ...row,
+      value: Number(row.value),
+      metric: row.metric || "TVL",
+      unit: row.unit || "USD",
+      period: row.period || "current",
+      source_name: row.source_name || "DefiLlama",
+      pulled_date: row.pulled_date || window.dashboardMeta?.generated_at || "2026-06-02"
+    }));
+
+    const metricFilter = document.getElementById("metricFilter");
+    const sectorFilter = document.getElementById("sectorFilter");
+    const projectFilter = document.getElementById("projectFilter");
+    const confidenceFilter = document.getElementById("confidenceFilter");
+    const chart = document.getElementById("chart");
+    const ledgerRows = document.getElementById("ledgerRows");
+    const compareRows = document.getElementById("compareRows");
+    const sectorRows = document.getElementById("sectorRows");
+    const sourceRows = document.getElementById("sourceRows");
+    const actionRows = document.getElementById("actionRows");
+    const navButtons = [...document.querySelectorAll(".nav button")];
+    const views = {
+      overview: document.getElementById("overviewView"),
+      compare: document.getElementById("compareView"),
+      sectors: document.getElementById("sectorsView"),
+      sources: document.getElementById("sourcesView")
+    };
+    const viewCopy = {
+      overview: ["Protocol Metrics Snapshot", "Generated from public DefiLlama records. Aggregation rules are intentionally visible."],
+      compare: ["Compare Projects", "Roll up the visible product records by project while keeping confidence visible."],
+      sectors: ["Sector Rollup", "See which sectors dominate the starter TVL snapshot and where definitions still need work."],
+      sources: ["Source Ledger", "Inspect the exact source records behind the prototype before any metric is treated as cite-ready."]
+    };
+    let activeView = "overview";
+    const metricOrder = ["TVL", "30D Fees", "30D Revenue", "30D DEX Volume"];
+
+    function money(value) {
+      if (value >= 1_000_000_000) return "$" + (value / 1_000_000_000).toFixed(2) + "B";
+      if (value >= 1_000_000) return "$" + (value / 1_000_000).toFixed(0) + "M";
+      return "$" + value.toLocaleString();
+    }
+
+    function sectorClass(sector) {
+      return sector.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    }
+
+    function sectorColor(sector) {
+      return {
+        "Spot": "#0b6b57",
+        "Lending": "#2563a8",
+        "Derivatives": "#7c4d9e",
+        "Asset Management": "#9a5b00",
+        "Tokenization": "#b14b35"
+      }[sector] || "#66706b";
+    }
+
+    function confidenceTag(confidence) {
+      return `<span class="tag ${confidence}">${confidence}</span>`;
+    }
+
+    function sectorTag(sector) {
+      return `<span class="sector-tag ${sectorClass(sector)}">${sector}</span>`;
+    }
+
+    function shortLabel(label, maxLength = 34) {
+      return label.length > maxLength ? `${label.slice(0, maxLength - 1)}…` : label;
+    }
+
+    function populateFilters() {
+      [...new Set(rows.map(row => row.metric))]
+        .sort((a, b) => metricOrder.indexOf(a) - metricOrder.indexOf(b))
+        .forEach(metric => {
+          const option = document.createElement("option");
+          option.value = metric;
+          option.textContent = metric;
+          metricFilter.appendChild(option);
+        });
+
+      [...new Set(rows.map(row => row.sector))].sort().forEach(sector => {
+        const option = document.createElement("option");
+        option.value = sector;
+        option.textContent = sector;
+        sectorFilter.appendChild(option);
+      });
+
+      [...new Set(rows.map(row => row.project))].sort().forEach(project => {
+        const option = document.createElement("option");
+        option.value = project;
+        option.textContent = project;
+        projectFilter.appendChild(option);
+      });
+    }
+
+    function filteredRows() {
+      return rows
+        .filter(row => row.metric === metricFilter.value)
+        .filter(row => sectorFilter.value === "all" || row.sector === sectorFilter.value)
+        .filter(row => projectFilter.value === "all" || row.project === projectFilter.value)
+        .filter(row => confidenceFilter.value === "all" || row.confidence === confidenceFilter.value)
+        .sort((a, b) => b.value - a.value);
+    }
+
+    function renderStats(data) {
+      const total = data.reduce((sum, row) => sum + row.value, 0);
+      const top = data[0];
+      const highConfidenceCount = data.filter(row => row.confidence === "high").length;
+      const coveragePercent = data.length ? Math.round(highConfidenceCount / data.length * 100) : 0;
+      document.getElementById("visibleRecords").textContent = String(data.length);
+      document.getElementById("totalMetricLabel").textContent = `Total Visible ${metricFilter.value}`;
+      document.getElementById("totalMetric").textContent = money(total);
+      document.getElementById("topRecord").textContent = top ? top.record : "-";
+      document.getElementById("snapshotDate").textContent = window.dashboardMeta?.generated_at || top?.pulled_date || "-";
+      document.getElementById("chartTitle").textContent = `Top ${metricFilter.value} Records`;
+      document.getElementById("chartSubtitle").textContent = `${data[0]?.period || "current"}, USD`;
+      document.getElementById("compareTotalHeader").textContent = metricFilter.value;
+      document.getElementById("sectorTotalHeader").textContent = metricFilter.value;
+      document.getElementById("coverageSummary").textContent = `${highConfidenceCount}/${data.length || 0} high confidence`;
+      document.getElementById("coverageMeter").style.width = `${coveragePercent}%`;
+      document.getElementById("citationStatus").textContent = coveragePercent === 100 ? "Source-backed" : "Review sources";
+    }
+
+    function renderChart(data) {
+      chart.innerHTML = "";
+      const chartData = data.slice(0, 12);
+      const width = 760;
+      const rowHeight = 30;
+      const height = Math.max(360, chartData.length * rowHeight + 86);
+      const margin = {top: 18, right: 96, bottom: 26, left: 186};
+      const plotWidth = width - margin.left - margin.right;
+      const plotHeight = height - margin.top - margin.bottom;
+      const max = Math.max(...chartData.map(row => row.value), 1);
+      const barHeight = 16;
+
+      chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      chart.style.height = `${height}px`;
+
+      if (!chartData.length) {
+        const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        foreignObject.setAttribute("x", 0);
+        foreignObject.setAttribute("y", 0);
+        foreignObject.setAttribute("width", width);
+        foreignObject.setAttribute("height", 180);
+        foreignObject.innerHTML = `<div class="empty-state">No records match these filters yet.</div>`;
+        chart.appendChild(foreignObject);
+        return;
+      }
+
+      [0, 0.25, 0.5, 0.75, 1].forEach(tick => {
+        const x = margin.left + tick * plotWidth;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x);
+        line.setAttribute("x2", x);
+        line.setAttribute("y1", margin.top - 4);
+        line.setAttribute("y2", margin.top + plotHeight + 8);
+        line.setAttribute("class", "grid-line");
+        chart.appendChild(line);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", x);
+        label.setAttribute("y", height - 7);
+        label.setAttribute("text-anchor", tick === 0 ? "start" : "middle");
+        label.setAttribute("class", "value-label");
+        label.textContent = money(max * tick);
+        chart.appendChild(label);
+      });
+
+      chartData.forEach((row, index) => {
+        const y = margin.top + index * rowHeight + 4;
+        const barWidth = Math.max(2, row.value / max * plotWidth);
+
+        const project = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        project.setAttribute("x", 0);
+        project.setAttribute("y", y + 13);
+        project.setAttribute("class", "bar-label");
+        project.textContent = shortLabel(`${row.project} · ${row.record}`);
+        const fullTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        fullTitle.textContent = `${row.project} · ${row.record}`;
+        project.appendChild(fullTitle);
+        chart.appendChild(project);
+
+        const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        bg.setAttribute("x", margin.left);
+        bg.setAttribute("y", y);
+        bg.setAttribute("width", plotWidth);
+        bg.setAttribute("height", barHeight);
+        bg.setAttribute("rx", 4);
+        bg.setAttribute("class", "bar-bg");
+        chart.appendChild(bg);
+
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", margin.left);
+        rect.setAttribute("y", y);
+        rect.setAttribute("width", barWidth);
+        rect.setAttribute("height", barHeight);
+        rect.setAttribute("rx", 4);
+        rect.setAttribute("class", "bar");
+        rect.setAttribute("style", `fill: ${sectorColor(row.sector)}`);
+        rect.setAttribute("tabindex", "0");
+        rect.setAttribute("aria-label", `${row.record}: ${money(row.value)}`);
+        chart.appendChild(rect);
+
+        const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        value.setAttribute("x", margin.left + barWidth + 8);
+        value.setAttribute("y", y + 13);
+        value.setAttribute("text-anchor", "start");
+        value.setAttribute("class", "value-label");
+        value.textContent = money(row.value);
+        chart.appendChild(value);
+      });
+    }
+
+    function renderLedger(data) {
+      ledgerRows.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.project}<br>${sectorTag(row.sector)}</td>
+          <td><a href="${row.source}">${row.record}</a><br><span class="subtle">${row.metric} · ${money(row.value)}</span></td>
+          <td>${confidenceTag(row.confidence)}</td>
+        `;
+        ledgerRows.appendChild(tr);
+      });
+    }
+
+    function groupBy(data, key) {
+      return data.reduce((groups, row) => {
+        const value = row[key];
+        if (!groups[value]) groups[value] = [];
+        groups[value].push(row);
+        return groups;
+      }, {});
+    }
+
+    function renderCompare(data) {
+      compareRows.innerHTML = "";
+      Object.entries(groupBy(data, "project"))
+        .map(([project, records]) => ({
+          project,
+          records,
+          total: records.reduce((sum, row) => sum + row.value, 0),
+          confidence: records.every(row => row.confidence === "high") ? "high" : "mixed"
+        }))
+        .sort((a, b) => b.total - a.total)
+        .forEach(group => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${group.project}</td>
+            <td>${group.records.map(row => row.record).join("<br>")}</td>
+            <td>${money(group.total)}</td>
+            <td>${confidenceTag(group.confidence)}</td>
+          `;
+          compareRows.appendChild(tr);
+        });
+    }
+
+    function renderSectors(data) {
+      sectorRows.innerHTML = "";
+      Object.entries(groupBy(data, "sector"))
+        .map(([sector, records]) => ({
+          sector,
+          projects: [...new Set(records.map(row => row.project))].sort(),
+          records,
+          total: records.reduce((sum, row) => sum + row.value, 0),
+          top: [...records].sort((a, b) => b.value - a.value)[0]
+        }))
+        .sort((a, b) => b.total - a.total)
+        .forEach(group => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${sectorTag(group.sector)}</td>
+            <td>${group.projects.join(", ")}</td>
+            <td>${group.records.length}</td>
+            <td>${money(group.total)}</td>
+            <td>${group.top ? `${group.top.record}<br><span class="subtle">${money(group.top.value)}</span>` : "-"}</td>
+          `;
+          sectorRows.appendChild(tr);
+        });
+    }
+
+    function renderSources(data) {
+      sourceRows.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.project}</td>
+          <td>${row.record}</td>
+          <td>${sectorTag(row.sector)}</td>
+          <td>${row.metric}<br><span class="subtle">${row.period}</span></td>
+          <td>${money(row.value)}</td>
+          <td><a href="${row.source}">${row.source_name}</a></td>
+          <td>${confidenceTag(row.confidence)}</td>
+        `;
+        sourceRows.appendChild(tr);
+      });
+    }
+
+    function actionCopy(row) {
+      const metric = row.metric;
+      if (metric === "TVL") {
+        return {
+          action: "Check driver",
+          note: "Look for whether the move is real inflow, asset price movement, or a product/version split."
+        };
+      }
+      if (metric === "30D Fees" || metric === "30D Revenue") {
+        return {
+          action: "Verify methodology",
+          note: "Confirm the fee/revenue definition before treating this as business traction in copy."
+        };
+      }
+      if (metric === "30D DEX Volume") {
+        return {
+          action: "Compare share",
+          note: "Check whether this product/version is gaining share against the rest of its sector."
+        };
+      }
+      return {
+        action: "Review source",
+        note: "Open the source record and confirm the metric definition."
+      };
+    }
+
+    function renderActions(data) {
+      actionRows.innerHTML = "";
+      const candidates = data.slice(0, 4);
+      if (!candidates.length) {
+        actionRows.innerHTML = `<div class="empty-state">No follow-up candidates match these filters yet.</div>`;
+        return;
+      }
+      candidates.forEach(row => {
+        const copy = actionCopy(row);
+        const div = document.createElement("div");
+        div.className = "action-row";
+        div.innerHTML = `
+          <div>
+            <strong>${row.project}</strong>
+            <p>${row.record} · ${money(row.value)}</p>
+          </div>
+          <p>${copy.note}</p>
+          <span class="status-pill">${copy.action}</span>
+        `;
+        actionRows.appendChild(div);
+      });
+    }
+
+    function setActiveView(view) {
+      activeView = view;
+      navButtons.forEach(button => button.classList.toggle("active", button.dataset.view === view));
+      Object.entries(views).forEach(([name, element]) => element.classList.toggle("active", name === view));
+      document.getElementById("pageTitle").textContent = viewCopy[view][0];
+      document.getElementById("pageSubtitle").textContent = viewCopy[view][1];
+      render();
+    }
+
+    function render() {
+      const data = filteredRows();
+      renderStats(data);
+      if (activeView === "overview") {
+        renderChart(data);
+        renderLedger(data);
+        renderActions(data);
+      } else if (activeView === "compare") {
+        renderCompare(data);
+      } else if (activeView === "sectors") {
+        renderSectors(data);
+      } else if (activeView === "sources") {
+        renderSources(data);
+      }
+    }
+
+    populateFilters();
+    [metricFilter, sectorFilter, projectFilter, confidenceFilter].forEach(control => control.addEventListener("change", render));
+    navButtons.forEach(button => button.addEventListener("click", () => setActiveView(button.dataset.view)));
+    setActiveView("overview");
+  </script>
+</body>
+</html>
