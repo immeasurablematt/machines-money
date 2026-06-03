@@ -130,3 +130,12 @@ The first source check confirmed reachable DefiLlama public protocol records for
 - `docs/dashboard/source-check-notes.md`
 
 The main finding is that several projects split into multiple product/version records, so dashboard labels and aggregation rules need to be explicit before a prototype shows rolled-up numbers.
+
+## Free Data Expansion
+
+The next recommended no-paid-data layer is market data: token price, market cap, FDV, and token volume. See:
+
+- `docs/dashboard/free-data-expansion-quote.md`
+- `docs/dashboard/starter-token-map.csv`
+
+Active users and wallet counts should stay in source discovery until Dune/project-native sources are mapped for each project.

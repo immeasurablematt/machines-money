@@ -1,0 +1,12 @@
+project,sector,token_symbol,coingecko_id,status,notes
+Uniswap,Spot,UNI,uniswap,verified_search,"CoinGecko search returned Uniswap / UNI."
+Aave,Lending,AAVE,aave,verified_search,"CoinGecko search returned Aave / AAVE."
+Pendle,Derivatives,PENDLE,pendle,verified_search,"CoinGecko search returned Pendle / PENDLE."
+Hyperliquid,Derivatives,HYPE,hyperliquid,verified_search,"CoinGecko search returned Hyperliquid / HYPE."
+Ethena,Asset Management,ENA,ethena,verified_search,"CoinGecko search returned Ethena / ENA; dashboard may also need USDe and sUSDe as product assets."
+Ethena,Asset Management,USDe,ethena-usde,verified_search,"CoinGecko search returned Ethena USDe / USDE; treat as product asset rather than governance token."
+Sky,Lending,SKY,,needs_confirmation,"Confirm whether Ian wants SKY, USDS, sUSDS, MKR legacy context, or product-level stablecoin metrics."
+Ondo,Tokenization,ONDO,,needs_confirmation,"Confirm CoinGecko id and whether dashboard should track ONDO token, OUSG/USDY products, or both."
+Aerodrome,Spot,AERO,,needs_confirmation,"Confirm CoinGecko id and whether dashboard should track AERO only or include veAERO context."
+Morpho,Lending,MORPHO,,needs_confirmation,"Confirm CoinGecko id and whether token market data is useful alongside Morpho Blue AUM."
+Jupiter,Spot and Derivatives,JUP,,needs_confirmation,"Confirm CoinGecko id and whether JUP token is the right proxy for Jupiter product metrics."

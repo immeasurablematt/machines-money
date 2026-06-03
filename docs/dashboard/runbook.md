@@ -79,3 +79,7 @@ Before showing a metric as cite-ready:
 ## Next Build Step
 
 After Ian confirms the metric selector and source-first layout, the next useful step is a small hosted version or a local app shell that can refresh data on demand.
+
+For the no-paid-data expansion plan and Ian quote, see:
+
+- `docs/dashboard/free-data-expansion-quote.md`
