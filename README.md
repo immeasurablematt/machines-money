@@ -43,6 +43,14 @@ PYTHONPATH=src python3 -m news_insights_scanner \
 
 See `docs/news-insights-scanner/spec.md` and `docs/news-insights-scanner/runbook.md` for the source spec and operating notes.
 
+## Metrics Dashboard Discovery
+
+The repo now includes early planning artifacts for a future **Machines & Money Metrics Dashboard**.
+
+The dashboard direction is to help Ian compare projects, sectors, and metrics across DeFi, tokenized assets, derivatives, lending, asset management, infra, AI, and related markets. The first step is source discovery, not a full build: each requested metric needs a source, pulled date, confidence level, and clear distinction between project-native, parent, and third-party data.
+
+See `docs/dashboard/ian-outline-analysis.md`, `docs/dashboard/mvp-spec.md`, `docs/dashboard/metric-inventory.csv`, `docs/dashboard/source-discovery-plan.md`, `docs/dashboard/starter-source-map.csv`, `docs/dashboard/source-check-notes.md`, `docs/dashboard/runbook.md`, and `docs/dashboard/prototype.html` for the initial discovery scope.
+
 ## Newsletter Context
 
 Machines & Money currently includes several recurring content formats:
