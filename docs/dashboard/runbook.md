@@ -46,6 +46,22 @@ Current generated metrics:
 - 30D Revenue
 - 30D DEX Volume
 
+Optional generated metrics after a free CoinGecko Demo key is available:
+
+- Token Price
+- Market Cap
+- FDV
+- 24H Token Volume
+
+To enable the market-data layer, set:
+
+```bash
+export COINGECKO_DEMO_API_KEY=...
+python3 scripts/refresh_dashboard_data.py
+```
+
+Only `verified_search` rows in `docs/dashboard/starter-token-map.csv` are pulled. Rows marked `needs_confirmation` are skipped until Ian confirms the token/product mapping.
+
 ## Current Source Coverage
 
 The refresh script uses public DefiLlama endpoints.

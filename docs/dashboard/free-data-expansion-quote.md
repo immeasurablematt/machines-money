@@ -146,6 +146,14 @@ Do not build the next automated layer around these if the constraint is no paid 
 5. Add backlog rows for active users and harder project metrics.
 6. Republish the here.now preview for Ian review.
 
+## Prework Completed While Waiting For Ian
+
+- Added `docs/dashboard/starter-token-map.csv`.
+- Added CoinGecko-ready market-data scaffolding to `scripts/refresh_dashboard_data.py`.
+- The refresh script now skips market data unless `COINGECKO_DEMO_API_KEY` is set.
+- Rows marked `needs_confirmation` are skipped until Ian confirms the token/product mapping.
+- The prototype metric order is ready for Token Price, Market Cap, FDV, and 24H Token Volume once generated.
+
 ## Key Risk
 
 The main risk is not cost. The main risk is **metric mismatch**:

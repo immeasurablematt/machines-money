@@ -842,7 +842,16 @@
       sources: ["Source Ledger", "Inspect the exact source records behind the prototype before any metric is treated as cite-ready."]
     };
     let activeView = "overview";
-    const metricOrder = ["TVL", "30D Fees", "30D Revenue", "30D DEX Volume"];
+    const metricOrder = [
+      "TVL",
+      "30D Fees",
+      "30D Revenue",
+      "30D DEX Volume",
+      "Token Price",
+      "Market Cap",
+      "FDV",
+      "24H Token Volume"
+    ];
 
     function money(value) {
       if (value >= 1_000_000_000) return "$" + (value / 1_000_000_000).toFixed(2) + "B";
@@ -1122,6 +1131,12 @@
         return {
           action: "Compare share",
           note: "Check whether this product/version is gaining share against the rest of its sector."
+        };
+      }
+      if (metric === "Token Price" || metric === "Market Cap" || metric === "FDV" || metric === "24H Token Volume") {
+        return {
+          action: "Confirm token fit",
+          note: "Confirm this token is the right proxy before connecting it to protocol/product activity."
         };
       }
       return {

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -22,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_DIR = ROOT / "docs" / "dashboard"
 DATA_JS = DASHBOARD_DIR / "generated-dashboard-data.js"
 DATA_CSV = DASHBOARD_DIR / "generated-dashboard-data.csv"
+TOKEN_MAP_CSV = DASHBOARD_DIR / "starter-token-map.csv"
 
 USER_AGENT = "machines-money-dashboard-refresh/0.1"
 
@@ -218,8 +220,11 @@ RECORDS = [
 ]
 
 
-def fetch_json(url: str) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
+    request_headers = {"User-Agent": USER_AGENT}
+    if headers:
+        request_headers.update(headers)
+    req = urllib.request.Request(url, headers=request_headers)
     with urllib.request.urlopen(req, timeout=25) as response:
         return json.load(response)
 
@@ -237,6 +242,7 @@ def append_row(
     period: str,
     source_name: str,
     source: str,
+    unit: str = "USD",
     notes: str | None = None,
 ) -> None:
     if value is None:
@@ -256,7 +262,7 @@ def append_row(
             "sector": record["sector"],
             "metric": metric,
             "value": round(numeric_value, 2),
-            "unit": "USD",
+            "unit": unit,
             "period": period,
             "source_name": source_name,
             "source": source,
@@ -265,6 +271,107 @@ def append_row(
             "notes": notes or record["notes"],
         }
     )
+
+
+def read_token_map() -> list[dict[str, str]]:
+    if not TOKEN_MAP_CSV.exists():
+        return []
+    with TOKEN_MAP_CSV.open(newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def coingecko_source_url(ids: list[str]) -> str:
+    joined_ids = ",".join(ids)
+    return (
+        "https://api.coingecko.com/api/v3/coins/markets"
+        f"?vs_currency=usd&ids={joined_ids}"
+        "&order=market_cap_desc&per_page=250&page=1&sparkline=false"
+    )
+
+
+def append_market_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -> None:
+    token_rows = [
+        row
+        for row in read_token_map()
+        if row.get("coingecko_id") and row.get("status") == "verified_search"
+    ]
+    if not token_rows:
+        warnings.append("CoinGecko market data skipped: no verified token mappings")
+        return
+
+    api_key = os.environ.get("COINGECKO_DEMO_API_KEY")
+    if not api_key:
+        warnings.append(
+            "CoinGecko market data skipped: set COINGECKO_DEMO_API_KEY after the free Demo key is available"
+        )
+        return
+
+    ids = sorted({row["coingecko_id"] for row in token_rows})
+    url = coingecko_source_url(ids)
+    try:
+        data = fetch_json(url, headers={"x-cg-demo-api-key": api_key})
+    except urllib.error.HTTPError as exc:
+        warnings.append(f"CoinGecko market data unavailable: HTTP {exc.code}")
+        return
+    except Exception as exc:  # noqa: BLE001 - retain source warning in generated metadata.
+        warnings.append(f"CoinGecko market data unavailable: {exc.__class__.__name__}")
+        return
+
+    by_id = {item.get("id"): item for item in data if isinstance(item, dict)}
+    for token in token_rows:
+        market = by_id.get(token["coingecko_id"])
+        if not market:
+            warnings.append(f"CoinGecko market data missing for {token['project']} / {token['coingecko_id']}")
+            continue
+
+        record = {
+            "project": token["project"],
+            "record": f"{token['token_symbol']} token",
+            "sector": token["sector"],
+            "confidence": "high",
+            "notes": token.get("notes", "Token-level market metric from CoinGecko."),
+        }
+        notes = "Token-level market metric from CoinGecko; do not treat as protocol/product usage."
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Token Price",
+            value=market.get("current_price"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Market Cap",
+            value=market.get("market_cap"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="FDV",
+            value=market.get("fully_diluted_valuation"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="24H Token Volume",
+            value=market.get("total_volume"),
+            period="24H",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
 
 
 def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
@@ -344,6 +451,8 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             ),
             notes="DEX volume is source-comparable only for DEX records; lending and derivatives volume still need separate source discovery.",
         )
+
+    append_market_rows(metric_rows, warnings)
 
     metric_rows.sort(key=lambda row: (row["metric"], -row["value"], row["project"], row["record"]))
     return metric_rows, warnings
