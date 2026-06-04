@@ -55,10 +55,10 @@ If Ian wants a fixed-scope version, quote it as:
 Ask Ian for these four things:
 
 1. **Confirm the starter project list.**
-   The current prototype uses Uniswap, Aave, Pendle, Hyperliquid, Ethena, Sky, Ondo, Aerodrome, Morpho, and Jupiter.
+   Complete. Ian confirmed the first 20 projects. See `docs/dashboard/ian-confirmed-dashboard-scope.md`.
 
 2. **Confirm token mappings.**
-   Some projects map cleanly to one token, but some do not. For example, Hyperliquid, Sky, Ethena, Ondo, and Jupiter may need explicit decisions about which token or product record matters.
+   Complete at the business level. CoinGecko IDs still need verification for rows marked `needs_verification`.
 
    Starter mapping file:
 
@@ -68,12 +68,7 @@ Ask Ian for these four things:
    This is still $0, but it is better than depending on an unstable keyless path.
 
 4. **Choose the next priority after market data.**
-   Best choices:
-   - active users / wallets,
-   - sector volume share,
-   - stablecoin supply and APY,
-   - lending utilization,
-   - yield paid.
+   Complete. Ian ranked the next metrics as active users/wallets, sector volume share, stablecoin APY, yield paid, and lending utilization.
 
 ## Free Source Assessment
 
@@ -149,6 +144,8 @@ Do not build the next automated layer around these if the constraint is no paid 
 ## Prework Completed While Waiting For Ian
 
 - Added `docs/dashboard/starter-token-map.csv`.
+- Added `docs/dashboard/ian-confirmed-dashboard-scope.md`.
+- Added `docs/dashboard/token-vs-product-metric-definitions.md`.
 - Added CoinGecko-ready market-data scaffolding to `scripts/refresh_dashboard_data.py`.
 - The refresh script now skips market data unless `COINGECKO_DEMO_API_KEY` is set.
 - Rows marked `needs_confirmation` are skipped until Ian confirms the token/product mapping.

@@ -136,6 +136,8 @@ The main finding is that several projects split into multiple product/version re
 The next recommended no-paid-data layer is market data: token price, market cap, FDV, and token volume. See:
 
 - `docs/dashboard/free-data-expansion-quote.md`
+- `docs/dashboard/ian-confirmed-dashboard-scope.md`
 - `docs/dashboard/starter-token-map.csv`
+- `docs/dashboard/token-vs-product-metric-definitions.md`
 
 Active users and wallet counts should stay in source discovery until Dune/project-native sources are mapped for each project.
