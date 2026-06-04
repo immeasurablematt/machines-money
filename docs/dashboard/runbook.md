@@ -101,3 +101,4 @@ For the no-paid-data expansion plan and Ian quote, see:
 - `docs/dashboard/free-data-expansion-quote.md`
 - `docs/dashboard/ian-confirmed-dashboard-scope.md`
 - `docs/dashboard/token-vs-product-metric-definitions.md`
+- `docs/dashboard/dune-active-wallets.md`

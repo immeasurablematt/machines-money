@@ -26,6 +26,26 @@ DATA_CSV = DASHBOARD_DIR / "generated-dashboard-data.csv"
 TOKEN_MAP_CSV = DASHBOARD_DIR / "starter-token-map.csv"
 
 USER_AGENT = "machines-money-dashboard-refresh/0.1"
+DUNE_API_BASE = "https://api.dune.com/api/v1"
+
+DUNE_DEX_ACTIVE_WALLETS_SQL = """
+SELECT
+  project,
+  blockchain,
+  count(DISTINCT tx_from) AS active_wallets_7d
+FROM dex.trades
+WHERE block_time >= now() - interval '7' day
+  AND lower(project) IN ('uniswap', 'curve', 'aerodrome')
+GROUP BY 1,2
+ORDER BY active_wallets_7d DESC
+LIMIT 50
+"""
+
+DUNE_DEX_PROJECTS = {
+    "aerodrome": {"project": "Aerodrome", "sector": "Spot"},
+    "curve": {"project": "Curve", "sector": "Spot"},
+    "uniswap": {"project": "Uniswap", "sector": "Spot"},
+}
 
 
 RECORDS = [
@@ -374,6 +394,102 @@ def append_market_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -
         )
 
 
+def dune_request(path: str, api_key: str, *, data: dict[str, Any] | None = None) -> Any:
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
+        "X-Dune-Api-Key": api_key,
+    }
+    body = json.dumps(data).encode() if data is not None else None
+    req = urllib.request.Request(f"{DUNE_API_BASE}{path}", data=body, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as response:
+        return json.load(response)
+
+
+def execute_dune_sql(sql: str, api_key: str, warnings: list[str]) -> list[dict[str, Any]]:
+    try:
+        execution = dune_request(
+            "/sql/execute",
+            api_key,
+            data={"sql": sql, "performance": "small"},
+        )
+    except urllib.error.HTTPError as exc:
+        warnings.append(f"Dune SQL execution unavailable: HTTP {exc.code}")
+        return []
+    except Exception as exc:  # noqa: BLE001 - keep refresh resilient if Dune is unavailable.
+        warnings.append(f"Dune SQL execution unavailable: {exc.__class__.__name__}")
+        return []
+
+    execution_id = execution.get("execution_id")
+    if not execution_id:
+        warnings.append("Dune SQL execution unavailable: no execution_id returned")
+        return []
+
+    state = execution.get("state")
+    for _ in range(30):
+        if state in {
+            "QUERY_STATE_COMPLETED",
+            "QUERY_STATE_FAILED",
+            "QUERY_STATE_CANCELLED",
+            "QUERY_STATE_EXPIRED",
+        }:
+            break
+        time.sleep(2)
+        try:
+            status = dune_request(f"/execution/{execution_id}/status", api_key)
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Dune SQL status unavailable: {exc.__class__.__name__}")
+            return []
+        state = status.get("state")
+
+    if state != "QUERY_STATE_COMPLETED":
+        warnings.append(f"Dune SQL execution did not complete: {state}")
+        return []
+
+    try:
+        result = dune_request(f"/execution/{execution_id}/results?limit=1000", api_key)
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Dune SQL results unavailable: {exc.__class__.__name__}")
+        return []
+
+    rows = result.get("result", {}).get("rows", [])
+    return rows if isinstance(rows, list) else []
+
+
+def append_dune_active_wallet_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -> None:
+    api_key = os.environ.get("DUNE_API_KEY")
+    if not api_key:
+        warnings.append("Dune active-wallet data skipped: set DUNE_API_KEY")
+        return
+
+    rows = execute_dune_sql(DUNE_DEX_ACTIVE_WALLETS_SQL, api_key, warnings)
+    for row in rows:
+        project_key = str(row.get("project", "")).lower()
+        project = DUNE_DEX_PROJECTS.get(project_key)
+        if not project:
+            continue
+        blockchain = str(row.get("blockchain", "unknown"))
+        record = {
+            "project": project["project"],
+            "record": f"{project['project']} on {blockchain}",
+            "sector": project["sector"],
+            "confidence": "medium",
+            "notes": "7D active wallets from Dune dex.trades using distinct tx_from. Treat as DEX-trader wallets, not total protocol users.",
+        }
+        append_row(
+            metric_rows,
+            record=record,
+            metric="7D Active Wallets",
+            value=row.get("active_wallets_7d"),
+            unit="wallets",
+            period="7D",
+            source_name="Dune dex.trades",
+            source=f"{DUNE_API_BASE}/sql/execute",
+            notes=record["notes"],
+        )
+
+
 def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     warnings: list[str] = []
     metric_rows: list[dict[str, Any]] = []
@@ -453,6 +569,7 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
         )
 
     append_market_rows(metric_rows, warnings)
+    append_dune_active_wallet_rows(metric_rows, warnings)
 
     metric_rows.sort(key=lambda row: (row["metric"], -row["value"], row["project"], row["record"]))
     return metric_rows, warnings

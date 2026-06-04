@@ -847,6 +847,7 @@
       "30D Fees",
       "30D Revenue",
       "30D DEX Volume",
+      "7D Active Wallets",
       "Token Price",
       "Market Cap",
       "FDV",
@@ -1131,6 +1132,12 @@
         return {
           action: "Compare share",
           note: "Check whether this product/version is gaining share against the rest of its sector."
+        };
+      }
+      if (metric === "7D Active Wallets") {
+        return {
+          action: "Validate user proxy",
+          note: "Treat this as active trading wallets from Dune, not total protocol users."
         };
       }
       if (metric === "Token Price" || metric === "Market Cap" || metric === "FDV" || metric === "24H Token Volume") {
