@@ -440,8 +440,59 @@
     }
 
     .ledger {
-      max-height: 390px;
+      max-height: 430px;
       overflow: auto;
+      padding: 10px;
+    }
+
+    .ledger table {
+      min-width: 0;
+    }
+
+    .ledger-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .ledger-row + .ledger-row {
+      margin-top: 8px;
+    }
+
+    .ledger-main {
+      min-width: 0;
+    }
+
+    .ledger-main a {
+      display: block;
+      overflow-wrap: anywhere;
+      line-height: 1.25;
+    }
+
+    .ledger-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .ledger-status {
+      display: grid;
+      justify-items: end;
+      align-content: start;
+      gap: 4px;
+      min-width: 96px;
+      text-align: right;
+    }
+
+    .ledger-status .subtle {
+      max-width: 112px;
+      font-size: 12px;
+      line-height: 1.25;
     }
 
     .view {
@@ -707,16 +758,7 @@
               <span>Every row keeps source and confidence</span>
             </div>
             <div class="ledger">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Record</th>
-                    <th>Confidence</th>
-                  </tr>
-                </thead>
-                <tbody id="ledgerRows"></tbody>
-              </table>
+              <div id="ledgerRows"></div>
             </div>
           </div>
         </div>
@@ -1172,13 +1214,20 @@
     function renderLedger(data) {
       ledgerRows.innerHTML = "";
       data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.project}<br>${sectorTag(row.sector)}</td>
-          <td><a href="${row.source}">${row.record}</a><br><span class="subtle">${row.metric} · ${formatValue(row.value, row.unit)}</span></td>
-          <td>${confidenceTag(row.confidence)}<br><span class="subtle">${readinessLabel(row.research_readiness)}</span></td>
+        const div = document.createElement("div");
+        div.className = "ledger-row";
+        div.innerHTML = `
+          <div class="ledger-main">
+            <a href="${row.source}">${row.record}</a>
+            <div class="ledger-meta">${row.project} · ${row.metric} · ${formatValue(row.value, row.unit)}</div>
+            ${sectorTag(row.sector)}
+          </div>
+          <div class="ledger-status">
+            ${confidenceTag(row.confidence)}
+            <span class="subtle">${readinessLabel(row.research_readiness)}</span>
+          </div>
         `;
-        ledgerRows.appendChild(tr);
+        ledgerRows.appendChild(div);
       });
     }
 
