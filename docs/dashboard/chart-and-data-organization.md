@@ -37,7 +37,16 @@ Recommended chart types by metric:
   - FDV vs revenue
   - TVL vs fees
 
-The next useful visual upgrade is not more bar charts. It is a **research opportunity scatter plot** that helps Ian find gaps like high usage with lower market attention, or high valuation with weak product traction.
+The first non-bar visual is a **research opportunity scatter plot** that helps Ian find gaps like high usage with lower market attention, or high valuation with weak product traction.
+
+Current scatter plot:
+
+- X-axis: Market Cap
+- Y-axis: 7D Active Wallets
+- Bubble size: TVL where available, otherwise market cap
+- Color: sector
+
+This is intentionally narrow. It only includes projects where the current generated data has both market cap and active-wallet rows.
 
 ## How The Pulled Data Is Stored
 
@@ -115,4 +124,3 @@ If this moves beyond prototype, split the generated data into source-specific ra
 - `data/normalized/dashboard-metrics.csv`
 
 That would make it easier to audit changes, rerun transformations, and explain exactly where a number came from.
-
