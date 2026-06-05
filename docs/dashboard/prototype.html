@@ -606,7 +606,20 @@
           <p class="subtle" id="pageSubtitle">Generated from public DefiLlama records. Aggregation rules are intentionally visible.</p>
         </div>
         <div class="controls">
+          <select id="familyFilter" aria-label="Metric family filter">
+            <option value="all">All metric families</option>
+            <option value="market">Market data</option>
+            <option value="usage">Product usage</option>
+            <option value="financials">Financials</option>
+            <option value="stablecoin">Stablecoin / yield</option>
+          </select>
           <select id="metricFilter" aria-label="Metric filter">
+          </select>
+          <select id="metricTypeFilter" aria-label="Token or product metric filter">
+            <option value="all">Token + product</option>
+            <option value="token">Token metrics</option>
+            <option value="product">Product metrics</option>
+            <option value="stablecoin">Stablecoin products</option>
           </select>
           <select id="sectorFilter" aria-label="Sector filter">
             <option value="all">All sectors</option>
@@ -618,6 +631,19 @@
             <option value="all">All confidence</option>
             <option value="high">High only</option>
             <option value="medium">Medium only</option>
+          </select>
+          <select id="readinessFilter" aria-label="Research readiness filter">
+            <option value="all">All research states</option>
+            <option value="ready">Ready to cite</option>
+            <option value="source_check">Needs source check</option>
+            <option value="definition_check">Needs definition check</option>
+          </select>
+          <select id="sortMode" aria-label="Sort records">
+            <option value="largest">Sort: largest first</option>
+            <option value="smallest">Sort: smallest first</option>
+            <option value="confidence">Sort: most cite-ready</option>
+            <option value="needs_review">Sort: needs review first</option>
+            <option value="project">Sort: project A-Z</option>
           </select>
         </div>
       </div>
@@ -814,20 +840,50 @@
       {project:"Uniswap", record:"Uniswap V3", sector:"Spot", metric:"TVL", value:1578425747.37, unit:"USD", period:"current", confidence:"high", source_name:"DefiLlama protocol", source:"https://api.llama.fi/protocol/uniswap-v3", pulled_date:"2026-06-02", notes:"Version-specific record."},
       {project:"Aave", record:"Aave V3", sector:"Lending", metric:"TVL", value:12707191772.92, unit:"USD", period:"current", confidence:"high", source_name:"DefiLlama protocol", source:"https://api.llama.fi/protocol/aave-v3", pulled_date:"2026-06-02", notes:"Primary Aave MVP record."}
     ];
-    const rows = (window.dashboardRows || fallbackRows).map(row => ({
-      ...row,
-      value: Number(row.value),
-      metric: row.metric || "TVL",
-      unit: row.unit || "USD",
-      period: row.period || "current",
-      source_name: row.source_name || "DefiLlama",
-      pulled_date: row.pulled_date || window.dashboardMeta?.generated_at || "2026-06-02"
-    }));
+    function metricFamily(metric, row = {}) {
+      if (["Token Price", "Market Cap", "FDV", "24H Token Volume"].includes(metric)) return "market";
+      if (["30D Fees", "30D Revenue"].includes(metric)) return "financials";
+      if (["7D Active Wallets", "30D DEX Volume", "TVL"].includes(metric)) return "usage";
+      if (/apy|yield|stablecoin|syrup|usde|usds|usdf/i.test(`${row.record || ""} ${row.notes || ""}`)) return "stablecoin";
+      return "usage";
+    }
 
+    function metricType(row) {
+      if (row.source_name?.includes("CoinGecko") || row.record?.endsWith(" token")) return "token";
+      if (/stablecoin|USDe|USDS|USDf|sUSDe|sUSDS|sUSDf|syrup/i.test(`${row.record || ""} ${row.notes || ""}`)) return "stablecoin";
+      return "product";
+    }
+
+    function researchReadiness(row) {
+      if (row.confidence === "high" && !row.notes?.match(/review|confirm|methodology|proxy/i)) return "ready";
+      if (row.notes?.match(/methodology|definition|proxy|token fit/i)) return "definition_check";
+      return "source_check";
+    }
+
+    const rows = (window.dashboardRows || fallbackRows).map(row => {
+      const normalized = {
+        ...row,
+        value: Number(row.value),
+        metric: row.metric || "TVL",
+        unit: row.unit || "USD",
+        period: row.period || "current",
+        source_name: row.source_name || "DefiLlama",
+        pulled_date: row.pulled_date || window.dashboardMeta?.generated_at || "2026-06-02"
+      };
+      normalized.metric_family = metricFamily(normalized.metric, normalized);
+      normalized.metric_type = metricType(normalized);
+      normalized.research_readiness = researchReadiness(normalized);
+      return normalized;
+    });
+
+    const familyFilter = document.getElementById("familyFilter");
     const metricFilter = document.getElementById("metricFilter");
+    const metricTypeFilter = document.getElementById("metricTypeFilter");
     const sectorFilter = document.getElementById("sectorFilter");
     const projectFilter = document.getElementById("projectFilter");
     const confidenceFilter = document.getElementById("confidenceFilter");
+    const readinessFilter = document.getElementById("readinessFilter");
+    const sortMode = document.getElementById("sortMode");
     const chart = document.getElementById("chart");
     const ledgerRows = document.getElementById("ledgerRows");
     const compareRows = document.getElementById("compareRows");
@@ -859,6 +915,10 @@
       "FDV",
       "24H Token Volume"
     ];
+    const metricIndex = metric => {
+      const index = metricOrder.indexOf(metric);
+      return index === -1 ? metricOrder.length : index;
+    };
 
     function money(value) {
       if (value >= 1_000_000_000) return "$" + (value / 1_000_000_000).toFixed(2) + "B";
@@ -897,15 +957,47 @@
       return label.length > maxLength ? `${label.slice(0, maxLength - 1)}…` : label;
     }
 
+    function metricLabel(metric) {
+      return metric === "all" ? "All metrics in family" : metric;
+    }
+
+    function availableMetrics() {
+      return [...new Set(rows
+        .filter(row => familyFilter.value === "all" || row.metric_family === familyFilter.value)
+        .map(row => row.metric))]
+        .sort((a, b) => metricIndex(a) - metricIndex(b));
+    }
+
+    function populateMetricFilter(preferredMetric = metricFilter.value) {
+      const metrics = availableMetrics();
+      metricFilter.innerHTML = "";
+      metrics.forEach(metric => {
+        const option = document.createElement("option");
+        option.value = metric;
+        option.textContent = metricLabel(metric);
+        metricFilter.appendChild(option);
+      });
+      metricFilter.value = metrics.includes(preferredMetric) ? preferredMetric : (metrics[0] || "");
+    }
+
+    function readinessLabel(value) {
+      return {
+        ready: "Ready to cite",
+        source_check: "Needs source check",
+        definition_check: "Needs definition check"
+      }[value] || value;
+    }
+
+    function typeLabel(value) {
+      return {
+        token: "Token metric",
+        product: "Product metric",
+        stablecoin: "Stablecoin product"
+      }[value] || value;
+    }
+
     function populateFilters() {
-      [...new Set(rows.map(row => row.metric))]
-        .sort((a, b) => metricOrder.indexOf(a) - metricOrder.indexOf(b))
-        .forEach(metric => {
-          const option = document.createElement("option");
-          option.value = metric;
-          option.textContent = metric;
-          metricFilter.appendChild(option);
-        });
+      populateMetricFilter();
 
       [...new Set(rows.map(row => row.sector))].sort().forEach(sector => {
         const option = document.createElement("option");
@@ -923,29 +1015,45 @@
     }
 
     function filteredRows() {
-      return rows
+      const filtered = rows
+        .filter(row => familyFilter.value === "all" || row.metric_family === familyFilter.value)
         .filter(row => row.metric === metricFilter.value)
+        .filter(row => metricTypeFilter.value === "all" || row.metric_type === metricTypeFilter.value)
         .filter(row => sectorFilter.value === "all" || row.sector === sectorFilter.value)
         .filter(row => projectFilter.value === "all" || row.project === projectFilter.value)
         .filter(row => confidenceFilter.value === "all" || row.confidence === confidenceFilter.value)
-        .sort((a, b) => b.value - a.value);
+        .filter(row => readinessFilter.value === "all" || row.research_readiness === readinessFilter.value);
+      return sortRows(filtered);
+    }
+
+    function sortRows(data) {
+      const confidenceRank = row => row.confidence === "high" ? 0 : 1;
+      const readinessRank = row => row.research_readiness === "ready" ? 0 : row.research_readiness === "definition_check" ? 1 : 2;
+      return [...data].sort((a, b) => {
+        if (sortMode.value === "smallest") return a.value - b.value;
+        if (sortMode.value === "confidence") return confidenceRank(a) - confidenceRank(b) || readinessRank(a) - readinessRank(b) || b.value - a.value;
+        if (sortMode.value === "needs_review") return readinessRank(b) - readinessRank(a) || confidenceRank(b) - confidenceRank(a) || b.value - a.value;
+        if (sortMode.value === "project") return a.project.localeCompare(b.project) || a.record.localeCompare(b.record);
+        return b.value - a.value;
+      });
     }
 
     function renderStats(data) {
       const total = data.reduce((sum, row) => sum + row.value, 0);
       const top = data[0];
       const unit = top?.unit || "USD";
+      const metricTitle = metricFilter.value === "all" ? metricLabel("all") : metricFilter.value;
       const highConfidenceCount = data.filter(row => row.confidence === "high").length;
       const coveragePercent = data.length ? Math.round(highConfidenceCount / data.length * 100) : 0;
       document.getElementById("visibleRecords").textContent = String(data.length);
-      document.getElementById("totalMetricLabel").textContent = `Total Visible ${metricFilter.value}`;
+      document.getElementById("totalMetricLabel").textContent = `Total Visible ${metricTitle}`;
       document.getElementById("totalMetric").textContent = formatValue(total, unit);
       document.getElementById("topRecord").textContent = top ? top.record : "-";
       document.getElementById("snapshotDate").textContent = window.dashboardMeta?.generated_at || top?.pulled_date || "-";
-      document.getElementById("chartTitle").textContent = `Top ${metricFilter.value} Records`;
+      document.getElementById("chartTitle").textContent = `Top ${metricTitle} Records`;
       document.getElementById("chartSubtitle").textContent = `${data[0]?.period || "current"}, ${unit}`;
-      document.getElementById("compareTotalHeader").textContent = metricFilter.value;
-      document.getElementById("sectorTotalHeader").textContent = metricFilter.value;
+      document.getElementById("compareTotalHeader").textContent = metricTitle;
+      document.getElementById("sectorTotalHeader").textContent = metricTitle;
       document.getElementById("coverageSummary").textContent = `${highConfidenceCount}/${data.length || 0} high confidence`;
       document.getElementById("coverageMeter").style.width = `${coveragePercent}%`;
       document.getElementById("citationStatus").textContent = coveragePercent === 100 ? "Source-backed" : "Review sources";
@@ -1068,7 +1176,7 @@
         tr.innerHTML = `
           <td>${row.project}<br>${sectorTag(row.sector)}</td>
           <td><a href="${row.source}">${row.record}</a><br><span class="subtle">${row.metric} · ${formatValue(row.value, row.unit)}</span></td>
-          <td>${confidenceTag(row.confidence)}</td>
+          <td>${confidenceTag(row.confidence)}<br><span class="subtle">${readinessLabel(row.research_readiness)}</span></td>
         `;
         ledgerRows.appendChild(tr);
       });
@@ -1139,8 +1247,8 @@
           <td>${sectorTag(row.sector)}</td>
           <td>${row.metric}<br><span class="subtle">${row.period}</span></td>
           <td>${formatValue(row.value, row.unit)}</td>
-          <td><a href="${row.source}">${row.source_name}</a></td>
-          <td>${confidenceTag(row.confidence)}</td>
+          <td><a href="${row.source}">${row.source_name}</a><br><span class="subtle">${typeLabel(row.metric_type)}</span></td>
+          <td>${confidenceTag(row.confidence)}<br><span class="subtle">${readinessLabel(row.research_readiness)}</span></td>
         `;
         sourceRows.appendChild(tr);
       });
@@ -1233,7 +1341,21 @@
     }
 
     populateFilters();
-    [metricFilter, sectorFilter, projectFilter, confidenceFilter].forEach(control => control.addEventListener("change", render));
+    familyFilter.addEventListener("change", () => {
+      populateMetricFilter();
+      metricTypeFilter.value = "all";
+      readinessFilter.value = "all";
+      render();
+    });
+    [
+      metricFilter,
+      metricTypeFilter,
+      sectorFilter,
+      projectFilter,
+      confidenceFilter,
+      readinessFilter,
+      sortMode
+    ].forEach(control => control.addEventListener("change", render));
     navButtons.forEach(button => button.addEventListener("click", () => setActiveView(button.dataset.view)));
     window.addEventListener("resize", () => window.requestAnimationFrame(render));
     setActiveView("overview");
