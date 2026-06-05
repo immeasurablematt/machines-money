@@ -22,23 +22,24 @@ Source table:
 
 Definition:
 
-`7D Active Wallets` counts distinct `tx_from` wallets in Dune's `dex.trades` table over the last 7 days.
+`7D Active Wallets` counts distinct wallets that interacted with the protocol over the last 7 days.
 
-This is a DEX-trader wallet proxy. It is not total protocol users, app visitors, governance participants, lenders, borrowers, or stablecoin holders.
+For the current DEX implementation, that means distinct `tx_from` wallets in Dune's `dex.trades` table over the last 7 days, rolled up to one total per project across all supported chains.
+
+This is a protocol-interaction wallet proxy for the covered DEX surface. It is not app visitors, governance participants, lenders, borrowers, or stablecoin holders.
 
 ## SQL
 
 ```sql
 SELECT
   project,
-  blockchain,
   count(DISTINCT tx_from) AS active_wallets_7d
 FROM dex.trades
 WHERE block_time >= now() - interval '7' day
   AND lower(project) IN ('uniswap', 'curve', 'aerodrome')
-GROUP BY 1,2
+GROUP BY 1
 ORDER BY active_wallets_7d DESC
-LIMIT 50
+LIMIT 20
 ```
 
 ## Verification
@@ -69,4 +70,3 @@ The dashboard should label the Dune metric as a wallet proxy until project-speci
 3. Map stablecoin holder/staker activity for Sky, Ethena, Maple, and Falcon.
 4. Map infrastructure activity for LayerZero and Canton.
 5. Decide whether active wallets should be 7D, 30D, or both.
-

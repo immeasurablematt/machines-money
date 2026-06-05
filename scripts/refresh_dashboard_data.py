@@ -31,14 +31,13 @@ DUNE_API_BASE = "https://api.dune.com/api/v1"
 DUNE_DEX_ACTIVE_WALLETS_SQL = """
 SELECT
   project,
-  blockchain,
   count(DISTINCT tx_from) AS active_wallets_7d
 FROM dex.trades
 WHERE block_time >= now() - interval '7' day
   AND lower(project) IN ('uniswap', 'curve', 'aerodrome')
-GROUP BY 1,2
+GROUP BY 1
 ORDER BY active_wallets_7d DESC
-LIMIT 50
+LIMIT 20
 """
 
 DUNE_DEX_PROJECTS = {
@@ -469,13 +468,12 @@ def append_dune_active_wallet_rows(metric_rows: list[dict[str, Any]], warnings: 
         project = DUNE_DEX_PROJECTS.get(project_key)
         if not project:
             continue
-        blockchain = str(row.get("blockchain", "unknown"))
         record = {
             "project": project["project"],
-            "record": f"{project['project']} on {blockchain}",
+            "record": project["project"],
             "sector": project["sector"],
             "confidence": "medium",
-            "notes": "7D active wallets from Dune dex.trades using distinct tx_from. Treat as DEX-trader wallets, not total protocol users.",
+            "notes": "7D active wallets from Dune dex.trades using distinct tx_from across all supported chains for this project. Treat as protocol-interaction wallets for the covered DEX surface.",
         }
         append_row(
             metric_rows,

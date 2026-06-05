@@ -860,6 +860,11 @@
       return "$" + value.toLocaleString();
     }
 
+    function formatValue(value, unit = "USD") {
+      if (unit === "wallets") return Math.round(value).toLocaleString();
+      return money(value);
+    }
+
     function sectorClass(sector) {
       return sector.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     }
@@ -923,15 +928,16 @@
     function renderStats(data) {
       const total = data.reduce((sum, row) => sum + row.value, 0);
       const top = data[0];
+      const unit = top?.unit || "USD";
       const highConfidenceCount = data.filter(row => row.confidence === "high").length;
       const coveragePercent = data.length ? Math.round(highConfidenceCount / data.length * 100) : 0;
       document.getElementById("visibleRecords").textContent = String(data.length);
       document.getElementById("totalMetricLabel").textContent = `Total Visible ${metricFilter.value}`;
-      document.getElementById("totalMetric").textContent = money(total);
+      document.getElementById("totalMetric").textContent = formatValue(total, unit);
       document.getElementById("topRecord").textContent = top ? top.record : "-";
       document.getElementById("snapshotDate").textContent = window.dashboardMeta?.generated_at || top?.pulled_date || "-";
       document.getElementById("chartTitle").textContent = `Top ${metricFilter.value} Records`;
-      document.getElementById("chartSubtitle").textContent = `${data[0]?.period || "current"}, USD`;
+      document.getElementById("chartSubtitle").textContent = `${data[0]?.period || "current"}, ${unit}`;
       document.getElementById("compareTotalHeader").textContent = metricFilter.value;
       document.getElementById("sectorTotalHeader").textContent = metricFilter.value;
       document.getElementById("coverageSummary").textContent = `${highConfidenceCount}/${data.length || 0} high confidence`;
@@ -949,6 +955,7 @@
       const plotWidth = width - margin.left - margin.right;
       const plotHeight = height - margin.top - margin.bottom;
       const max = Math.max(...chartData.map(row => row.value), 1);
+      const unit = chartData[0]?.unit || "USD";
       const barHeight = 16;
 
       chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -980,7 +987,7 @@
         label.setAttribute("y", height - 7);
         label.setAttribute("text-anchor", tick === 0 ? "start" : "middle");
         label.setAttribute("class", "value-label");
-        label.textContent = money(max * tick);
+        label.textContent = formatValue(max * tick, unit);
         chart.appendChild(label);
       });
 
@@ -1016,7 +1023,7 @@
         rect.setAttribute("class", "bar");
         rect.setAttribute("style", `fill: ${sectorColor(row.sector)}`);
         rect.setAttribute("tabindex", "0");
-        rect.setAttribute("aria-label", `${row.record}: ${money(row.value)}`);
+        rect.setAttribute("aria-label", `${row.record}: ${formatValue(row.value, row.unit)}`);
         chart.appendChild(rect);
 
         const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -1024,7 +1031,7 @@
         value.setAttribute("y", y + 13);
         value.setAttribute("text-anchor", "start");
         value.setAttribute("class", "value-label");
-        value.textContent = money(row.value);
+        value.textContent = formatValue(row.value, row.unit);
         chart.appendChild(value);
       });
     }
@@ -1035,7 +1042,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${row.project}<br>${sectorTag(row.sector)}</td>
-          <td><a href="${row.source}">${row.record}</a><br><span class="subtle">${row.metric} · ${money(row.value)}</span></td>
+          <td><a href="${row.source}">${row.record}</a><br><span class="subtle">${row.metric} · ${formatValue(row.value, row.unit)}</span></td>
           <td>${confidenceTag(row.confidence)}</td>
         `;
         ledgerRows.appendChild(tr);
@@ -1066,7 +1073,7 @@
           tr.innerHTML = `
             <td>${group.project}</td>
             <td>${group.records.map(row => row.record).join("<br>")}</td>
-            <td>${money(group.total)}</td>
+            <td>${formatValue(group.total, group.records[0]?.unit)}</td>
             <td>${confidenceTag(group.confidence)}</td>
           `;
           compareRows.appendChild(tr);
@@ -1090,8 +1097,8 @@
             <td>${sectorTag(group.sector)}</td>
             <td>${group.projects.join(", ")}</td>
             <td>${group.records.length}</td>
-            <td>${money(group.total)}</td>
-            <td>${group.top ? `${group.top.record}<br><span class="subtle">${money(group.top.value)}</span>` : "-"}</td>
+            <td>${formatValue(group.total, group.records[0]?.unit)}</td>
+            <td>${group.top ? `${group.top.record}<br><span class="subtle">${formatValue(group.top.value, group.top.unit)}</span>` : "-"}</td>
           `;
           sectorRows.appendChild(tr);
         });
@@ -1106,7 +1113,7 @@
           <td>${row.record}</td>
           <td>${sectorTag(row.sector)}</td>
           <td>${row.metric}<br><span class="subtle">${row.period}</span></td>
-          <td>${money(row.value)}</td>
+          <td>${formatValue(row.value, row.unit)}</td>
           <td><a href="${row.source}">${row.source_name}</a></td>
           <td>${confidenceTag(row.confidence)}</td>
         `;
@@ -1137,7 +1144,7 @@
       if (metric === "7D Active Wallets") {
         return {
           action: "Validate user proxy",
-          note: "Treat this as active trading wallets from Dune, not total protocol users."
+          note: "Treat this as wallets that interacted with the covered protocol surface over the past 7 days."
         };
       }
       if (metric === "Token Price" || metric === "Market Cap" || metric === "FDV" || metric === "24H Token Volume") {
@@ -1166,7 +1173,7 @@
         div.innerHTML = `
           <div>
             <strong>${row.project}</strong>
-            <p>${row.record} · ${money(row.value)}</p>
+            <p>${row.record} · ${formatValue(row.value, row.unit)}</p>
           </div>
           <p>${copy.note}</p>
           <span class="status-pill">${copy.action}</span>
