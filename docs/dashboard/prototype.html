@@ -261,13 +261,14 @@
 
     .chart-wrap {
       padding: 18px;
-      overflow-x: auto;
+      overflow: hidden;
     }
 
     svg {
       display: block;
       width: 100%;
-      min-width: 680px;
+      max-width: 100%;
+      min-width: 0;
       height: 430px;
     }
 
@@ -553,9 +554,7 @@
         grid-template-columns: 1fr;
       }
 
-      svg {
-        min-width: 760px;
-      }
+      svg { min-width: 0; }
     }
 
     @media (max-width: 560px) {
@@ -955,10 +954,14 @@
     function renderChart(data) {
       chart.innerHTML = "";
       const chartData = data.slice(0, 12);
-      const width = 760;
-      const rowHeight = 30;
-      const height = Math.max(360, chartData.length * rowHeight + 86);
-      const margin = {top: 18, right: 96, bottom: 26, left: 186};
+      const wrapWidth = chart.getBoundingClientRect().width || chart.parentElement?.clientWidth || 760;
+      const width = Math.max(300, Math.floor(wrapWidth));
+      const compact = width < 560;
+      const rowHeight = compact ? 54 : 30;
+      const height = Math.max(compact ? 420 : 360, chartData.length * rowHeight + (compact ? 76 : 86));
+      const margin = compact
+        ? {top: 16, right: 0, bottom: 30, left: 0}
+        : {top: 18, right: 78, bottom: 26, left: 186};
       const plotWidth = width - margin.left - margin.right;
       const plotHeight = height - margin.top - margin.bottom;
       const max = Math.max(...chartData.map(row => row.value), 1);
@@ -966,6 +969,7 @@
       const barHeight = 16;
 
       chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      chart.setAttribute("preserveAspectRatio", "xMinYMin meet");
       chart.style.height = `${height}px`;
 
       if (!chartData.length) {
@@ -992,7 +996,7 @@
         const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
         label.setAttribute("x", x);
         label.setAttribute("y", height - 7);
-        label.setAttribute("text-anchor", tick === 0 ? "start" : "middle");
+        label.setAttribute("text-anchor", tick === 0 ? "start" : tick === 1 ? "end" : "middle");
         label.setAttribute("class", "value-label");
         label.textContent = formatValue(max * tick, unit);
         chart.appendChild(label);
@@ -1003,18 +1007,29 @@
         const barWidth = Math.max(2, row.value / max * plotWidth);
 
         const project = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        project.setAttribute("x", 0);
-        project.setAttribute("y", y + 13);
+        project.setAttribute("x", compact ? 0 : 0);
+        project.setAttribute("y", compact ? y + 11 : y + 13);
         project.setAttribute("class", "bar-label");
-        project.textContent = shortLabel(`${row.project} · ${row.record}`);
+        project.textContent = shortLabel(`${row.project} · ${row.record}`, compact ? 36 : 34);
         const fullTitle = document.createElementNS("http://www.w3.org/2000/svg", "title");
         fullTitle.textContent = `${row.project} · ${row.record}`;
         project.appendChild(fullTitle);
         chart.appendChild(project);
 
+        if (compact) {
+          const topValue = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          topValue.setAttribute("x", width);
+          topValue.setAttribute("y", y + 11);
+          topValue.setAttribute("text-anchor", "end");
+          topValue.setAttribute("class", "value-label");
+          topValue.textContent = formatValue(row.value, row.unit);
+          chart.appendChild(topValue);
+        }
+
+        const barY = compact ? y + 21 : y;
         const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         bg.setAttribute("x", margin.left);
-        bg.setAttribute("y", y);
+        bg.setAttribute("y", barY);
         bg.setAttribute("width", plotWidth);
         bg.setAttribute("height", barHeight);
         bg.setAttribute("rx", 4);
@@ -1023,7 +1038,7 @@
 
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         rect.setAttribute("x", margin.left);
-        rect.setAttribute("y", y);
+        rect.setAttribute("y", barY);
         rect.setAttribute("width", barWidth);
         rect.setAttribute("height", barHeight);
         rect.setAttribute("rx", 4);
@@ -1033,13 +1048,16 @@
         rect.setAttribute("aria-label", `${row.record}: ${formatValue(row.value, row.unit)}`);
         chart.appendChild(rect);
 
-        const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        value.setAttribute("x", margin.left + barWidth + 8);
-        value.setAttribute("y", y + 13);
-        value.setAttribute("text-anchor", "start");
-        value.setAttribute("class", "value-label");
-        value.textContent = formatValue(row.value, row.unit);
-        chart.appendChild(value);
+        if (!compact) {
+          const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          const valueX = Math.min(margin.left + barWidth + 8, width - 4);
+          value.setAttribute("x", valueX);
+          value.setAttribute("y", y + 13);
+          value.setAttribute("text-anchor", valueX > width - 18 ? "end" : "start");
+          value.setAttribute("class", "value-label");
+          value.textContent = formatValue(row.value, row.unit);
+          chart.appendChild(value);
+        }
       });
     }
 
@@ -1217,6 +1235,7 @@
     populateFilters();
     [metricFilter, sectorFilter, projectFilter, confidenceFilter].forEach(control => control.addEventListener("change", render));
     navButtons.forEach(button => button.addEventListener("click", () => setActiveView(button.dataset.view)));
+    window.addEventListener("resize", () => window.requestAnimationFrame(render));
     setActiveView("overview");
   </script>
 </body>
