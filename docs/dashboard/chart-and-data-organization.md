@@ -32,21 +32,12 @@ Recommended chart types by metric:
   - yield paid
   - lending utilization
 
-- **Research opportunity view:** scatter plot
-  - market cap vs active wallets
-  - FDV vs revenue
-  - TVL vs fees
+- **Research prompts:** plain-language queue
+  - what needs source verification
+  - what needs definition review
+  - which records are ready to cite
 
-The first non-bar visual is a **research opportunity scatter plot** that helps Ian find gaps like high usage with lower market attention, or high valuation with weak product traction.
-
-Current scatter plot:
-
-- X-axis: Market Cap
-- Y-axis: 7D Active Wallets
-- Bubble size: TVL where available, otherwise market cap
-- Color: sector
-
-This is intentionally narrow. It only includes projects where the current generated data has both market cap and active-wallet rows.
+The prototype intentionally stays with bar charts and tables for now. The scatterplot experiment was removed because it did not make the research question easier to answer.
 
 ## How The Pulled Data Is Stored
 

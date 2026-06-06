@@ -318,23 +318,6 @@
       height: 430px;
     }
 
-    .scatter-point {
-      stroke: rgba(6, 21, 21, 0.86);
-      stroke-width: 2;
-      cursor: pointer;
-    }
-
-    .scatter-label {
-      fill: var(--ink);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .scatter-note {
-      fill: var(--muted);
-      font-size: 11px;
-    }
-
     .axis text {
       fill: var(--muted);
       font-size: 11px;
@@ -634,39 +617,6 @@
       padding: 14px;
     }
 
-    .opportunity-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
-      gap: 16px;
-      align-items: start;
-      margin-top: 14px;
-    }
-
-    .opportunity-list {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-    }
-
-    .opportunity-row {
-      display: grid;
-      gap: 5px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel-subtle);
-    }
-
-    .opportunity-row strong {
-      color: var(--ink);
-    }
-
-    .opportunity-row p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-
     .action-row {
       display: grid;
       grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.2fr) auto;
@@ -739,7 +689,7 @@
         justify-content: flex-start;
       }
 
-      .stats, .grid, .split, .quality-strip, .action-row, .opportunity-grid, .ecosystem-strip {
+      .stats, .grid, .split, .quality-strip, .action-row, .ecosystem-strip {
         grid-template-columns: 1fr;
       }
 
@@ -936,24 +886,6 @@
           </div>
           <div class="action-list" id="actionRows"></div>
         </div>
-        <div class="opportunity-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <h2>Research Opportunities</h2>
-              <span>Market cap vs active wallets</span>
-            </div>
-            <div class="chart-wrap">
-              <svg id="opportunityChart" role="img" aria-label="Market cap versus active wallets scatter plot"></svg>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-header">
-              <h2>Opportunity Notes</h2>
-              <span>Use as article prompts</span>
-            </div>
-            <div class="opportunity-list" id="opportunityRows"></div>
-          </div>
-        </div>
       </section>
 
       <section id="compareView" class="view">
@@ -1112,13 +1044,11 @@
     const readinessFilter = document.getElementById("readinessFilter");
     const sortMode = document.getElementById("sortMode");
     const chart = document.getElementById("chart");
-    const opportunityChart = document.getElementById("opportunityChart");
     const ledgerRows = document.getElementById("ledgerRows");
     const compareRows = document.getElementById("compareRows");
     const sectorRows = document.getElementById("sectorRows");
     const sourceRows = document.getElementById("sourceRows");
     const actionRows = document.getElementById("actionRows");
-    const opportunityRows = document.getElementById("opportunityRows");
     const navButtons = [...document.querySelectorAll(".nav button")];
     const views = {
       overview: document.getElementById("overviewView"),
@@ -1398,144 +1328,6 @@
       });
     }
 
-    function opportunityData() {
-      const byProject = {};
-      rows.forEach(row => {
-        if (!byProject[row.project]) byProject[row.project] = { project: row.project, sector: row.sector };
-        if (row.metric === "Market Cap") byProject[row.project].marketCap = row.value;
-        if (row.metric === "7D Active Wallets") byProject[row.project].activeWallets = row.value;
-        if (row.metric === "TVL") byProject[row.project].tvl = Math.max(byProject[row.project].tvl || 0, row.value);
-      });
-      return Object.values(byProject)
-        .filter(row => row.marketCap > 0 && row.activeWallets > 0)
-        .map(row => ({
-          ...row,
-          attentionRatio: row.activeWallets / Math.max(row.marketCap / 1_000_000_000, 0.01)
-        }))
-        .sort((a, b) => b.attentionRatio - a.attentionRatio);
-    }
-
-    function renderOpportunityChart() {
-      if (!opportunityChart) return;
-      opportunityChart.innerHTML = "";
-      opportunityRows.innerHTML = "";
-      const data = opportunityData();
-      const wrapWidth = opportunityChart.getBoundingClientRect().width || opportunityChart.parentElement?.clientWidth || 760;
-      const width = Math.max(300, Math.floor(wrapWidth));
-      const compact = width < 560;
-      const height = compact ? 370 : 410;
-      const margin = compact
-        ? {top: 28, right: 18, bottom: 54, left: 48}
-        : {top: 28, right: 28, bottom: 56, left: 70};
-      const plotWidth = width - margin.left - margin.right;
-      const plotHeight = height - margin.top - margin.bottom;
-      const maxMarketCap = Math.max(...data.map(row => row.marketCap), 1);
-      const maxWallets = Math.max(...data.map(row => row.activeWallets), 1);
-
-      opportunityChart.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      opportunityChart.setAttribute("preserveAspectRatio", "xMinYMin meet");
-      opportunityChart.style.height = `${height}px`;
-
-      if (!data.length) {
-        const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-        foreignObject.setAttribute("x", 0);
-        foreignObject.setAttribute("y", 0);
-        foreignObject.setAttribute("width", width);
-        foreignObject.setAttribute("height", 180);
-        foreignObject.innerHTML = `<div class="empty-state">Need both Market Cap and 7D Active Wallets before plotting opportunities.</div>`;
-        opportunityChart.appendChild(foreignObject);
-        opportunityRows.innerHTML = `<div class="empty-state">No opportunity pairs available yet.</div>`;
-        return;
-      }
-
-      [0, 0.5, 1].forEach(tick => {
-        const x = margin.left + tick * plotWidth;
-        const y = margin.top + plotHeight - tick * plotHeight;
-        const vline = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        vline.setAttribute("x1", x);
-        vline.setAttribute("x2", x);
-        vline.setAttribute("y1", margin.top);
-        vline.setAttribute("y2", margin.top + plotHeight);
-        vline.setAttribute("class", "grid-line");
-        opportunityChart.appendChild(vline);
-
-        const hline = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        hline.setAttribute("x1", margin.left);
-        hline.setAttribute("x2", margin.left + plotWidth);
-        hline.setAttribute("y1", y);
-        hline.setAttribute("y2", y);
-        hline.setAttribute("class", "grid-line");
-        opportunityChart.appendChild(hline);
-
-        const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        xLabel.setAttribute("x", x);
-        xLabel.setAttribute("y", height - 18);
-        xLabel.setAttribute("text-anchor", tick === 1 ? "end" : tick === 0 ? "start" : "middle");
-        xLabel.setAttribute("class", "value-label");
-        xLabel.textContent = money(maxMarketCap * tick);
-        opportunityChart.appendChild(xLabel);
-
-        const yLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        yLabel.setAttribute("x", 4);
-        yLabel.setAttribute("y", y + 4);
-        yLabel.setAttribute("class", "value-label");
-        yLabel.textContent = formatValue(maxWallets * tick, "wallets");
-        opportunityChart.appendChild(yLabel);
-      });
-
-      const xTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      xTitle.setAttribute("x", margin.left + plotWidth);
-      xTitle.setAttribute("y", height - 4);
-      xTitle.setAttribute("text-anchor", "end");
-      xTitle.setAttribute("class", "scatter-note");
-      xTitle.textContent = "Market cap";
-      opportunityChart.appendChild(xTitle);
-
-      const yTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      yTitle.setAttribute("x", margin.left);
-      yTitle.setAttribute("y", 14);
-      yTitle.setAttribute("class", "scatter-note");
-      yTitle.textContent = "7D active wallets";
-      opportunityChart.appendChild(yTitle);
-
-      data.forEach(row => {
-        const x = margin.left + row.marketCap / maxMarketCap * plotWidth;
-        const y = margin.top + plotHeight - row.activeWallets / maxWallets * plotHeight;
-        const radius = Math.max(8, Math.min(18, Math.sqrt((row.tvl || row.marketCap) / maxMarketCap) * 18));
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", radius);
-        circle.setAttribute("fill", sectorColor(row.sector));
-        circle.setAttribute("class", "scatter-point");
-        circle.setAttribute("tabindex", "0");
-        circle.setAttribute("aria-label", `${row.project}: ${formatValue(row.activeWallets, "wallets")} active wallets, ${money(row.marketCap)} market cap`);
-        const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-        title.textContent = `${row.project}: ${formatValue(row.activeWallets, "wallets")} active wallets · ${money(row.marketCap)} market cap`;
-        circle.appendChild(title);
-        opportunityChart.appendChild(circle);
-
-        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", Math.min(x + radius + 6, width - 4));
-        label.setAttribute("y", y + 4);
-        label.setAttribute("text-anchor", x + radius + 72 > width ? "end" : "start");
-        label.setAttribute("class", "scatter-label");
-        label.textContent = row.project;
-        opportunityChart.appendChild(label);
-      });
-
-      data.slice(0, 3).forEach(row => {
-        const div = document.createElement("div");
-        div.className = "opportunity-row";
-        div.innerHTML = `
-          <strong>${row.project}</strong>
-          <p>${formatValue(row.activeWallets, "wallets")} active wallets · ${money(row.marketCap)} market cap</p>
-          <p>Use this to ask whether product usage is ahead of, or behind, market attention.</p>
-        `;
-        opportunityRows.appendChild(div);
-      });
-    }
-
     function renderLedger(data) {
       ledgerRows.innerHTML = "";
       data.forEach(row => {
@@ -1705,7 +1497,6 @@
         renderChart(data);
         renderLedger(data);
         renderActions(data);
-        renderOpportunityChart();
       } else if (activeView === "compare") {
         renderCompare(data);
       } else if (activeView === "sectors") {
