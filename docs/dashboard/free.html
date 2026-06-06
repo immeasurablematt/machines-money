@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Machines & Money Free Dashboard</title>
+  <style>
+    :root {
+      --bg: #061515;
+      --bg-deep: #03100f;
+      --panel: rgba(255, 255, 255, 0.04);
+      --panel-2: rgba(80, 210, 193, 0.065);
+      --ink: #ffffff;
+      --muted: rgba(255, 255, 255, 0.65);
+      --dim: rgba(255, 255, 255, 0.42);
+      --line: rgba(255, 255, 255, 0.09);
+      --line-strong: rgba(152, 252, 228, 0.28);
+      --mint: #50d2c1;
+      --mint-bright: #98fce4;
+      --orange: #ffb96d;
+      --red: #ff7a59;
+      --blue: #87bfff;
+      --purple: #b58cff;
+      --shadow: 0 16px 42px rgba(0, 0, 0, 0.44), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 1120px 620px at 50% -12%, rgba(80, 210, 193, 0.15), transparent 62%),
+        radial-gradient(ellipse 820px 450px at 92% 18%, rgba(152, 252, 228, 0.07), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg-deep));
+      background-attachment: fixed;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, select { font: inherit; }
+
+    .shell {
+      width: calc(100% - 32px);
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 14px 0 44px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .nav {
+      position: sticky;
+      top: 14px;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(6, 21, 21, 0.78);
+      backdrop-filter: blur(16px);
+      padding: 8px 10px 8px 14px;
+      box-shadow: 0 8px 28px -12px rgba(0, 0, 0, 0.55);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(80, 210, 193, 0.08);
+      color: var(--mint-bright);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 750;
+      box-shadow: 0 0 24px rgba(80, 210, 193, 0.14);
+      flex: 0 0 auto;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .brand-copy strong {
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .brand-copy span {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 560;
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
+    .nav-links a:hover {
+      color: var(--mint-bright);
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid rgba(152, 252, 228, 0.22);
+      border-radius: 8px;
+      background: var(--mint);
+      color: #061515;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 750;
+      box-shadow: 0 0 16px rgba(80, 210, 193, 0.2);
+      white-space: nowrap;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 410px);
+      gap: 24px;
+      align-items: end;
+      padding: 56px 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      color: var(--mint-bright);
+      font-size: 11px;
+      font-weight: 720;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5.2vw, 68px);
+      line-height: 0.98;
+      font-weight: 520;
+      max-width: 880px;
+    }
+
+    .lede {
+      margin: 16px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .hero-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .hero-card span {
+      color: var(--dim);
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .hero-card strong {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 28px;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-card p {
+      color: var(--muted);
+      margin: 10px 0 0;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 18px 0 14px;
+    }
+
+    .stat, .panel, .story-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      min-width: 0;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      min-height: 94px;
+      border-top: 1px solid rgba(152, 252, 228, 0.18);
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 22px;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat em {
+      color: var(--dim);
+      font-size: 12px;
+      font-style: normal;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      margin: 18px 0 14px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tabs button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .tabs button.active {
+      background: rgba(80, 210, 193, 0.14);
+      border-color: var(--line-strong);
+      color: var(--ink);
+    }
+
+    select {
+      min-width: 150px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      padding: 7px 28px 7px 10px;
+    }
+
+    option {
+      background: #061515;
+      color: #ffffff;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 680;
+    }
+
+    .panel-header span {
+      color: var(--muted);
+      text-align: right;
+      font-size: 12px;
+    }
+
+    .chart-wrap {
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      height: 430px;
+    }
+
+    .bar-bg { fill: rgba(255, 255, 255, 0.06); }
+    .bar { fill: var(--mint); }
+    .bar-label { fill: var(--ink); font-size: 11.5px; font-weight: 680; }
+    .value-label { fill: var(--muted); font-size: 11px; }
+    .grid-line { stroke: var(--line); stroke-width: 1; }
+
+    .story-list {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .story-card {
+      padding: 12px;
+      box-shadow: none;
+    }
+
+    .story-card strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .story-card p {
+      color: var(--muted);
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: rgba(152, 252, 228, 0.12);
+      color: var(--mint-bright);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .table-panel {
+      margin-top: 14px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      background: var(--panel-2);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    td.num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .source-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 13px;
+    }
+
+    .source-card strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .source-card p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .newsletter {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: rgba(80, 210, 193, 0.09);
+      box-shadow: var(--shadow);
+    }
+
+    .newsletter h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .newsletter p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .empty {
+      padding: 38px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    @media (max-width: 900px) {
+      .shell { width: calc(100% - 24px); }
+      .nav { grid-template-columns: 1fr; }
+      .nav-links { justify-content: flex-start; flex-wrap: wrap; }
+      .hero, .dashboard, .newsletter { grid-template-columns: 1fr; }
+      .stats, .source-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar { grid-template-columns: 1fr; }
+      select { width: 100%; }
+    }
+
+    @media (max-width: 560px) {
+      h1 { font-size: 34px; }
+      .stats, .source-strip { grid-template-columns: 1fr; }
+      .tabs button { flex: 1 1 auto; }
+      svg { height: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav" aria-label="Free dashboard navigation">
+      <a class="brand" href="#">
+        <span class="mark">M&M</span>
+        <span class="brand-copy">
+          <strong>Machines & Money</strong>
+          <span>Free fundamentals dashboard</span>
+        </span>
+      </a>
+      <div class="nav-links">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#leaderboard">Leaderboard</a>
+        <a href="#sources">Sources</a>
+      </div>
+      <a class="cta" href="https://machinesandmoney.beehiiv.com">Subscribe</a>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <p class="eyebrow">DeFi20 fundamentals, built for public sharing</p>
+        <h1>See which crypto platforms are gaining real adoption.</h1>
+        <p class="lede">A free Machines & Money dashboard for readers who want interactive, chart-first fundamentals across DeFi and crypto infrastructure. Use it to spot who is big, who is being used, and which projects deserve a deeper article.</p>
+      </div>
+      <aside class="hero-card">
+        <span>First 60 seconds</span>
+        <strong id="heroTakeaway">Loading...</strong>
+        <p id="heroCopy">Pulling the latest generated public-data snapshot from the repo.</p>
+      </aside>
+    </header>
+
+    <section class="stats" aria-label="Free dashboard summary">
+      <div class="stat">
+        <span>Projects tracked</span>
+        <strong id="projectCount">-</strong>
+        <em>Confirmed starter universe</em>
+      </div>
+      <div class="stat">
+        <span>Total market cap</span>
+        <strong id="totalMarketCap">-</strong>
+        <em>Token-level market metric</em>
+      </div>
+      <div class="stat">
+        <span>Total product TVL</span>
+        <strong id="totalTvl">-</strong>
+        <em>Product/protocol metric</em>
+      </div>
+      <div class="stat">
+        <span>Snapshot date</span>
+        <strong id="snapshotDate">-</strong>
+        <em id="coverageNote">Public data coverage</em>
+      </div>
+    </section>
+
+    <section id="dashboard">
+      <div class="toolbar">
+        <div class="tabs" id="metricTabs" aria-label="Chart metric selector"></div>
+        <select id="sectorFilter" aria-label="Filter by sector">
+          <option value="all">All sectors</option>
+        </select>
+        <select id="sortMode" aria-label="Sort table">
+          <option value="metric">Sort by selected metric</option>
+          <option value="name">Sort by project name</option>
+          <option value="marketCap">Sort by market cap</option>
+          <option value="tvl">Sort by TVL</option>
+        </select>
+      </div>
+
+      <div class="dashboard">
+        <section class="panel">
+          <div class="panel-header">
+            <h2 id="chartTitle">Fundamentals Leaderboard</h2>
+            <span id="chartSubtitle">Chart-first public view</span>
+          </div>
+          <div class="chart-wrap">
+            <svg id="chart" role="img" aria-label="Fundamentals bar chart"></svg>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-header">
+            <h2>Chart Angles</h2>
+            <span>Useful for posts</span>
+          </div>
+          <div class="story-list" id="storyList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="leaderboard" class="panel table-panel">
+      <div class="panel-header">
+        <h2>Project Fundamentals Table</h2>
+        <span>Market attention, product scale, and usage coverage</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Sector</th>
+            <th>Market Cap</th>
+            <th>TVL</th>
+            <th>30D Fees</th>
+            <th>30D Revenue</th>
+            <th>7D Active Wallets</th>
+          </tr>
+        </thead>
+        <tbody id="projectRows"></tbody>
+      </table>
+    </section>
+
+    <section id="sources" class="source-strip" aria-label="Dashboard data sources">
+      <div class="source-card">
+        <strong>Market data</strong>
+        <p>CoinGecko token metrics: price, market cap, FDV, and 24H token volume.</p>
+      </div>
+      <div class="source-card">
+        <strong>Product data</strong>
+        <p>DefiLlama protocol/product metrics: TVL, fees, revenue, and DEX volume where available.</p>
+      </div>
+      <div class="source-card">
+        <strong>Usage data</strong>
+        <p>Dune active-wallet rows are included where currently available. Treat usage coverage as directional, not complete.</p>
+      </div>
+    </section>
+
+    <section id="subscribe" class="newsletter">
+      <div>
+        <h2>Want the chart-filled fundamentals series?</h2>
+        <p>Machines & Money can use this free dashboard as the public chart surface, then turn the best weekly signals into newsletter issues and deeper paid analysis later.</p>
+      </div>
+      <a class="cta" href="https://machinesandmoney.beehiiv.com">Subscribe to Machines & Money</a>
+    </section>
+  </div>
+
+  <script src="generated-dashboard-data.js"></script>
+  <script>
+    const rawRows = (window.dashboardRows || []).map(row => ({
+      ...row,
+      value: Number(row.value) || 0
+    }));
+    const meta = window.dashboardMeta || {};
+
+    const metricTabs = document.getElementById("metricTabs");
+    const sectorFilter = document.getElementById("sectorFilter");
+    const sortMode = document.getElementById("sortMode");
+    const chart = document.getElementById("chart");
+    const projectRows = document.getElementById("projectRows");
+    const storyList = document.getElementById("storyList");
+
+    const metricConfig = [
+      {id: "tvl", label: "TVL", metric: "TVL", title: "Biggest Product Footprints", subtitle: "Total value locked by project", unit: "USD", type: "product"},
+      {id: "marketCap", label: "Market Cap", metric: "Market Cap", title: "Largest Market Attention", subtitle: "Token market cap by project", unit: "USD", type: "token"},
+      {id: "fdv", label: "FDV", metric: "FDV", title: "Fully Diluted Attention", subtitle: "FDV by project token", unit: "USD", type: "token"},
+      {id: "volume", label: "24H Volume", metric: "24H Token Volume", title: "Most Traded Tokens", subtitle: "24H token volume", unit: "USD", type: "token"},
+      {id: "fees", label: "30D Fees", metric: "30D Fees", title: "Fee Engines", subtitle: "30D protocol fees where public rows are available", unit: "USD", type: "product"},
+      {id: "revenue", label: "30D Revenue", metric: "30D Revenue", title: "Revenue Engines", subtitle: "30D protocol revenue where public rows are available", unit: "USD", type: "product"},
+      {id: "wallets", label: "Active Wallets", metric: "7D Active Wallets", title: "Current Usage Coverage", subtitle: "7D active wallets; coverage is limited and directional", unit: "wallets", type: "usage"}
+    ];
+
+    let activeMetric = "tvl";
+
+    function money(value) {
+      if (!Number.isFinite(value)) return "-";
+      const abs = Math.abs(value);
+      if (abs >= 1e12) return "$" + (value / 1e12).toFixed(2).replace(/\.00$/, "") + "T";
+      if (abs >= 1e9) return "$" + (value / 1e9).toFixed(2).replace(/\.00$/, "") + "B";
+      if (abs >= 1e6) return "$" + (value / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+      if (abs >= 1e3) return "$" + (value / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+      return "$" + Math.round(value).toLocaleString();
+    }
+
+    function formatValue(value, unit = "USD") {
+      if (!value) return "-";
+      if (unit === "wallets") return Math.round(value).toLocaleString();
+      return money(value);
+    }
+
+    function shortLabel(label, max = 34) {
+      return label.length > max ? label.slice(0, max - 1) + "..." : label;
+    }
+
+    function sectorColor(sector) {
+      return {
+        "Spot": "#50d2c1",
+        "Lending": "#87bfff",
+        "Derivatives": "#b58cff",
+        "Asset Management": "#ffb96d",
+        "Tokenization": "#ff7a59"
+      }[sector] || "#98fce4";
+    }
+
+    function metricRows(metric) {
+      return rawRows.filter(row => row.metric === metric);
+    }
+
+    function aggregateByProject() {
+      const projects = {};
+      rawRows.forEach(row => {
+        if (!projects[row.project]) {
+          projects[row.project] = {
+            project: row.project,
+            sector: row.sector,
+            records: []
+          };
+        }
+        projects[row.project].records.push(row);
+        const key = {
+          "Market Cap": "marketCap",
+          "FDV": "fdv",
+          "24H Token Volume": "volume",
+          "TVL": "tvl",
+          "30D Fees": "fees",
+          "30D Revenue": "revenue",
+          "7D Active Wallets": "wallets"
+        }[row.metric];
+        if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
+      });
+      return Object.values(projects);
+    }
+
+    const projects = aggregateByProject();
+
+    function filteredProjects() {
+      const selectedSector = sectorFilter.value;
+      const filtered = projects.filter(project => selectedSector === "all" || project.sector === selectedSector);
+      const key = sortMode.value === "metric" ? metricConfig.find(item => item.id === activeMetric).id : sortMode.value;
+      return filtered.sort((a, b) => {
+        if (key === "name") return a.project.localeCompare(b.project);
+        return (b[key] || 0) - (a[key] || 0);
+      });
+    }
+
+    function topProject(metricId) {
+      return [...projects].sort((a, b) => (b[metricId] || 0) - (a[metricId] || 0))[0];
+    }
+
+    function renderTabs() {
+      metricTabs.innerHTML = "";
+      metricConfig.forEach(config => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = config.label;
+        button.className = config.id === activeMetric ? "active" : "";
+        button.addEventListener("click", () => {
+          activeMetric = config.id;
+          render();
+        });
+        metricTabs.appendChild(button);
+      });
+    }
+
+    function renderFilters() {
+      [...new Set(projects.map(project => project.sector))].sort().forEach(sector => {
+        const option = document.createElement("option");
+        option.value = sector;
+        option.textContent = sector;
+        sectorFilter.appendChild(option);
+      });
+    }
+
+    function renderStats() {
+      const totalMarketCap = projects.reduce((sum, row) => sum + (row.marketCap || 0), 0);
+      const totalTvl = projects.reduce((sum, row) => sum + (row.tvl || 0), 0);
+      const usageCount = projects.filter(row => row.wallets).length;
+      const topTvl = topProject("tvl");
+      document.getElementById("projectCount").textContent = projects.length.toLocaleString();
+      document.getElementById("totalMarketCap").textContent = money(totalMarketCap);
+      document.getElementById("totalTvl").textContent = money(totalTvl);
+      document.getElementById("snapshotDate").textContent = meta.generated_at || rawRows[0]?.pulled_date || "-";
+      document.getElementById("coverageNote").textContent = `${usageCount}/${projects.length} have active-wallet rows`;
+      document.getElementById("heroTakeaway").textContent = topTvl ? `${topTvl.project} leads TVL` : "Data loading";
+      document.getElementById("heroCopy").textContent = topTvl
+        ? `${topTvl.project} currently has the largest product footprint in this public snapshot. Switch metrics to compare market attention, fees, revenue, and usage coverage.`
+        : "The dashboard needs generated-dashboard-data.js to load.";
+    }
+
+    function renderChart() {
+      const config = metricConfig.find(item => item.id === activeMetric);
+      const data = filteredProjects()
+        .map(project => ({...project, value: project[config.id] || 0}))
+        .filter(project => project.value > 0)
+        .slice(0, 12);
+
+      document.getElementById("chartTitle").textContent = config.title;
+      document.getElementById("chartSubtitle").textContent = config.subtitle;
+      chart.innerHTML = "";
+
+      if (!data.length) {
+        const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        foreignObject.setAttribute("x", 0);
+        foreignObject.setAttribute("y", 0);
+        foreignObject.setAttribute("width", 760);
+        foreignObject.setAttribute("height", 180);
+        foreignObject.innerHTML = `<div class="empty">No rows for this metric and sector yet.</div>`;
+        chart.setAttribute("viewBox", "0 0 760 180");
+        chart.appendChild(foreignObject);
+        return;
+      }
+
+      const wrapWidth = chart.getBoundingClientRect().width || chart.parentElement?.clientWidth || 760;
+      const width = Math.max(300, Math.floor(wrapWidth));
+      const compact = width < 560;
+      const rowHeight = compact ? 42 : 34;
+      const height = Math.max(compact ? 460 : 390, data.length * rowHeight + (compact ? 86 : 88));
+      const margin = compact
+        ? {top: 16, right: 8, bottom: 54, left: 0}
+        : {top: 18, right: 18, bottom: 50, left: 250};
+      const plotWidth = compact ? width : width - margin.left - margin.right;
+      const max = Math.max(...data.map(row => row.value), 1);
+
+      chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      chart.setAttribute("preserveAspectRatio", "xMinYMin meet");
+      chart.style.height = `${height}px`;
+
+      [0, 0.5, 1].forEach(tick => {
+        const x = compact ? tick * plotWidth : margin.left + tick * plotWidth;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x);
+        line.setAttribute("x2", x);
+        line.setAttribute("y1", margin.top);
+        line.setAttribute("y2", height - margin.bottom);
+        line.setAttribute("class", "grid-line");
+        chart.appendChild(line);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", x);
+        label.setAttribute("y", height - 16);
+        label.setAttribute("text-anchor", tick === 1 ? "end" : tick === 0 ? "start" : "middle");
+        label.setAttribute("class", "value-label");
+        label.textContent = formatValue(max * tick, config.unit);
+        chart.appendChild(label);
+      });
+
+      data.forEach((row, index) => {
+        const y = margin.top + index * rowHeight + 3;
+        const barY = compact ? y + 20 : y;
+        const barHeight = 18;
+        const widthRatio = Math.max(2, row.value / max * plotWidth);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", compact ? 0 : 0);
+        label.setAttribute("y", compact ? y + 12 : y + 14);
+        label.setAttribute("class", "bar-label");
+        label.textContent = shortLabel(row.project, compact ? 24 : 28);
+        chart.appendChild(label);
+
+        if (compact) {
+          const valueTop = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          valueTop.setAttribute("x", width);
+          valueTop.setAttribute("y", y + 12);
+          valueTop.setAttribute("text-anchor", "end");
+          valueTop.setAttribute("class", "value-label");
+          valueTop.textContent = formatValue(row.value, config.unit);
+          chart.appendChild(valueTop);
+        }
+
+        const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        bg.setAttribute("x", compact ? 0 : margin.left);
+        bg.setAttribute("y", barY);
+        bg.setAttribute("width", plotWidth);
+        bg.setAttribute("height", barHeight);
+        bg.setAttribute("rx", 4);
+        bg.setAttribute("class", "bar-bg");
+        chart.appendChild(bg);
+
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", compact ? 0 : margin.left);
+        rect.setAttribute("y", barY);
+        rect.setAttribute("width", widthRatio);
+        rect.setAttribute("height", barHeight);
+        rect.setAttribute("rx", 4);
+        rect.setAttribute("class", "bar");
+        rect.setAttribute("style", `fill: ${sectorColor(row.sector)}`);
+        chart.appendChild(rect);
+
+        if (!compact) {
+          const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          const valueX = Math.min(margin.left + widthRatio + 8, width - 4);
+          value.setAttribute("x", valueX);
+          value.setAttribute("y", y + 14);
+          value.setAttribute("text-anchor", valueX > width - 24 ? "end" : "start");
+          value.setAttribute("class", "value-label");
+          value.textContent = formatValue(row.value, config.unit);
+          chart.appendChild(value);
+        }
+      });
+    }
+
+    function renderStories() {
+      const config = metricConfig.find(item => item.id === activeMetric);
+      const data = filteredProjects()
+        .map(project => ({...project, value: project[config.id] || 0}))
+        .filter(project => project.value > 0)
+        .sort((a, b) => b.value - a.value);
+      const top = data[0];
+      const second = data[1];
+      const lagging = filteredProjects().filter(project => !project[config.id]).slice(0, 2);
+
+      const stories = [];
+      if (top) {
+        stories.push({
+          badge: "Lead chart",
+          title: `${top.project} leads ${config.label}`,
+          body: `${top.project} is the first project to inspect when writing about ${config.subtitle.toLowerCase()}. Tag the project account when sharing this chart.`
+        });
+      }
+      if (top && second) {
+        stories.push({
+          badge: "Comparison",
+          title: `${top.project} vs ${second.project}`,
+          body: `${top.project} is ahead of ${second.project} by ${formatValue(top.value - second.value, config.unit)} on this metric. That gap can become a simple chart post.`
+        });
+      }
+      if (config.id === "wallets") {
+        stories.push({
+          badge: "Coverage caveat",
+          title: "Usage data is still narrow",
+          body: "Active-wallet rows currently cover only a few DEX projects. This should be framed as a directional usage cut, not total protocol users."
+        });
+      } else if (lagging.length) {
+        stories.push({
+          badge: "Research prompt",
+          title: `${lagging.map(row => row.project).join(" and ")} need more context`,
+          body: `These projects do not have a ${config.label} row in the current public snapshot. That is a good prompt for source follow-up before writing.`
+        });
+      }
+
+      storyList.innerHTML = stories.slice(0, 3).map(story => `
+        <article class="story-card">
+          <span class="badge">${story.badge}</span>
+          <strong>${story.title}</strong>
+          <p>${story.body}</p>
+        </article>
+      `).join("");
+    }
+
+    function renderTable() {
+      const data = filteredProjects();
+      projectRows.innerHTML = data.map(project => `
+        <tr>
+          <td>${project.project}</td>
+          <td>${project.sector}</td>
+          <td class="num">${formatValue(project.marketCap)}</td>
+          <td class="num">${formatValue(project.tvl)}</td>
+          <td class="num">${formatValue(project.fees)}</td>
+          <td class="num">${formatValue(project.revenue)}</td>
+          <td class="num">${formatValue(project.wallets, "wallets")}</td>
+        </tr>
+      `).join("");
+    }
+
+    function render() {
+      renderTabs();
+      renderStats();
+      renderChart();
+      renderStories();
+      renderTable();
+    }
+
+    renderFilters();
+    render();
+    sectorFilter.addEventListener("change", render);
+    sortMode.addEventListener("change", render);
+    window.addEventListener("resize", renderChart);
+  </script>
+</body>
+</html>
