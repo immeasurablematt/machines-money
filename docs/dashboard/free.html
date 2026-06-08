@@ -218,6 +218,29 @@
       line-height: 1.45;
     }
 
+    .refresh-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 26px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 650;
+      margin-top: 12px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--mint);
+      box-shadow: 0 0 0 5px rgba(80, 210, 193, 0.1);
+    }
+
     .grid {
       display: grid;
       gap: 14px;
@@ -226,6 +249,61 @@
     .stats {
       grid-template-columns: repeat(4, minmax(0, 1fr));
       margin: 18px 0 14px;
+    }
+
+    .category-map {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0 14px;
+    }
+
+    .category-card {
+      display: grid;
+      align-content: space-between;
+      gap: 12px;
+      min-height: 128px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      text-align: left;
+      color: var(--ink);
+    }
+
+    .category-card:hover,
+    .category-card.active {
+      border-color: var(--line-strong);
+      background: rgba(80, 210, 193, 0.08);
+    }
+
+    .category-card span {
+      color: var(--mint-bright);
+      font-size: 10px;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+
+    .category-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .category-card em {
+      color: var(--dim);
+      font-size: 11px;
+      font-style: normal;
+    }
+
+    .category-card p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .stat, .panel, .story-card {
@@ -273,13 +351,21 @@
       margin: 18px 0 14px;
     }
 
+    .timeframes {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
     .tabs {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
 
-    .tabs button {
+    .tabs button,
+    .timeframes button {
       border: 1px solid var(--line);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.035);
@@ -290,7 +376,8 @@
       font-weight: 650;
     }
 
-    .tabs button.active {
+    .tabs button.active,
+    .timeframes button.active {
       background: rgba(80, 210, 193, 0.14);
       border-color: var(--line-strong);
       color: var(--ink);
@@ -489,15 +576,15 @@
       .nav { grid-template-columns: 1fr; }
       .nav-links { justify-content: flex-start; flex-wrap: wrap; }
       .hero, .dashboard, .newsletter { grid-template-columns: 1fr; }
-      .stats, .source-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats, .source-strip, .category-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       select { width: 100%; }
     }
 
     @media (max-width: 560px) {
       h1 { font-size: 34px; }
-      .stats, .source-strip { grid-template-columns: 1fr; }
-      .tabs button { flex: 1 1 auto; }
+      .stats, .source-strip, .category-map { grid-template-columns: 1fr; }
+      .tabs button, .timeframes button { flex: 1 1 auto; }
       svg { height: 480px; }
     }
   </style>
@@ -525,6 +612,7 @@
         <p class="eyebrow">DeFi20 fundamentals, built for public sharing</p>
         <h1>See which crypto platforms are gaining real adoption.</h1>
         <p class="lede">A free Machines & Money dashboard for readers who want interactive, chart-first fundamentals across DeFi and crypto infrastructure. Use it to spot who is big, who is being used, and which projects deserve a deeper article.</p>
+        <div class="refresh-pill"><span class="live-dot"></span><span id="refreshStatus">Refresh status loading</span></div>
       </div>
       <aside class="hero-card">
         <span>First 60 seconds</span>
@@ -556,9 +644,63 @@
       </div>
     </section>
 
+    <section class="category-map" aria-label="Dashboard category map">
+      <button class="category-card" type="button" data-metric="marketCap">
+        <div>
+          <span>Current</span>
+          <strong>Market Attention</strong>
+        </div>
+        <p>Which tokens command the most public market value?</p>
+        <em>Market Cap / FDV</em>
+      </button>
+      <button class="category-card" type="button" data-metric="tvl">
+        <div>
+          <span>Current</span>
+          <strong>Product Scale</strong>
+        </div>
+        <p>Which platforms have the largest real product footprint?</p>
+        <em>TVL</em>
+      </button>
+      <button class="category-card" type="button" data-metric="volume">
+        <div>
+          <span>24H</span>
+          <strong>Trading Attention</strong>
+        </div>
+        <p>Which project tokens are attracting the most near-term trading?</p>
+        <em>24H volume</em>
+      </button>
+      <button class="category-card" type="button" data-metric="wallets">
+        <div>
+          <span>7D</span>
+          <strong>Usage Signals</strong>
+        </div>
+        <p>Where active-wallet coverage exists, which products are being used?</p>
+        <em>Directional coverage</em>
+      </button>
+      <button class="category-card" type="button" data-metric="fees">
+        <div>
+          <span>30D</span>
+          <strong>Fee Engines</strong>
+        </div>
+        <p>Which protocols are generating measurable fee activity?</p>
+        <em>Fees / revenue</em>
+      </button>
+      <button class="category-card" type="button" data-metric="revenue">
+        <div>
+          <span>30D</span>
+          <strong>Fundamental Stories</strong>
+        </div>
+        <p>Find chart angles for newsletters, social posts, and project tagging.</p>
+        <em>Article prompts</em>
+      </button>
+    </section>
+
     <section id="dashboard">
       <div class="toolbar">
-        <div class="tabs" id="metricTabs" aria-label="Chart metric selector"></div>
+        <div>
+          <div class="timeframes" id="timeframeTabs" aria-label="Chart timeframe selector"></div>
+          <div class="tabs" id="metricTabs" aria-label="Chart metric selector"></div>
+        </div>
         <select id="sectorFilter" aria-label="Filter by sector">
           <option value="all">All sectors</option>
         </select>
@@ -645,6 +787,8 @@
     const meta = window.dashboardMeta || {};
 
     const metricTabs = document.getElementById("metricTabs");
+    const timeframeTabs = document.getElementById("timeframeTabs");
+    const categoryCards = [...document.querySelectorAll(".category-card")];
     const sectorFilter = document.getElementById("sectorFilter");
     const sortMode = document.getElementById("sortMode");
     const chart = document.getElementById("chart");
@@ -652,16 +796,24 @@
     const storyList = document.getElementById("storyList");
 
     const metricConfig = [
-      {id: "tvl", label: "TVL", metric: "TVL", title: "Biggest Product Footprints", subtitle: "Total value locked by project", unit: "USD", type: "product"},
-      {id: "marketCap", label: "Market Cap", metric: "Market Cap", title: "Largest Market Attention", subtitle: "Token market cap by project", unit: "USD", type: "token"},
-      {id: "fdv", label: "FDV", metric: "FDV", title: "Fully Diluted Attention", subtitle: "FDV by project token", unit: "USD", type: "token"},
-      {id: "volume", label: "24H Volume", metric: "24H Token Volume", title: "Most Traded Tokens", subtitle: "24H token volume", unit: "USD", type: "token"},
-      {id: "fees", label: "30D Fees", metric: "30D Fees", title: "Fee Engines", subtitle: "30D protocol fees where public rows are available", unit: "USD", type: "product"},
-      {id: "revenue", label: "30D Revenue", metric: "30D Revenue", title: "Revenue Engines", subtitle: "30D protocol revenue where public rows are available", unit: "USD", type: "product"},
-      {id: "wallets", label: "Active Wallets", metric: "7D Active Wallets", title: "Current Usage Coverage", subtitle: "7D active wallets; coverage is limited and directional", unit: "wallets", type: "usage"}
+      {id: "tvl", label: "TVL", frame: "current", metric: "TVL", title: "Biggest Product Footprints", subtitle: "Current total value locked by project", unit: "USD", type: "product"},
+      {id: "marketCap", label: "Market Cap", frame: "current", metric: "Market Cap", title: "Largest Market Attention", subtitle: "Current token market cap by project", unit: "USD", type: "token"},
+      {id: "fdv", label: "FDV", frame: "current", metric: "FDV", title: "Fully Diluted Attention", subtitle: "Current FDV by project token", unit: "USD", type: "token"},
+      {id: "volume", label: "Token Volume", frame: "24h", metric: "24H Token Volume", title: "Most Traded Tokens", subtitle: "24H token volume", unit: "USD", type: "token"},
+      {id: "wallets", label: "Active Wallets", frame: "7d", metric: "7D Active Wallets", title: "Current Usage Coverage", subtitle: "7D active wallets; coverage is limited and directional", unit: "wallets", type: "usage"},
+      {id: "fees", label: "Fees", frame: "30d", metric: "30D Fees", title: "Fee Engines", subtitle: "30D protocol fees where public rows are available", unit: "USD", type: "product"},
+      {id: "revenue", label: "Revenue", frame: "30d", metric: "30D Revenue", title: "Revenue Engines", subtitle: "30D protocol revenue where public rows are available", unit: "USD", type: "product"}
+    ];
+
+    const timeframeConfig = [
+      {id: "current", label: "Current", description: "Latest snapshot metrics"},
+      {id: "24h", label: "24H", description: "Near-term market activity"},
+      {id: "7d", label: "7D", description: "Available usage rows"},
+      {id: "30d", label: "30D", description: "Fees and revenue"}
     ];
 
     let activeMetric = "tvl";
+    let activeFrame = "current";
 
     function money(value) {
       if (!Number.isFinite(value)) return "-";
@@ -695,6 +847,25 @@
 
     function metricRows(metric) {
       return rawRows.filter(row => row.metric === metric);
+    }
+
+    function visibleMetricConfig() {
+      return metricConfig.filter(config => config.frame === activeFrame);
+    }
+
+    function ensureActiveMetricForFrame() {
+      const visible = visibleMetricConfig();
+      if (!visible.some(config => config.id === activeMetric)) {
+        activeMetric = visible[0]?.id || "tvl";
+      }
+    }
+
+    function setMetric(metricId) {
+      const config = metricConfig.find(item => item.id === metricId);
+      if (!config) return;
+      activeMetric = metricId;
+      activeFrame = config.frame;
+      render();
     }
 
     function aggregateByProject() {
@@ -739,8 +910,9 @@
     }
 
     function renderTabs() {
+      ensureActiveMetricForFrame();
       metricTabs.innerHTML = "";
-      metricConfig.forEach(config => {
+      visibleMetricConfig().forEach(config => {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = config.label;
@@ -750,6 +922,29 @@
           render();
         });
         metricTabs.appendChild(button);
+      });
+    }
+
+    function renderTimeframes() {
+      timeframeTabs.innerHTML = "";
+      timeframeConfig.forEach(frame => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = frame.label;
+        button.title = frame.description;
+        button.className = frame.id === activeFrame ? "active" : "";
+        button.addEventListener("click", () => {
+          activeFrame = frame.id;
+          ensureActiveMetricForFrame();
+          render();
+        });
+        timeframeTabs.appendChild(button);
+      });
+    }
+
+    function renderCategoryMap() {
+      categoryCards.forEach(card => {
+        card.classList.toggle("active", card.dataset.metric === activeMetric);
       });
     }
 
@@ -772,6 +967,7 @@
       document.getElementById("totalTvl").textContent = money(totalTvl);
       document.getElementById("snapshotDate").textContent = meta.generated_at || rawRows[0]?.pulled_date || "-";
       document.getElementById("coverageNote").textContent = `${usageCount}/${projects.length} have active-wallet rows`;
+      document.getElementById("refreshStatus").textContent = `Latest generated snapshot: ${meta.generated_at || rawRows[0]?.pulled_date || "unknown"}; built to support scheduled refresh`;
       document.getElementById("heroTakeaway").textContent = topTvl ? `${topTvl.project} leads TVL` : "Data loading";
       document.getElementById("heroCopy").textContent = topTvl
         ? `${topTvl.project} currently has the largest product footprint in this public snapshot. Switch metrics to compare market attention, fees, revenue, and usage coverage.`
@@ -954,7 +1150,9 @@
     }
 
     function render() {
+      renderTimeframes();
       renderTabs();
+      renderCategoryMap();
       renderStats();
       renderChart();
       renderStories();
@@ -963,6 +1161,9 @@
 
     renderFilters();
     render();
+    categoryCards.forEach(card => {
+      card.addEventListener("click", () => setMetric(card.dataset.metric));
+    });
     sectorFilter.addEventListener("change", render);
     sortMode.addEventListener("change", render);
     window.addEventListener("resize", renderChart);
