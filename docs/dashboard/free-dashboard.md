@@ -34,3 +34,20 @@ The current prototype uses the generated public-data snapshot. Continuous updati
 ## Current Entry Point
 
 Open `docs/dashboard/free.html`.
+
+## Production Readiness Notes
+
+The production lane should now be reviewed as the free public dashboard, not as the broader prototype:
+
+- `free.html` is the public page to polish, QA, and eventually host.
+- `prototype.html` remains the broader/pro research prototype and should stay untouched unless that separate product is being worked on.
+- `generated-dashboard-data.js` is still the shared data snapshot, so visible source caveats and freshness copy matter.
+- The public CTA target is `https://machinesandmoney.beehiiv.com`.
+
+Before public launch, verify:
+
+- category, timeframe, metric, sector, and sort controls work,
+- source confidence and caveats update with the selected metric,
+- the dashboard is readable on mobile,
+- share and subscribe actions are visible,
+- the page has a permanent public URL rather than an expiring preview.

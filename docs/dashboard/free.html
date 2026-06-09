@@ -253,7 +253,7 @@
 
     .category-map {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(156px, 1fr));
       gap: 10px;
       margin: 16px 0 14px;
     }
@@ -520,6 +520,88 @@
       margin-top: 14px;
     }
 
+    .methodology {
+      margin-top: 14px;
+    }
+
+    .methodology-body {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .methodology-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      padding: 12px;
+    }
+
+    .methodology-card strong {
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .methodology-card p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .source-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .source-row a {
+      color: var(--ink);
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .source-row span,
+    .quality-chip {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .quality-chip {
+      display: inline-flex;
+      justify-content: center;
+      min-width: 58px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.035);
+      white-space: nowrap;
+    }
+
+    .quality-chip.high {
+      color: var(--mint-bright);
+      border-color: var(--line-strong);
+      background: rgba(80, 210, 193, 0.08);
+    }
+
+    .quality-chip.medium {
+      color: var(--orange);
+      border-color: rgba(255, 185, 109, 0.24);
+      background: rgba(255, 185, 109, 0.08);
+    }
+
     .source-card {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -562,6 +644,34 @@
       line-height: 1.45;
     }
 
+    .share-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .secondary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 720;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .secondary-action:hover {
+      border-color: var(--line-strong);
+      color: var(--mint-bright);
+    }
+
     .empty {
       padding: 38px 18px;
       text-align: center;
@@ -575,7 +685,7 @@
       .shell { width: calc(100% - 24px); }
       .nav { grid-template-columns: 1fr; }
       .nav-links { justify-content: flex-start; flex-wrap: wrap; }
-      .hero, .dashboard, .newsletter { grid-template-columns: 1fr; }
+      .hero, .dashboard, .newsletter, .methodology-body { grid-template-columns: 1fr; }
       .stats, .source-strip, .category-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       select { width: 100%; }
@@ -596,7 +706,7 @@
         <span class="mark">M&M</span>
         <span class="brand-copy">
           <strong>Machines & Money</strong>
-          <span>Free fundamentals dashboard</span>
+          <span>DeFi20 opportunity tracker</span>
         </span>
       </a>
       <div class="nav-links">
@@ -604,20 +714,20 @@
         <a href="#leaderboard">Leaderboard</a>
         <a href="#sources">Sources</a>
       </div>
-      <a class="cta" href="https://machinesandmoney.beehiiv.com">Subscribe</a>
+      <a class="cta" href="https://machinesandmoney.beehiiv.com" data-track="subscribe_nav">Subscribe</a>
     </nav>
 
     <header class="hero">
       <div>
-        <p class="eyebrow">DeFi20 fundamentals, built for public sharing</p>
-        <h1>See which crypto platforms are gaining real adoption.</h1>
-        <p class="lede">A free Machines & Money dashboard for readers who want interactive, chart-first fundamentals across DeFi and crypto infrastructure. Use it to spot who is big, who is being used, and which projects deserve a deeper article.</p>
-        <div class="refresh-pill"><span class="live-dot"></span><span id="refreshStatus">Refresh status loading</span></div>
+        <p class="eyebrow">DeFi20 signals for market checks, yield research, and project discovery</p>
+        <h1>See which DeFi projects are earning attention.</h1>
+        <p class="lede">Track the DeFi20 across TVL, fees, revenue, volume, and usage before deciding what deserves your time, research, or capital.</p>
+        <div class="refresh-pill"><span class="live-dot"></span><span id="refreshStatus">Data status loading</span></div>
       </div>
       <aside class="hero-card">
-        <span>First 60 seconds</span>
+        <span>Worth watching</span>
         <strong id="heroTakeaway">Loading...</strong>
-        <p id="heroCopy">Pulling the latest generated public-data snapshot from the repo.</p>
+        <p id="heroCopy">Finding the clearest signal across capital, usage, fees, and token activity.</p>
       </aside>
     </header>
 
@@ -625,73 +735,97 @@
       <div class="stat">
         <span>Projects tracked</span>
         <strong id="projectCount">-</strong>
-        <em>Confirmed starter universe</em>
+        <em>Starter universe</em>
       </div>
       <div class="stat">
         <span>Total market cap</span>
         <strong id="totalMarketCap">-</strong>
-        <em>Token-level market metric</em>
+        <em>Token metric</em>
       </div>
       <div class="stat">
         <span>Total product TVL</span>
         <strong id="totalTvl">-</strong>
-        <em>Product/protocol metric</em>
+        <em>Product metric</em>
       </div>
       <div class="stat">
         <span>Snapshot date</span>
         <strong id="snapshotDate">-</strong>
-        <em id="coverageNote">Public data coverage</em>
+        <em id="coverageNote">Coverage check</em>
       </div>
     </section>
 
     <section class="category-map" aria-label="Dashboard category map">
       <button class="category-card" type="button" data-metric="marketCap">
         <div>
-          <span>Current</span>
-          <strong>Market Attention</strong>
+          <span>Index</span>
+          <strong>DeFi20 Pulse</strong>
         </div>
-        <p>Which tokens command the most public market value?</p>
-        <em>Market Cap / FDV</em>
+        <p>What is leading right now?</p>
+        <em>Scale / fees / tokens</em>
       </button>
-      <button class="category-card" type="button" data-metric="tvl">
+      <button class="category-card" type="button" data-sector="Spot">
         <div>
-          <span>Current</span>
-          <strong>Product Scale</strong>
+          <span>Spot</span>
+          <strong>Where Traders Go</strong>
         </div>
-        <p>Which platforms have the largest real product footprint?</p>
-        <em>TVL</em>
+        <p>DEXs with real flow.</p>
+        <em>Volume / fees</em>
       </button>
-      <button class="category-card" type="button" data-metric="volume">
+      <button class="category-card" type="button" data-sector="Derivatives">
         <div>
-          <span>24H</span>
-          <strong>Trading Attention</strong>
+          <span>Derivatives</span>
+          <strong>Risk Markets</strong>
         </div>
-        <p>Which project tokens are attracting the most near-term trading?</p>
-        <em>24H volume</em>
+        <p>Perps, options, and hedging.</p>
+        <em>Volume / fees</em>
       </button>
-      <button class="category-card" type="button" data-metric="wallets">
+      <button class="category-card" type="button" data-sector="Lending">
         <div>
-          <span>7D</span>
-          <strong>Usage Signals</strong>
+          <span>Lending</span>
+          <strong>Onchain Credit</strong>
         </div>
-        <p>Where active-wallet coverage exists, which products are being used?</p>
-        <em>Directional coverage</em>
+        <p>Where capital gets used.</p>
+        <em>TVL / fees</em>
       </button>
-      <button class="category-card" type="button" data-metric="fees">
+      <button class="category-card" type="button" data-sector="Asset Management">
         <div>
-          <span>30D</span>
-          <strong>Fee Engines</strong>
+          <span>Asset Mgmt</span>
+          <strong>Yield Products</strong>
         </div>
-        <p>Which protocols are generating measurable fee activity?</p>
-        <em>Fees / revenue</em>
+        <p>Income strategies to inspect.</p>
+        <em>Stablecoins / vaults</em>
+      </button>
+      <button class="category-card" type="button" data-sector="Tokenization">
+        <div>
+          <span>RWA</span>
+          <strong>Assets Onchain</strong>
+        </div>
+        <p>Real-world finance moving over.</p>
+        <em>RWA / credit</em>
+      </button>
+      <button class="category-card" type="button" data-sector="Infra">
+        <div>
+          <span>Infra</span>
+          <strong>Rails and Flows</strong>
+        </div>
+        <p>The pipes beneath adoption.</p>
+        <em>Messages / users</em>
+      </button>
+      <button class="category-card" type="button" data-sector="AI">
+        <div>
+          <span>AI</span>
+          <strong>AI Markets</strong>
+        </div>
+        <p>Agent networks with activity.</p>
+        <em>Agents / volume</em>
       </button>
       <button class="category-card" type="button" data-metric="revenue">
         <div>
-          <span>30D</span>
-          <strong>Fundamental Stories</strong>
+          <span>Accrual</span>
+          <strong>Value Capture</strong>
         </div>
-        <p>Find chart angles for newsletters, social posts, and project tagging.</p>
-        <em>Article prompts</em>
+        <p>Who turns usage into token value?</p>
+        <em>Revenue / buybacks</em>
       </button>
     </section>
 
@@ -716,7 +850,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2 id="chartTitle">Fundamentals Leaderboard</h2>
-            <span id="chartSubtitle">Chart-first public view</span>
+            <span id="chartSubtitle">Pick a signal to compare</span>
           </div>
           <div class="chart-wrap">
             <svg id="chart" role="img" aria-label="Fundamentals bar chart"></svg>
@@ -725,8 +859,8 @@
 
         <aside class="panel">
           <div class="panel-header">
-            <h2>Chart Angles</h2>
-            <span>Useful for posts</span>
+            <h2>What To Watch</h2>
+            <span>Signals worth a closer look</span>
           </div>
           <div class="story-list" id="storyList"></div>
         </aside>
@@ -735,8 +869,8 @@
 
     <section id="leaderboard" class="panel table-panel">
       <div class="panel-header">
-        <h2>Project Fundamentals Table</h2>
-        <span>Market attention, product scale, and usage coverage</span>
+        <h2>Project Signal Table</h2>
+        <span>Scale, activity, and confidence</span>
       </div>
       <table>
         <thead>
@@ -748,33 +882,52 @@
             <th>30D Fees</th>
             <th>30D Revenue</th>
             <th>7D Active Wallets</th>
+            <th>Confidence</th>
           </tr>
         </thead>
         <tbody id="projectRows"></tbody>
       </table>
     </section>
 
+    <section id="methodology" class="panel methodology">
+      <div class="panel-header">
+        <h2>Read This Carefully</h2>
+        <span id="methodologySubtitle">What the data can and cannot tell you</span>
+      </div>
+      <div class="methodology-body">
+        <div class="methodology-card">
+          <strong id="sourceSummaryTitle">Data context loading</strong>
+          <p id="sourceSummaryCopy">Use the numbers to spot questions worth asking, then check the source before making a move.</p>
+        </div>
+        <div class="source-list" id="sourceList"></div>
+      </div>
+    </section>
+
     <section id="sources" class="source-strip" aria-label="Dashboard data sources">
       <div class="source-card">
-        <strong>Market data</strong>
-        <p>CoinGecko token metrics: price, market cap, FDV, and 24H token volume.</p>
+        <strong>Market conviction</strong>
+        <p>CoinGecko token price, market cap, FDV, and 24H volume.</p>
       </div>
       <div class="source-card">
-        <strong>Product data</strong>
-        <p>DefiLlama protocol/product metrics: TVL, fees, revenue, and DEX volume where available.</p>
+        <strong>Product traction</strong>
+        <p>DefiLlama TVL, fees, revenue, and DEX volume.</p>
       </div>
       <div class="source-card">
-        <strong>Usage data</strong>
-        <p>Dune active-wallet rows are included where currently available. Treat usage coverage as directional, not complete.</p>
+        <strong>User activity</strong>
+        <p>Dune wallet rows where available. Treat usage as a signal to verify, not a final verdict.</p>
       </div>
     </section>
 
     <section id="subscribe" class="newsletter">
       <div>
-        <h2>Want the chart-filled fundamentals series?</h2>
-        <p>Machines & Money can use this free dashboard as the public chart surface, then turn the best weekly signals into newsletter issues and deeper paid analysis later.</p>
+        <h2>Know where to look next.</h2>
+        <p>Get Machines & Money’s weekly read on DeFi yield, market moves, and projects that can change how capital gets used.</p>
       </div>
-      <a class="cta" href="https://machinesandmoney.beehiiv.com">Subscribe to Machines & Money</a>
+      <div class="share-actions">
+        <a class="secondary-action" id="shareOnX" href="#" target="_blank" rel="noopener noreferrer" data-track="share_x">Share chart</a>
+        <button class="secondary-action" id="copyDashboardLink" type="button" data-track="copy_link">Copy link</button>
+        <a class="cta" href="https://machinesandmoney.beehiiv.com" data-track="subscribe_footer">Subscribe to Machines & Money</a>
+      </div>
     </section>
   </div>
 
@@ -794,22 +947,29 @@
     const chart = document.getElementById("chart");
     const projectRows = document.getElementById("projectRows");
     const storyList = document.getElementById("storyList");
+    const sourceList = document.getElementById("sourceList");
+    const sourceSummaryTitle = document.getElementById("sourceSummaryTitle");
+    const sourceSummaryCopy = document.getElementById("sourceSummaryCopy");
+    const methodologySubtitle = document.getElementById("methodologySubtitle");
+    const shareOnX = document.getElementById("shareOnX");
+    const copyDashboardLink = document.getElementById("copyDashboardLink");
 
     const metricConfig = [
-      {id: "tvl", label: "TVL", frame: "current", metric: "TVL", title: "Biggest Product Footprints", subtitle: "Current total value locked by project", unit: "USD", type: "product"},
-      {id: "marketCap", label: "Market Cap", frame: "current", metric: "Market Cap", title: "Largest Market Attention", subtitle: "Current token market cap by project", unit: "USD", type: "token"},
-      {id: "fdv", label: "FDV", frame: "current", metric: "FDV", title: "Fully Diluted Attention", subtitle: "Current FDV by project token", unit: "USD", type: "token"},
-      {id: "volume", label: "Token Volume", frame: "24h", metric: "24H Token Volume", title: "Most Traded Tokens", subtitle: "24H token volume", unit: "USD", type: "token"},
-      {id: "wallets", label: "Active Wallets", frame: "7d", metric: "7D Active Wallets", title: "Current Usage Coverage", subtitle: "7D active wallets; coverage is limited and directional", unit: "wallets", type: "usage"},
-      {id: "fees", label: "Fees", frame: "30d", metric: "30D Fees", title: "Fee Engines", subtitle: "30D protocol fees where public rows are available", unit: "USD", type: "product"},
-      {id: "revenue", label: "Revenue", frame: "30d", metric: "30D Revenue", title: "Revenue Engines", subtitle: "30D protocol revenue where public rows are available", unit: "USD", type: "product"}
+      {id: "tvl", label: "TVL", frame: "current", metric: "TVL", title: "Where Capital Is Parked", subtitle: "Which DeFi20 projects have the largest product footprint", unit: "USD", type: "product"},
+      {id: "marketCap", label: "Market Cap", frame: "current", metric: "Market Cap", title: "What The Market Believes", subtitle: "Where token holders are assigning the most value today", unit: "USD", type: "token"},
+      {id: "fdv", label: "FDV", frame: "current", metric: "FDV", title: "What Is Priced In", subtitle: "Which projects already carry the biggest future expectations", unit: "USD", type: "token"},
+      {id: "volume", label: "Token Volume", frame: "24h", metric: "24H Token Volume", title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation", unit: "USD", type: "token"},
+      {id: "wallets", label: "Active Wallets", frame: "7d", metric: "7D Active Wallets", title: "Where Users Show Up", subtitle: "Available wallet rows; useful for questions, not conclusions", unit: "wallets", type: "usage"},
+      {id: "fees", label: "Fees", frame: "30d", metric: "30D Fees", title: "Who Gets Paid", subtitle: "Protocols turning activity into fees over the past month", unit: "USD", type: "product"},
+      {id: "revenue", label: "Revenue", frame: "30d", metric: "30D Revenue", title: "Who Keeps Revenue", subtitle: "Projects retaining more economics from real usage", unit: "USD", type: "product"},
+      {id: "dexVolume", label: "DEX Volume", frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"}
     ];
 
     const timeframeConfig = [
-      {id: "current", label: "Current", description: "Latest snapshot metrics"},
+      {id: "current", label: "Current", description: "Current scale and valuation"},
       {id: "24h", label: "24H", description: "Near-term market activity"},
-      {id: "7d", label: "7D", description: "Available usage rows"},
-      {id: "30d", label: "30D", description: "Fees and revenue"}
+      {id: "7d", label: "7D", description: "Available user activity"},
+      {id: "30d", label: "30D", description: "Monthly product economics"}
     ];
 
     let activeMetric = "tvl";
@@ -833,6 +993,38 @@
 
     function shortLabel(label, max = 34) {
       return label.length > max ? label.slice(0, max - 1) + "..." : label;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function uniqueValues(rows, key) {
+      return [...new Set(rows.map(row => row[key]).filter(Boolean))];
+    }
+
+    function countBy(rows, key) {
+      return rows.reduce((counts, row) => {
+        const value = row[key] || "unknown";
+        counts[value] = (counts[value] || 0) + 1;
+        return counts;
+      }, {});
+    }
+
+    function sourceLabel(row) {
+      const relationship = row.source_relationship ? row.source_relationship.replace(/_/g, " ") : "source";
+      return `${row.source_name || "Unknown source"} / ${relationship}`;
+    }
+
+    function qualitySummary(project) {
+      const counts = countBy(project.records, "confidence");
+      const parts = ["high", "medium", "low"].filter(key => counts[key]).map(key => `${counts[key]} ${key}`);
+      return parts.length ? parts.join(", ") : "unknown";
     }
 
     function sectorColor(sector) {
@@ -886,6 +1078,7 @@
           "TVL": "tvl",
           "30D Fees": "fees",
           "30D Revenue": "revenue",
+          "30D DEX Volume": "dexVolume",
           "7D Active Wallets": "wallets"
         }[row.metric];
         if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
@@ -897,7 +1090,7 @@
 
     function filteredProjects() {
       const selectedSector = sectorFilter.value;
-      const filtered = projects.filter(project => selectedSector === "all" || project.sector === selectedSector);
+      const filtered = projects.filter(project => selectedSector === "all" || project.sector.includes(selectedSector));
       const key = sortMode.value === "metric" ? metricConfig.find(item => item.id === activeMetric).id : sortMode.value;
       return filtered.sort((a, b) => {
         if (key === "name") return a.project.localeCompare(b.project);
@@ -944,7 +1137,9 @@
 
     function renderCategoryMap() {
       categoryCards.forEach(card => {
-        card.classList.toggle("active", card.dataset.metric === activeMetric);
+        const metricMatch = card.dataset.metric && card.dataset.metric === activeMetric;
+        const sectorMatch = card.dataset.sector && sectorFilter.value === card.dataset.sector;
+        card.classList.toggle("active", metricMatch || sectorMatch);
       });
     }
 
@@ -962,16 +1157,20 @@
       const totalTvl = projects.reduce((sum, row) => sum + (row.tvl || 0), 0);
       const usageCount = projects.filter(row => row.wallets).length;
       const topTvl = topProject("tvl");
+      const warningCount = Array.isArray(meta.warnings) ? meta.warnings.length : 0;
+      const refreshStatus = meta.refresh_status || "snapshot";
+      const rowCount = meta.row_count || rawRows.length;
       document.getElementById("projectCount").textContent = projects.length.toLocaleString();
       document.getElementById("totalMarketCap").textContent = money(totalMarketCap);
       document.getElementById("totalTvl").textContent = money(totalTvl);
       document.getElementById("snapshotDate").textContent = meta.generated_at || rawRows[0]?.pulled_date || "-";
       document.getElementById("coverageNote").textContent = `${usageCount}/${projects.length} have active-wallet rows`;
-      document.getElementById("refreshStatus").textContent = `Latest generated snapshot: ${meta.generated_at || rawRows[0]?.pulled_date || "unknown"}; built to support scheduled refresh`;
+      document.getElementById("refreshStatus").textContent =
+        `${refreshStatus === "fresh" ? "Updated" : "Using saved data"} ${meta.generated_at || rawRows[0]?.pulled_date || "recently"} / ${rowCount} signals / ${warningCount ? `${warningCount} caveats` : "sources checked"}`;
       document.getElementById("heroTakeaway").textContent = topTvl ? `${topTvl.project} leads TVL` : "Data loading";
       document.getElementById("heroCopy").textContent = topTvl
-        ? `${topTvl.project} currently has the largest product footprint in this public snapshot. Switch metrics to compare market attention, fees, revenue, and usage coverage.`
-        : "The dashboard needs generated-dashboard-data.js to load.";
+        ? `${topTvl.project} currently has the deepest DeFi20 product footprint. The next question is whether usage and fees support it.`
+        : "Data is still loading. Check back shortly for the latest DeFi20 signal set.";
     }
 
     function renderChart() {
@@ -1099,52 +1298,122 @@
       const stories = [];
       if (top) {
         stories.push({
-          badge: "Lead chart",
+          badge: "Lead signal",
           title: `${top.project} leads ${config.label}`,
-          body: `${top.project} is the first project to inspect when writing about ${config.subtitle.toLowerCase()}. Tag the project account when sharing this chart.`
+          body: `Start here when deciding what deserves deeper research.`
         });
       }
       if (top && second) {
         stories.push({
           badge: "Comparison",
           title: `${top.project} vs ${second.project}`,
-          body: `${top.project} is ahead of ${second.project} by ${formatValue(top.value - second.value, config.unit)} on this metric. That gap can become a simple chart post.`
+          body: `${formatValue(top.value - second.value, config.unit)} separates the leader from the next closest project.`
         });
       }
       if (config.id === "wallets") {
         stories.push({
-          badge: "Coverage caveat",
+          badge: "Usage caveat",
           title: "Usage data is still narrow",
-          body: "Active-wallet rows currently cover only a few DEX projects. This should be framed as a directional usage cut, not total protocol users."
+          body: "Use wallet rows to find leads, then verify them in the source."
         });
       } else if (lagging.length) {
         stories.push({
-          badge: "Research prompt",
+          badge: "Missing signal",
           title: `${lagging.map(row => row.project).join(" and ")} need more context`,
-          body: `These projects do not have a ${config.label} row in the current public snapshot. That is a good prompt for source follow-up before writing.`
+          body: `No ${config.label} row is available here yet. That is a research gap, not a verdict.`
         });
       }
 
       storyList.innerHTML = stories.slice(0, 3).map(story => `
         <article class="story-card">
-          <span class="badge">${story.badge}</span>
-          <strong>${story.title}</strong>
-          <p>${story.body}</p>
+          <span class="badge">${escapeHtml(story.badge)}</span>
+          <strong>${escapeHtml(story.title)}</strong>
+          <p>${escapeHtml(story.body)}</p>
         </article>
       `).join("");
+    }
+
+    function renderSourceDetail() {
+      const config = metricConfig.find(item => item.id === activeMetric);
+      const selectedSector = sectorFilter.value;
+      const rows = metricRows(config.metric).filter(row => selectedSector === "all" || row.sector.includes(selectedSector));
+      const confidence = countBy(rows, "confidence");
+      const sources = uniqueValues(rows, "source_name");
+      const periods = uniqueValues(rows, "period");
+      const relationships = uniqueValues(rows, "source_relationship").map(value => value.replace(/_/g, " "));
+      const caveats = uniqueValues(rows, "notes").slice(0, 2);
+      const warningCount = Array.isArray(meta.warnings) ? meta.warnings.length : 0;
+
+      methodologySubtitle.textContent = `${config.label} / ${selectedSector === "all" ? "all sectors" : selectedSector}`;
+
+      if (!rows.length) {
+        sourceSummaryTitle.textContent = `No ${config.label} rows in this view`;
+        sourceSummaryCopy.textContent = "No row is available here yet. Check the project directly before drawing conclusions.";
+        sourceList.innerHTML = `<div class="empty">No source rows for this selected metric and sector.</div>`;
+        return;
+      }
+
+      const confidenceText = ["high", "medium", "low"]
+        .filter(key => confidence[key])
+        .map(key => `${confidence[key]} ${key}`)
+        .join(", ");
+      const periodText = periods.length ? periods.join(", ") : config.frame;
+      const relationshipText = relationships.length ? relationships.join(", ") : "source relationship unknown";
+      const caveatText = caveats.length ? shortLabel(caveats.join(" "), 150) : "Confirm the source methodology before using this signal.";
+
+      sourceSummaryTitle.textContent = `${rows.length} ${config.label} rows / ${confidenceText || "confidence unknown"}`;
+      sourceSummaryCopy.textContent = `${periodText}. ${relationshipText}. ${caveatText}${warningCount ? ` Caveats: ${meta.warnings.join(" ")}` : ""}`;
+      sourceList.innerHTML = sources.slice(0, 4).map(source => {
+        const sourceRows = rows.filter(row => row.source_name === source);
+        const first = sourceRows[0];
+        const sourceConfidence = countBy(sourceRows, "confidence");
+        const topConfidence = sourceConfidence.high ? "high" : sourceConfidence.medium ? "medium" : "unknown";
+        return `
+          <div class="source-row">
+            <div>
+              <a href="${escapeHtml(first.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>
+              <span>${escapeHtml(sourceLabel(first))} / ${sourceRows.length} rows</span>
+            </div>
+            <span class="quality-chip ${escapeHtml(topConfidence)}">${escapeHtml(topConfidence)}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateShareLinks() {
+      const config = metricConfig.find(item => item.id === activeMetric);
+      const url = window.location.href.split("#")[0];
+      const text = `Machines & Money DeFi20 signal: ${config.title}.`;
+      shareOnX.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    }
+
+    function copyShareLink() {
+      const url = window.location.href.split("#")[0];
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          copyDashboardLink.textContent = "Copied";
+          window.setTimeout(() => { copyDashboardLink.textContent = "Copy link"; }, 1600);
+        }).catch(() => {
+          copyDashboardLink.textContent = "Copy failed";
+          window.setTimeout(() => { copyDashboardLink.textContent = "Copy link"; }, 1600);
+        });
+        return;
+      }
+      copyDashboardLink.textContent = "Copy URL";
     }
 
     function renderTable() {
       const data = filteredProjects();
       projectRows.innerHTML = data.map(project => `
         <tr>
-          <td>${project.project}</td>
-          <td>${project.sector}</td>
+          <td>${escapeHtml(project.project)}</td>
+          <td>${escapeHtml(project.sector)}</td>
           <td class="num">${formatValue(project.marketCap)}</td>
           <td class="num">${formatValue(project.tvl)}</td>
           <td class="num">${formatValue(project.fees)}</td>
           <td class="num">${formatValue(project.revenue)}</td>
           <td class="num">${formatValue(project.wallets, "wallets")}</td>
+          <td>${escapeHtml(qualitySummary(project))}</td>
         </tr>
       `).join("");
     }
@@ -1156,16 +1425,29 @@
       renderStats();
       renderChart();
       renderStories();
+      renderSourceDetail();
+      updateShareLinks();
       renderTable();
     }
 
     renderFilters();
     render();
     categoryCards.forEach(card => {
-      card.addEventListener("click", () => setMetric(card.dataset.metric));
+      card.addEventListener("click", () => {
+        if (card.dataset.metric) {
+          sectorFilter.value = "all";
+          setMetric(card.dataset.metric);
+          return;
+        }
+        if (card.dataset.sector) {
+          sectorFilter.value = card.dataset.sector;
+          render();
+        }
+      });
     });
     sectorFilter.addEventListener("change", render);
     sortMode.addEventListener("change", render);
+    copyDashboardLink.addEventListener("click", copyShareLink);
     window.addEventListener("resize", renderChart);
   </script>
 </body>
