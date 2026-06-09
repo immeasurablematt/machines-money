@@ -109,8 +109,13 @@ The digest starts with an executive summary for Ian: reviewed count, selected co
 - Check adoption metrics for value, period, source URL, pulled date, confidence, and source kind in `digest.json`.
 - Keep the broad scanner distinction: do not convert routine mentions into Research Dossier work.
 
+## Production Schedule
+
+The scanner runs in production via GitHub Actions: a daily scheduled workflow
+(`.github/workflows/daily-digest.yml`) ingests the live X list and delivers
+`digest.md` as a Google Doc in baggetta@gmail.com's Drive. Setup and
+operating details live in `docs/news-insights-scanner/production-setup.md`.
+
 ## Open Product Decisions
 
-- Sustainable X access path: official API, logged-in browser, or manual URLs.
-- Digest destination: repo outputs, Google Drive, Paperclip comments, or a mix.
 - Final follow-up buckets for Ian.
