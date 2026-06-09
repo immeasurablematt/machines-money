@@ -2,16 +2,16 @@
 
 ## Current Free Dashboard Preview
 
-Published: 2026-06-08
+Published: 2026-06-09
 
 Live preview:
 
-- https://marble-pocket-zz9d.here.now/
+- https://misty-rivulet-fa4k.here.now/
 
 Notes:
 
 - This is an anonymous here.now publish of the free dashboard bundle.
-- It expires at approximately 2026-06-10T00:43:51Z unless claimed.
+- It expires at approximately 2026-06-10T22:49:22Z unless claimed.
 - The claim URL contains a token and is not stored in this repo.
 - Published files:
   - `index.html` from `docs/dashboard/free.html`
@@ -19,9 +19,9 @@ Notes:
 
 Verification:
 
-- `https://marble-pocket-zz9d.here.now/` returned HTTP 200.
-- `https://marble-pocket-zz9d.here.now/generated-dashboard-data.js` returned HTTP 200.
-- The live HTML contains the DeFi20 opportunity tracker copy, selected-metric source panel, Beehiiv CTA, and data script reference.
+- `https://misty-rivulet-fa4k.here.now/` returned HTTP 200.
+- `https://misty-rivulet-fa4k.here.now/generated-dashboard-data.js` returned HTTP 200.
+- The live HTML contains the metric-first controls, category/project selector, project detail panel, selected-metric source panel, Beehiiv CTA, and data script reference.
 
 ## Older Prototype Preview
 

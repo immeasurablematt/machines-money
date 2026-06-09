@@ -20,10 +20,11 @@ This plan applies only to `docs/dashboard/free.html`. The broader/pro dashboard 
 2. First viewport: clear public framing, snapshot freshness, one immediate takeaway, and subscriber CTA.
 3. Summary strip: projects tracked, market cap, TVL, snapshot date, and coverage caveat.
 4. Category map: Index, Spot, Derivatives, Lending, Asset Management, Tokenization/RWA, Infra, AI, Token Value Accrual.
-5. Interactive chart area: timeframe selector, metric selector, sector filter, ranked chart, and chart-angle prompts.
-6. Leaderboard table: project, sector, market cap, TVL, fees, revenue, usage.
-7. Sources and caveats: market data, product data, usage data, methodology caveats.
-8. Newsletter CTA: subscribe for weekly interpretation and deeper Machines & Money analysis.
+5. Interactive chart area: metric selector first, available timeframe selector second, category/project filters, ranked chart, and chart-angle prompts.
+6. Project detail area: choose a category, then an individual project, then see every available shared metric plus future project-specific metrics.
+7. Leaderboard table: project, sector, market cap, TVL, fees, revenue, usage.
+8. Sources and caveats: market data, product data, usage data, methodology caveats.
+9. Newsletter CTA: subscribe for weekly interpretation and deeper Machines & Money analysis.
 
 ## Free vs Pro Boundary
 
@@ -64,7 +65,7 @@ Use Ian's Dune outline as the public taxonomy:
 - AI: agent volume, fees, users, agents, and aGDP-style metrics once sourced.
 - Token Value Accrual: buybacks, token performance, fee capture, and value-accrual evidence.
 
-## Chart and Timeframe Model
+## Chart, Timeframe, and Project Model
 
 Current production MVP:
 
@@ -72,12 +73,15 @@ Current production MVP:
 - 24H: token volume.
 - 7D: active-wallet rows where available.
 - 30D: fees, revenue, DEX volume where available.
+- UX rule: the visitor chooses the metric first, then the dashboard shows the timeframes available for that metric. Timeframes should not silently switch the selected metric.
+- Category rule: category cards narrow the universe first. The project selector then shows projects inside that category so project-specific metrics can live below the broad comparison layer.
 
 Next production layer:
 
 - Add 7D and 30D growth columns once historical snapshots are retained.
 - Add line charts after at least 30 days of reliable refreshes.
 - Add market-share charts for spot/derivatives only after source definitions are consistent.
+- Add project-detail metrics, such as EtherFi card spend, only inside the relevant project view unless comparable sector-wide definitions exist.
 
 ## Data Freshness and Refresh Workflow
 

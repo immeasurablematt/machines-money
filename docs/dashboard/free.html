@@ -345,7 +345,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
       gap: 10px;
       align-items: center;
       margin: 18px 0 14px;
@@ -355,7 +355,7 @@
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-bottom: 8px;
+      margin-top: 8px;
     }
 
     .tabs {
@@ -381,6 +381,11 @@
       background: rgba(80, 210, 193, 0.14);
       border-color: var(--line-strong);
       color: var(--ink);
+    }
+
+    .timeframes button:disabled {
+      cursor: not-allowed;
+      opacity: 0.38;
     }
 
     select {
@@ -483,6 +488,39 @@
 
     .table-panel {
       margin-top: 14px;
+      overflow-x: auto;
+    }
+
+    .project-detail {
+      margin-top: 14px;
+    }
+
+    .project-detail-body {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .project-detail-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      padding: 12px;
+    }
+
+    .project-detail-card strong {
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .project-detail-card p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .mini-table {
       overflow-x: auto;
     }
 
@@ -685,7 +723,7 @@
       .shell { width: calc(100% - 24px); }
       .nav { grid-template-columns: 1fr; }
       .nav-links { justify-content: flex-start; flex-wrap: wrap; }
-      .hero, .dashboard, .newsletter, .methodology-body { grid-template-columns: 1fr; }
+      .hero, .dashboard, .newsletter, .methodology-body, .project-detail-body { grid-template-columns: 1fr; }
       .stats, .source-strip, .category-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .toolbar { grid-template-columns: 1fr; }
       select { width: 100%; }
@@ -832,11 +870,14 @@
     <section id="dashboard">
       <div class="toolbar">
         <div>
-          <div class="timeframes" id="timeframeTabs" aria-label="Chart timeframe selector"></div>
           <div class="tabs" id="metricTabs" aria-label="Chart metric selector"></div>
+          <div class="timeframes" id="timeframeTabs" aria-label="Available timeframe selector"></div>
         </div>
         <select id="sectorFilter" aria-label="Filter by sector">
           <option value="all">All sectors</option>
+        </select>
+        <select id="projectFilter" aria-label="Select project">
+          <option value="all">All projects</option>
         </select>
         <select id="sortMode" aria-label="Sort table">
           <option value="metric">Sort by selected metric</option>
@@ -864,6 +905,33 @@
           </div>
           <div class="story-list" id="storyList"></div>
         </aside>
+      </div>
+    </section>
+
+    <section id="project-detail" class="panel project-detail">
+      <div class="panel-header">
+        <h2 id="projectDetailTitle">Project Detail</h2>
+        <span id="projectDetailSubtitle">Choose a category, then a project</span>
+      </div>
+      <div class="project-detail-body">
+        <div class="project-detail-card">
+          <strong id="projectDetailTakeaway">No project selected</strong>
+          <p id="projectDetailCopy">Use the category cards above to narrow the universe, then select an individual project to see every available signal in the current data.</p>
+        </div>
+        <div class="mini-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Period</th>
+                <th>Source</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="projectMetricRows"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -943,26 +1011,32 @@
     const timeframeTabs = document.getElementById("timeframeTabs");
     const categoryCards = [...document.querySelectorAll(".category-card")];
     const sectorFilter = document.getElementById("sectorFilter");
+    const projectFilter = document.getElementById("projectFilter");
     const sortMode = document.getElementById("sortMode");
     const chart = document.getElementById("chart");
     const projectRows = document.getElementById("projectRows");
+    const projectMetricRows = document.getElementById("projectMetricRows");
     const storyList = document.getElementById("storyList");
     const sourceList = document.getElementById("sourceList");
     const sourceSummaryTitle = document.getElementById("sourceSummaryTitle");
     const sourceSummaryCopy = document.getElementById("sourceSummaryCopy");
     const methodologySubtitle = document.getElementById("methodologySubtitle");
+    const projectDetailTitle = document.getElementById("projectDetailTitle");
+    const projectDetailSubtitle = document.getElementById("projectDetailSubtitle");
+    const projectDetailTakeaway = document.getElementById("projectDetailTakeaway");
+    const projectDetailCopy = document.getElementById("projectDetailCopy");
     const shareOnX = document.getElementById("shareOnX");
     const copyDashboardLink = document.getElementById("copyDashboardLink");
 
     const metricConfig = [
-      {id: "tvl", label: "TVL", frame: "current", metric: "TVL", title: "Where Capital Is Parked", subtitle: "Which DeFi20 projects have the largest product footprint", unit: "USD", type: "product"},
-      {id: "marketCap", label: "Market Cap", frame: "current", metric: "Market Cap", title: "What The Market Believes", subtitle: "Where token holders are assigning the most value today", unit: "USD", type: "token"},
-      {id: "fdv", label: "FDV", frame: "current", metric: "FDV", title: "What Is Priced In", subtitle: "Which projects already carry the biggest future expectations", unit: "USD", type: "token"},
-      {id: "volume", label: "Token Volume", frame: "24h", metric: "24H Token Volume", title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation", unit: "USD", type: "token"},
-      {id: "wallets", label: "Active Wallets", frame: "7d", metric: "7D Active Wallets", title: "Where Users Show Up", subtitle: "Available wallet rows; useful for questions, not conclusions", unit: "wallets", type: "usage"},
-      {id: "fees", label: "Fees", frame: "30d", metric: "30D Fees", title: "Who Gets Paid", subtitle: "Protocols turning activity into fees over the past month", unit: "USD", type: "product"},
-      {id: "revenue", label: "Revenue", frame: "30d", metric: "30D Revenue", title: "Who Keeps Revenue", subtitle: "Projects retaining more economics from real usage", unit: "USD", type: "product"},
-      {id: "dexVolume", label: "DEX Volume", frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"}
+      {id: "tvl", label: "TVL", frames: ["current"], frame: "current", metric: "TVL", title: "Where Capital Is Parked", subtitle: "Which DeFi20 projects have the largest product footprint", unit: "USD", type: "product"},
+      {id: "marketCap", label: "Market Cap", frames: ["current"], frame: "current", metric: "Market Cap", title: "What The Market Believes", subtitle: "Where token holders are assigning the most value today", unit: "USD", type: "token"},
+      {id: "fdv", label: "FDV", frames: ["current"], frame: "current", metric: "FDV", title: "What Is Priced In", subtitle: "Which projects already carry the biggest future expectations", unit: "USD", type: "token"},
+      {id: "volume", label: "Token Volume", frames: ["24h"], frame: "24h", metric: "24H Token Volume", title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation", unit: "USD", type: "token"},
+      {id: "wallets", label: "Active Wallets", frames: ["7d"], frame: "7d", metric: "7D Active Wallets", title: "Where Users Show Up", subtitle: "Available wallet rows; useful for questions, not conclusions", unit: "wallets", type: "usage"},
+      {id: "fees", label: "Fees", frames: ["30d"], frame: "30d", metric: "30D Fees", title: "Who Gets Paid", subtitle: "Protocols turning activity into fees over the past month", unit: "USD", type: "product"},
+      {id: "revenue", label: "Revenue", frames: ["30d"], frame: "30d", metric: "30D Revenue", title: "Who Keeps Revenue", subtitle: "Projects retaining more economics from real usage", unit: "USD", type: "product"},
+      {id: "dexVolume", label: "DEX Volume", frames: ["30d"], frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"}
     ];
 
     const timeframeConfig = [
@@ -1041,22 +1115,24 @@
       return rawRows.filter(row => row.metric === metric);
     }
 
-    function visibleMetricConfig() {
-      return metricConfig.filter(config => config.frame === activeFrame);
+    function activeMetricConfig() {
+      return metricConfig.find(item => item.id === activeMetric) || metricConfig[0];
     }
 
-    function ensureActiveMetricForFrame() {
-      const visible = visibleMetricConfig();
-      if (!visible.some(config => config.id === activeMetric)) {
-        activeMetric = visible[0]?.id || "tvl";
-      }
+    function availableFramesForMetric(config = activeMetricConfig()) {
+      return config.frames || [config.frame];
+    }
+
+    function ensureActiveFrameForMetric() {
+      const available = availableFramesForMetric();
+      if (!available.includes(activeFrame)) activeFrame = available[0];
     }
 
     function setMetric(metricId) {
       const config = metricConfig.find(item => item.id === metricId);
       if (!config) return;
       activeMetric = metricId;
-      activeFrame = config.frame;
+      ensureActiveFrameForMetric();
       render();
     }
 
@@ -1090,8 +1166,13 @@
 
     function filteredProjects() {
       const selectedSector = sectorFilter.value;
-      const filtered = projects.filter(project => selectedSector === "all" || project.sector.includes(selectedSector));
-      const key = sortMode.value === "metric" ? metricConfig.find(item => item.id === activeMetric).id : sortMode.value;
+      const selectedProject = projectFilter.value;
+      const filtered = projects.filter(project => {
+        const sectorMatch = selectedSector === "all" || project.sector.includes(selectedSector);
+        const projectMatch = selectedProject === "all" || project.project === selectedProject;
+        return sectorMatch && projectMatch;
+      });
+      const key = sortMode.value === "metric" ? activeMetricConfig().id : sortMode.value;
       return filtered.sort((a, b) => {
         if (key === "name") return a.project.localeCompare(b.project);
         return (b[key] || 0) - (a[key] || 0);
@@ -1103,15 +1184,15 @@
     }
 
     function renderTabs() {
-      ensureActiveMetricForFrame();
       metricTabs.innerHTML = "";
-      visibleMetricConfig().forEach(config => {
+      metricConfig.forEach(config => {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = config.label;
         button.className = config.id === activeMetric ? "active" : "";
         button.addEventListener("click", () => {
           activeMetric = config.id;
+          ensureActiveFrameForMetric();
           render();
         });
         metricTabs.appendChild(button);
@@ -1119,16 +1200,19 @@
     }
 
     function renderTimeframes() {
+      ensureActiveFrameForMetric();
+      const available = availableFramesForMetric();
       timeframeTabs.innerHTML = "";
       timeframeConfig.forEach(frame => {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = frame.label;
         button.title = frame.description;
+        button.disabled = !available.includes(frame.id);
         button.className = frame.id === activeFrame ? "active" : "";
         button.addEventListener("click", () => {
+          if (!available.includes(frame.id)) return;
           activeFrame = frame.id;
-          ensureActiveMetricForFrame();
           render();
         });
         timeframeTabs.appendChild(button);
@@ -1150,6 +1234,24 @@
         option.textContent = sector;
         sectorFilter.appendChild(option);
       });
+      renderProjectFilter();
+    }
+
+    function renderProjectFilter() {
+      const selectedSector = sectorFilter.value;
+      const currentProject = projectFilter.value;
+      const eligibleProjects = projects
+        .filter(project => selectedSector === "all" || project.sector.includes(selectedSector))
+        .map(project => project.project)
+        .sort((a, b) => a.localeCompare(b));
+      projectFilter.innerHTML = `<option value="all">All projects</option>`;
+      eligibleProjects.forEach(project => {
+        const option = document.createElement("option");
+        option.value = project;
+        option.textContent = project;
+        projectFilter.appendChild(option);
+      });
+      projectFilter.value = eligibleProjects.includes(currentProject) ? currentProject : "all";
     }
 
     function renderStats() {
@@ -1174,7 +1276,7 @@
     }
 
     function renderChart() {
-      const config = metricConfig.find(item => item.id === activeMetric);
+      const config = activeMetricConfig();
       const data = filteredProjects()
         .map(project => ({...project, value: project[config.id] || 0}))
         .filter(project => project.value > 0)
@@ -1286,7 +1388,7 @@
     }
 
     function renderStories() {
-      const config = metricConfig.find(item => item.id === activeMetric);
+      const config = activeMetricConfig();
       const data = filteredProjects()
         .map(project => ({...project, value: project[config.id] || 0}))
         .filter(project => project.value > 0)
@@ -1334,9 +1436,14 @@
     }
 
     function renderSourceDetail() {
-      const config = metricConfig.find(item => item.id === activeMetric);
+      const config = activeMetricConfig();
       const selectedSector = sectorFilter.value;
-      const rows = metricRows(config.metric).filter(row => selectedSector === "all" || row.sector.includes(selectedSector));
+      const selectedProject = projectFilter.value;
+      const rows = metricRows(config.metric).filter(row => {
+        const sectorMatch = selectedSector === "all" || row.sector.includes(selectedSector);
+        const projectMatch = selectedProject === "all" || row.project === selectedProject;
+        return sectorMatch && projectMatch;
+      });
       const confidence = countBy(rows, "confidence");
       const sources = uniqueValues(rows, "source_name");
       const periods = uniqueValues(rows, "period");
@@ -1344,7 +1451,7 @@
       const caveats = uniqueValues(rows, "notes").slice(0, 2);
       const warningCount = Array.isArray(meta.warnings) ? meta.warnings.length : 0;
 
-      methodologySubtitle.textContent = `${config.label} / ${selectedSector === "all" ? "all sectors" : selectedSector}`;
+      methodologySubtitle.textContent = `${config.label} / ${selectedProject === "all" ? selectedSector === "all" ? "all sectors" : selectedSector : selectedProject}`;
 
       if (!rows.length) {
         sourceSummaryTitle.textContent = `No ${config.label} rows in this view`;
@@ -1381,7 +1488,7 @@
     }
 
     function updateShareLinks() {
-      const config = metricConfig.find(item => item.id === activeMetric);
+      const config = activeMetricConfig();
       const url = window.location.href.split("#")[0];
       const text = `Machines & Money DeFi20 signal: ${config.title}.`;
       shareOnX.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
@@ -1418,16 +1525,55 @@
       `).join("");
     }
 
+    function renderProjectDetail() {
+      const selectedProject = projectFilter.value;
+      if (selectedProject === "all") {
+        const selectedSector = sectorFilter.value;
+        projectDetailTitle.textContent = "Project Detail";
+        projectDetailSubtitle.textContent = selectedSector === "all" ? "Choose a category, then a project" : `${selectedSector} projects`;
+        projectDetailTakeaway.textContent = "No project selected";
+        projectDetailCopy.textContent = selectedSector === "all"
+          ? "Use the category cards above to narrow the universe, then select an individual project to see every available signal in the current data."
+          : "Select one project in this category to see its market, adoption, product, and source rows together.";
+        projectMetricRows.innerHTML = `<tr><td colspan="5">Select a project to see the available rows.</td></tr>`;
+        return;
+      }
+
+      const project = projects.find(item => item.project === selectedProject);
+      const records = (project?.records || []).slice().sort((a, b) => {
+        const metricOrder = ["Market Cap", "FDV", "24H Token Volume", "TVL", "30D Fees", "30D Revenue", "30D DEX Volume", "7D Active Wallets", "Token Price"];
+        return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
+      });
+      const productRows = records.filter(row => !row.notes.includes("Token-level market metric"));
+      projectDetailTitle.textContent = selectedProject;
+      projectDetailSubtitle.textContent = project?.sector || "Project detail";
+      projectDetailTakeaway.textContent = `${records.length} available rows`;
+      projectDetailCopy.textContent = productRows.length
+        ? `${productRows.length} rows describe product traction or usage. Token rows are included for market context but should not be treated as product adoption.`
+        : "This project currently has market rows only. It needs product-native or third-party adoption data before making a stronger fundamentals claim.";
+      projectMetricRows.innerHTML = records.map(row => `
+        <tr>
+          <td>${escapeHtml(row.metric)}</td>
+          <td class="num">${formatValue(row.value, row.unit === "wallets" ? "wallets" : "USD")}</td>
+          <td>${escapeHtml(row.period)}</td>
+          <td><a href="${escapeHtml(row.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
+          <td>${escapeHtml(row.confidence || "unknown")}</td>
+        </tr>
+      `).join("");
+    }
+
     function render() {
       renderTimeframes();
       renderTabs();
       renderCategoryMap();
+      renderProjectFilter();
       renderStats();
       renderChart();
       renderStories();
       renderSourceDetail();
       updateShareLinks();
       renderTable();
+      renderProjectDetail();
     }
 
     renderFilters();
@@ -1436,16 +1582,22 @@
       card.addEventListener("click", () => {
         if (card.dataset.metric) {
           sectorFilter.value = "all";
+          projectFilter.value = "all";
           setMetric(card.dataset.metric);
           return;
         }
         if (card.dataset.sector) {
           sectorFilter.value = card.dataset.sector;
+          renderProjectFilter();
           render();
         }
       });
     });
-    sectorFilter.addEventListener("change", render);
+    sectorFilter.addEventListener("change", () => {
+      renderProjectFilter();
+      render();
+    });
+    projectFilter.addEventListener("change", render);
     sortMode.addEventListener("change", render);
     copyDashboardLink.addEventListener("click", copyShareLink);
     window.addEventListener("resize", renderChart);
