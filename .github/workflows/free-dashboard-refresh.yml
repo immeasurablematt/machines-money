@@ -13,6 +13,12 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: free-dashboard-pages
+  cancel-in-progress: false
 
 jobs:
   refresh:
@@ -49,3 +55,14 @@ jobs:
           git add docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good
           git commit -m "Refresh free dashboard data"
           git push
+
+      - name: Rebuild bundle with refreshed data
+        run: bash scripts/build_free_dashboard_bundle.sh site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
