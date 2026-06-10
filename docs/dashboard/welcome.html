@@ -38,7 +38,7 @@
     .chart-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px; }
     .chart-tabs button { border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,0.035); color:var(--muted); cursor:pointer; padding:8px 14px; font:inherit; font-size:13px; font-weight:650; }
     .chart-tabs button.active { background:rgba(80,210,193,0.14); border-color:var(--line-strong); color:var(--ink); }
-    .legend { display:flex; gap:8px; margin:0 0 10px; }
+    .legend { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px; }
     .legend button { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,0.035); color:var(--muted); cursor:pointer; padding:6px 12px; font:inherit; font-size:12px; font-weight:650; }
     .legend button.on { color:var(--ink); border-color:var(--line-strong); }
     .legend button.off .dot { opacity:0.25; }
@@ -100,7 +100,6 @@
     <section class="chart-card" id="aggregates">
       <h2 id="chartTitle">Why these twenty matter</h2>
       <p id="chartCaption">Pick a lens: combined scale, share of all DeFi, or how the DeFi20 stack up against Bitcoin and the altcoin market.</p>
-      <div class="chart-tabs" id="chartTabs"></div>
       <div class="legend" id="chartLegend"></div>
       <svg class="area" id="tvlChart" role="img" aria-label="DeFi20 aggregate chart"></svg>
     </section>
@@ -160,28 +159,29 @@
     document.getElementById("statTvl").textContent = money(totalTvl);
     document.getElementById("statDate").textContent = meta.generated_at || "—";
 
-    const sharePts = hist ? hist.dates.map((d,i) => ({d, tvl: hist.defi20_tvl[i], s: hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null})) : [];
+    const sharePts = hist ? hist.dates.map((d,i) => ({d, s: hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null})) : [];
     const lastShare = [...sharePts].reverse().find(p => p.s !== null);
     if (lastShare) document.getElementById("statShare").textContent = pct(lastShare.s);
     else if (totalTvl) document.getElementById("statShare").textContent = "soon";
 
     const seriesOn = { tvl: true, share: true };
+    let mode = "combo";
     const W = 1000, H = 360, ML = 74, MR = 60, MT = 26, MB = 36;
+    let scales = null;
+    const svg = document.getElementById("tvlChart");
 
     function drawCombined() {
-      const svg = document.getElementById("tvlChart");
       svg.style.display = "block";
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
       const n = hist.dates.length;
       const x = i => ML + i * (W - ML - MR) / (n - 1);
       const parts = [];
+      scales = { n, x, yTvl: null, yShare: null };
 
-      // horizontal gridlines (4 bands)
       for (let g = 0; g <= 3; g++) {
         const y = MT + g * (H - MT - MB) / 3;
         parts.push(`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.09)"/>`);
       }
-      // x date ticks (4)
       [0, Math.floor(n/3), Math.floor(2*n/3), n-1].forEach(i => {
         parts.push(`<text x="${x(i)}" y="${H-10}" text-anchor="${i===0?"start":i===n-1?"end":"middle"}" fill="rgba(255,255,255,0.45)" font-size="12">${hist.dates[i]}</text>`);
       });
@@ -190,6 +190,7 @@
         const vals = hist.defi20_tvl;
         const max = Math.max(...vals), min = Math.min(...vals);
         const y = v => H - MB - (v - min) / (max - min || 1) * (H - MT - MB);
+        scales.yTvl = y;
         let path = `M ${x(0)} ${y(vals[0])}`;
         vals.forEach((v,i) => { if (i) path += ` L ${x(i)} ${y(v)}`; });
         parts.push(`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#50d2c1" stop-opacity="0.4"/><stop offset="100%" stop-color="#50d2c1" stop-opacity="0.02"/></linearGradient></defs>`);
@@ -197,8 +198,7 @@
         parts.push(`<path d="${path}" fill="none" stroke="#98fce4" stroke-width="2.5"/>`);
         for (let g = 0; g <= 3; g++) {
           const gy = MT + g * (H - MT - MB) / 3;
-          const gv = max - g * (max - min) / 3;
-          parts.push(`<text x="${ML-8}" y="${gy+4}" text-anchor="end" fill="#98fce4" font-size="12">${money(gv)}</text>`);
+          parts.push(`<text x="${ML-8}" y="${gy+4}" text-anchor="end" fill="#98fce4" font-size="12">${money(max - g * (max - min) / 3)}</text>`);
         }
       }
       if (seriesOn.share) {
@@ -206,24 +206,55 @@
         if (pts.length > 1) {
           const max = Math.max(...pts.map(p => p.s)), min = Math.min(...pts.map(p => p.s));
           const y = v => H - MB - (v - min) / (max - min || 1) * (H - MT - MB);
+          scales.yShare = y;
           let path = "";
           pts.forEach((p,k) => { path += (k ? " L " : "M ") + x(p.i) + " " + y(p.s); });
           parts.push(`<path d="${path}" fill="none" stroke="#87bfff" stroke-width="2" stroke-dasharray="${seriesOn.tvl ? "5 4" : "none"}"/>`);
           for (let g = 0; g <= 3; g++) {
             const gy = MT + g * (H - MT - MB) / 3;
-            const gv = max - g * (max - min) / 3;
-            parts.push(`<text x="${W-MR+8}" y="${gy+4}" fill="#87bfff" font-size="12">${pct(gv)}</text>`);
+            parts.push(`<text x="${W-MR+8}" y="${gy+4}" fill="#87bfff" font-size="12">${pct(max - g * (max - min) / 3)}</text>`);
           }
         }
       }
       if (!seriesOn.tvl && !seriesOn.share) {
         parts.push(`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="15">Toggle a series back on above.</text>`);
       }
+      parts.push('<g id="xhair"></g>');
       svg.innerHTML = parts.join("");
     }
 
+    function moveCrosshair(evt) {
+      if (mode !== "combo" || !scales || (!seriesOn.tvl && !seriesOn.share)) return;
+      const rect = svg.getBoundingClientRect();
+      const relX = (evt.clientX - rect.left) / (rect.width || W) * W;
+      const i = Math.max(0, Math.min(scales.n - 1, Math.round((relX - ML) / ((W - ML - MR) / (scales.n - 1)))));
+      const g = svg.querySelector("#xhair");
+      if (!g) return;
+      const cx = scales.x(i);
+      const lines = [hist.dates[i]];
+      const dots = [];
+      if (seriesOn.tvl && scales.yTvl) {
+        lines.push(`TVL ${money(hist.defi20_tvl[i])}`);
+        dots.push(`<circle cx="${cx}" cy="${scales.yTvl(hist.defi20_tvl[i])}" r="5" fill="#98fce4" stroke="#061515" stroke-width="2"/>`);
+      }
+      if (seriesOn.share && scales.yShare && sharePts[i].s !== null) {
+        lines.push(`Share ${pct(sharePts[i].s)}`);
+        dots.push(`<circle cx="${cx}" cy="${scales.yShare(sharePts[i].s)}" r="5" fill="#87bfff" stroke="#061515" stroke-width="2"/>`);
+      }
+      const boxW = 150, boxH = 18 * lines.length + 14;
+      const boxX = cx + 14 + boxW > W - MR ? cx - boxW - 14 : cx + 14;
+      const boxY = MT + 6;
+      g.innerHTML = `
+        <line x1="${cx}" x2="${cx}" y1="${MT}" y2="${H-MB}" stroke="rgba(255,255,255,0.35)" stroke-dasharray="3 3"/>
+        ${dots.join("")}
+        <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="8" fill="rgba(3,16,15,0.92)" stroke="rgba(152,252,228,0.28)"/>
+        ${lines.map((t,k) => `<text x="${boxX+12}" y="${boxY+22+k*18}" fill="${k===0?"rgba(255,255,255,0.6)":"#fff"}" font-size="${k===0?12:13}" font-weight="${k===0?500:700}">${t}</text>`).join("")}`;
+    }
+    svg.addEventListener("mousemove", moveCrosshair);
+    svg.addEventListener("mouseleave", () => { const g = svg.querySelector("#xhair"); if (g) g.innerHTML = ""; });
+
     function drawBars(items) {
-      const svg = document.getElementById("tvlChart");
+      scales = null;
       const left = 8, top = 34, rowH = 96, barH = 44;
       const max = Math.max(...items.map(i => i.value));
       svg.style.display = "block";
@@ -239,61 +270,51 @@
       }).join("");
     }
 
-    const tabs = [
-      {id: "combo", label: "TVL & share of DeFi", available: () => hist && hist.dates.length > 1,
-        caption: "Combined DeFi20 value locked (solid, left axis) and its share of all DeFi TVL (dashed, right axis). Click the chips to toggle each series.",
-        legend: true, render: drawCombined},
-      {id: "btc", label: "vs Bitcoin & alts", available: () => ctx && ctx.btc_market_cap > 0 && totalMcap > 0,
-        caption: "Price-based market share today: DeFi20 combined market cap next to Bitcoin and the rest of the altcoin market.",
-        legend: false, render: () => drawBars([
-          {label: "Bitcoin", value: ctx.btc_market_cap, color: "#ffb96d"},
-          {label: "Altcoin market (ex-BTC)", value: ctx.altcoin_market_cap, color: "#87bfff"},
-          {label: "DeFi20 combined", value: totalMcap, color: "#50d2c1"},
-        ])},
-    ];
+    const captions = {
+      combo: "Combined DeFi20 value locked (solid, left axis) and its share of all DeFi TVL (dashed, right axis). Hover for exact values; click the chips to toggle.",
+      btc: "Price-based market share today: DeFi20 combined market cap next to Bitcoin and the rest of the altcoin market."
+    };
 
-    function renderLegend(show) {
+    function render() {
+      const haveHistory = hist && hist.dates.length > 1;
+      const haveBtc = ctx && ctx.btc_market_cap > 0 && totalMcap > 0;
       const wrap = document.getElementById("chartLegend");
       wrap.innerHTML = "";
-      wrap.style.display = show ? "flex" : "none";
-      if (!show) return;
-      [{key:"tvl", label:"DeFi20 TVL", color:"#50d2c1"}, {key:"share", label:"Share of all DeFi", color:"#87bfff"}].forEach(item => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = seriesOn[item.key] ? "on" : "off";
-        b.innerHTML = `<span class="dot" style="background:${item.color}"></span>${item.label}`;
-        b.addEventListener("click", () => {
-          seriesOn[item.key] = !seriesOn[item.key];
-          track("series_toggle", item.key + ":" + seriesOn[item.key]);
-          renderLegend(true);
-          drawCombined();
-        });
-        wrap.appendChild(b);
-      });
-    }
-
-    function renderTabs(activeId) {
-      const wrap = document.getElementById("chartTabs");
-      wrap.innerHTML = "";
-      const usable = tabs.filter(t => t.available());
-      if (!usable.length) {
+      if (!haveHistory && !haveBtc) {
         document.getElementById("chartCaption").textContent = "Daily history is accruing — the charts appear after the next data refreshes.";
-        document.getElementById("tvlChart").style.display = "none";
-        renderLegend(false);
+        svg.style.display = "none";
         return;
       }
-      const active = usable.find(t => t.id === activeId) || usable[0];
-      usable.forEach(t => {
+      if (mode === "btc" && !haveBtc) mode = "combo";
+      if (mode === "combo" && !haveHistory) mode = "btc";
+
+      const chips = [];
+      if (haveHistory) {
+        chips.push({label: "DeFi20 TVL", color: "#50d2c1", on: mode === "combo" && seriesOn.tvl,
+          click: () => { if (mode !== "combo") { mode = "combo"; } else { seriesOn.tvl = !seriesOn.tvl; } track("series_toggle", "tvl"); render(); }});
+        chips.push({label: "Share of all DeFi", color: "#87bfff", on: mode === "combo" && seriesOn.share,
+          click: () => { if (mode !== "combo") { mode = "combo"; } else { seriesOn.share = !seriesOn.share; } track("series_toggle", "share"); render(); }});
+      }
+      if (haveBtc) {
+        chips.push({label: "vs Bitcoin & alts", color: "#ffb96d", on: mode === "btc",
+          click: () => { mode = mode === "btc" ? "combo" : "btc"; track("aggregate_tab", mode); render(); }});
+      }
+      chips.forEach(item => {
         const b = document.createElement("button");
         b.type = "button";
-        b.textContent = t.label;
-        b.className = t.id === active.id ? "active" : "";
-        b.addEventListener("click", () => { track("aggregate_tab", t.id); renderTabs(t.id); });
+        b.className = item.on ? "on" : "off";
+        b.innerHTML = `<span class="dot" style="background:${item.color}"></span>${item.label}`;
+        b.addEventListener("click", item.click);
         wrap.appendChild(b);
       });
-      document.getElementById("chartCaption").textContent = active.caption;
-      renderLegend(active.legend);
-      active.render();
+
+      document.getElementById("chartCaption").textContent = captions[mode];
+      if (mode === "combo") drawCombined();
+      else drawBars([
+        {label: "Bitcoin", value: ctx.btc_market_cap, color: "#ffb96d"},
+        {label: "Altcoin market (ex-BTC)", value: ctx.altcoin_market_cap, color: "#87bfff"},
+        {label: "DeFi20 combined", value: totalMcap, color: "#50d2c1"},
+      ]);
     }
 
     const tracked = []; window.mmDashboardEvents = tracked;
@@ -306,7 +327,7 @@
       if (t) track(t.dataset.track, t.textContent.trim());
     });
 
-    renderTabs("combo");
+    render();
   </script>
 </body>
 </html>
