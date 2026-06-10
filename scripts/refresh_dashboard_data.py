@@ -989,10 +989,50 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"Global market context unavailable: {exc.__class__.__name__}")
 
+    # Daily market-cap history: Bitcoin plus the summed DeFi20 tokens, for the
+    # price-based market-share series on the welcome page.
+    btc_mcap_by_date: dict[str, float] = {}
+    defi20_mcap_by_date: dict[str, float] = {}
+    api_key = os.environ.get("COINGECKO_DEMO_API_KEY")
+    if api_key:
+        cg_headers = {"x-cg-demo-api-key": api_key}
+
+        def mcap_chart(coin_id: str) -> dict[str, float]:
+            data = fetch_json(
+                f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart?vs_currency=usd&days=365&interval=daily",
+                headers=cg_headers,
+            )
+            out: dict[str, float] = {}
+            for point in data.get("market_caps") or []:
+                if len(point) == 2 and point[1]:
+                    out[date.fromtimestamp(point[0] / 1000).isoformat()] = float(point[1])
+            return out
+
+        try:
+            btc_mcap_by_date = mcap_chart("bitcoin")
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Bitcoin mcap history unavailable: {exc.__class__.__name__}")
+        token_ids = sorted({
+            row["coingecko_id"] for row in read_token_map()
+            if row.get("coingecko_id") and row.get("status") == "verified_search"
+        })
+        for coin_id in token_ids:
+            try:
+                for day, value in mcap_chart(coin_id).items():
+                    defi20_mcap_by_date[day] = defi20_mcap_by_date.get(day, 0.0) + value
+            except Exception:  # noqa: BLE001
+                warnings.append(f"Mcap history missing for {coin_id}")
+            time.sleep(2)
+    else:
+        warnings.append("Market-cap history skipped: set COINGECKO_DEMO_API_KEY")
+
     dates = sorted(by_date)[-365:]
+    iso_dates = [date.fromtimestamp(ts).isoformat() for ts in dates]
     return {
         "market_context": market_context,
-        "dates": [date.fromtimestamp(ts).isoformat() for ts in dates],
+        "defi20_mcap": [round(defi20_mcap_by_date.get(d, 0), 2) for d in iso_dates],
+        "btc_mcap": [round(btc_mcap_by_date.get(d, 0), 2) for d in iso_dates],
+        "dates": iso_dates,
         "defi20_tvl": [round(by_date[ts], 2) for ts in dates],
         "all_defi_tvl": [round(all_by_date.get(ts, 0), 2) for ts in dates],
         "source": "DefiLlama protocol TVL histories summed across DeFi20 records; all-DeFi from historicalChainTvl.",
