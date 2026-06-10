@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "15 10 * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/free-dashboard-refresh.yml"
+      - "scripts/refresh_dashboard_data.py"
+      - "docs/dashboard/starter-token-map.csv"
 
 permissions:
   contents: write
