@@ -156,9 +156,26 @@ Before sharing the free dashboard publicly:
 - confirm `docs/dashboard/prototype.html` has no unintended diff,
 - confirm the URL is permanent before using it in social posts or newsletter links.
 
+## Permanent Hosting Path (GitHub Pages)
+
+Both production workflows are now active in `.github/workflows/`:
+
+- `free-dashboard-refresh.yml` refreshes the data daily and commits validated snapshots.
+- `free-dashboard-pages.yml` builds the free bundle (`free.html` as `index.html` plus `generated-dashboard-data.js`) and deploys it to GitHub Pages whenever the dashboard files change on `main`.
+
+One remaining owner action: in the GitHub repo, open **Settings > Pages** and set **Source: GitHub Actions**. After the next deploy run, the permanent URL is:
+
+- `https://immeasurablematt.github.io/machines-money/`
+
+Once that URL is live, set `CANONICAL_URL` in `docs/dashboard/free.html` (one constant near the top of the script) and add the matching `og:url` / canonical meta tags so shared links and social cards use the permanent address. A custom Machines & Money domain can be added later in the same Pages settings screen without changing the workflow.
+
+## Analytics Status
+
+`free.html` records every key interaction (category clicks, metric/timeframe changes, sector/project/sort changes, share, copy, and CTA clicks) into `window.mmDashboardEvents` and emits a `mm:track` DOM event for each. No data leaves the page yet. The single remaining analytics decision is choosing a privacy-friendly provider (for example GoatCounter or Plausible); its snippet only needs to listen for `mm:track`.
+
 ## Next Build Step
 
-For the free dashboard, the next useful production step is a durable hosted preview or permanent public URL that serves `free.html` and `generated-dashboard-data.js` together.
+For the free dashboard, the next useful production step is enabling GitHub Pages (one settings click, above) and running the first deploy.
 
 For the broader/prototype dashboard, the next useful step remains deeper source discovery and a local app shell or hosted version that can refresh data on demand.
 

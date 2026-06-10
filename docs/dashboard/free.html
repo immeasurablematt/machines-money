@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Machines & Money Free Dashboard</title>
+  <meta name="description" content="The Machines & Money DeFi20 tracker: compare top DeFi projects by TVL, fees, revenue, volume, and usage, with sources and caveats you can check.">
+  <!-- Set og:url and a rel="canonical" link to the permanent dashboard URL once hosting is live. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Machines & Money">
+  <meta property="og:title" content="Machines & Money DeFi20 Dashboard">
+  <meta property="og:description" content="See which DeFi projects are earning attention: TVL, fees, revenue, volume, and usage in one interactive view.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Machines & Money DeFi20 Dashboard">
+  <meta name="twitter:description" content="See which DeFi projects are earning attention: TVL, fees, revenue, volume, and usage in one interactive view.">
   <style>
     :root {
       --bg: #061515;
@@ -1007,6 +1016,25 @@
     }));
     const meta = window.dashboardMeta || {};
 
+    // Set to the permanent dashboard URL once hosting is live; share links fall
+    // back to the current address until then.
+    const CANONICAL_URL = "";
+
+    // Lightweight, privacy-safe analytics: events stay on the page, exposed via
+    // window.mmDashboardEvents and a "mm:track" DOM event. Choosing a provider
+    // (e.g. GoatCounter or Plausible) is the one remaining analytics decision;
+    // its snippet only needs to listen for "mm:track".
+    const trackedEvents = [];
+    window.mmDashboardEvents = trackedEvents;
+    function track(event, detail) {
+      trackedEvents.push({ event, detail: detail || "", at: new Date().toISOString() });
+      window.dispatchEvent(new CustomEvent("mm:track", { detail: { event, detail: detail || "" } }));
+    }
+    document.addEventListener("click", e => {
+      const tracked = e.target.closest("[data-track]");
+      if (tracked) track(tracked.dataset.track, tracked.textContent.trim());
+    });
+
     const metricTabs = document.getElementById("metricTabs");
     const timeframeTabs = document.getElementById("timeframeTabs");
     const categoryCards = [...document.querySelectorAll(".category-card")];
@@ -1193,6 +1221,7 @@
         button.addEventListener("click", () => {
           activeMetric = config.id;
           ensureActiveFrameForMetric();
+          track("metric_change", config.id);
           render();
         });
         metricTabs.appendChild(button);
@@ -1213,6 +1242,7 @@
         button.addEventListener("click", () => {
           if (!available.includes(frame.id)) return;
           activeFrame = frame.id;
+          track("timeframe_change", frame.id);
           render();
         });
         timeframeTabs.appendChild(button);
@@ -1487,15 +1517,21 @@
       }).join("");
     }
 
+    function shareUrl() {
+      return CANONICAL_URL || window.location.href.split("#")[0];
+    }
+
     function updateShareLinks() {
       const config = activeMetricConfig();
-      const url = window.location.href.split("#")[0];
-      const text = `Machines & Money DeFi20 signal: ${config.title}.`;
-      shareOnX.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      const leader = [...projects].sort((a, b) => (b[config.id] || 0) - (a[config.id] || 0))[0];
+      const text = leader && leader[config.id]
+        ? `${config.title}: ${leader.project} leads ${config.label} on the Machines & Money DeFi20 dashboard.`
+        : `Machines & Money DeFi20 signal: ${config.title}.`;
+      shareOnX.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}`;
     }
 
     function copyShareLink() {
-      const url = window.location.href.split("#")[0];
+      const url = shareUrl();
       if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(() => {
           copyDashboardLink.textContent = "Copied";
@@ -1544,7 +1580,7 @@
         const metricOrder = ["Market Cap", "FDV", "24H Token Volume", "TVL", "30D Fees", "30D Revenue", "30D DEX Volume", "7D Active Wallets", "Token Price"];
         return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
       });
-      const productRows = records.filter(row => !row.notes.includes("Token-level market metric"));
+      const productRows = records.filter(row => !(row.notes || "").includes("Token-level market metric"));
       projectDetailTitle.textContent = selectedProject;
       projectDetailSubtitle.textContent = project?.sector || "Project detail";
       projectDetailTakeaway.textContent = `${records.length} available rows`;
@@ -1580,6 +1616,7 @@
     render();
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
+        track("category_click", card.dataset.metric || card.dataset.sector);
         if (card.dataset.metric) {
           sectorFilter.value = "all";
           projectFilter.value = "all";
@@ -1594,11 +1631,18 @@
       });
     });
     sectorFilter.addEventListener("change", () => {
+      track("sector_filter", sectorFilter.value);
       renderProjectFilter();
       render();
     });
-    projectFilter.addEventListener("change", render);
-    sortMode.addEventListener("change", render);
+    projectFilter.addEventListener("change", () => {
+      track("project_select", projectFilter.value);
+      render();
+    });
+    sortMode.addEventListener("change", () => {
+      track("sort_change", sortMode.value);
+      render();
+    });
     copyDashboardLink.addEventListener("click", copyShareLink);
     window.addEventListener("resize", renderChart);
   </script>

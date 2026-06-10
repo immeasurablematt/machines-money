@@ -159,6 +159,8 @@ Recommended path:
 - Publish it as a static page with `generated-dashboard-data.js`.
 - Use a permanent Machines & Money URL or a durable subpath that can be linked from Beehiiv and social posts.
 
+Chosen implementation (2026-06-10): GitHub Pages via `.github/workflows/free-dashboard-pages.yml`, deploying the free bundle on every dashboard change to `main`. Permanent URL after the owner enables Pages (Settings > Pages > Source: GitHub Actions): `https://immeasurablematt.github.io/machines-money/`. A custom domain can be layered on later without changing the pipeline.
+
 Temporary preview rule:
 
 - If here.now is used, bundle `docs/dashboard/free.html` as `index.html`.
