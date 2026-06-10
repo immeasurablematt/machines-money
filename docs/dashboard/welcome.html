@@ -23,18 +23,19 @@
     .mark { width:34px; height:34px; border-radius:999px; border:1px solid var(--line-strong); background:rgba(80,210,193,0.08); color:var(--mint-bright); display:grid; place-items:center; font-size:11px; font-weight:750; }
     .nav-links { display:flex; gap:14px; color:var(--muted); font-size:13px; flex-wrap:wrap; }
     .nav-links a:hover { color:var(--mint-bright); }
-    .hero { text-align:center; padding:54px 0 8px; }
+    .hero { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,0.95fr); gap:38px; align-items:center; padding:44px 0 8px; }
     .eyebrow { color:var(--mint-bright); font-size:12px; font-weight:720; text-transform:uppercase; margin:0 0 10px; }
-    h1 { margin:0 auto; font-size:clamp(34px,5.6vw,64px); line-height:1.02; font-weight:540; max-width:820px; }
-    .lede { margin:18px auto 0; max-width:640px; color:var(--muted); font-size:17px; line-height:1.55; }
-    .signup { max-width:520px; margin:26px auto 0; }
+    h1 { margin:0; font-size:clamp(34px,5.6vw,64px); line-height:1.02; font-weight:540; max-width:820px; }
+    .lede { margin:18px 0 0; max-width:640px; color:var(--muted); font-size:17px; line-height:1.55; }
+    .signup { max-width:520px; margin:0; }
+    .join-kicker { margin:26px 0 10px; font-size:13px; font-weight:780; letter-spacing:0.05em; text-transform:uppercase; }
     .signup iframe { border-radius:10px; border:1px solid var(--line-strong) !important; box-shadow:0 0 32px rgba(80,210,193,0.12); }
-    .signup-note { color:var(--dim); font-size:12px; margin-top:8px; text-align:center; }
-    .chart-card { border:1px solid var(--line); border-radius:10px; background:var(--panel); margin-top:40px; padding:18px; }
+    .signup-note { color:var(--dim); font-size:12px; margin-top:8px; }
+    .chart-card { border:1px solid var(--line); border-radius:10px; background:var(--panel); margin-top:0; padding:18px; }
     .chart-card h2 { margin:0 0 4px; font-size:16px; }
     .chart-card p { margin:0 0 12px; color:var(--muted); font-size:13px; }
-    svg.area { display:block; width:100%; height:260px; }
-    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:14px; }
+    svg.area { display:block; width:100%; height:220px; }
+    .stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px; }
     .stat { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:14px; }
     .stat span { color:var(--muted); font-size:11px; font-weight:650; text-transform:uppercase; display:block; margin-bottom:6px; }
     .stat strong { font-family:ui-monospace,Menlo,monospace; font-size:22px; }
@@ -53,7 +54,7 @@
     .cta { display:inline-flex; align-items:center; border:1px solid rgba(152,252,228,0.22); border-radius:8px; background:var(--mint); color:#061515; padding:12px 22px; font-size:14px; font-weight:750; }
     .secondary { display:inline-flex; margin-left:10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,0.04); color:var(--ink); padding:12px 22px; font-size:14px; font-weight:700; }
     footer { margin-top:48px; color:var(--dim); font-size:12px; text-align:center; }
-    @media (max-width:760px) { .stats { grid-template-columns:repeat(2,1fr); } .pro-grid, .about { grid-template-columns:1fr; } }
+    @media (max-width:860px) { .hero { grid-template-columns:1fr; gap:24px; } .pro-grid, .about { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -69,26 +70,28 @@
     </nav>
 
     <header class="hero">
-      <p class="eyebrow">The DeFi20 — twenty platforms moving onchain finance</p>
-      <h1>DeFi is eating finance. Watch it happen, live.</h1>
-      <p class="lede" id="heroLede">Market cap, TVL, fees, revenue, and usage for the twenty DeFi platforms that matter — updated daily, sourced and caveated, free.</p>
-      <div class="signup">
-        <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="c1d43cc7-0e5d-418c-900a-686c0e356964"></script>
-        <p class="signup-note">Subscribe for free — weekly interpretation of what the charts mean.</p>
+      <div>
+        <p class="eyebrow">The DeFi20 — twenty platforms moving onchain finance</p>
+        <h1>Turning Onchain Data Into Smart Investing</h1>
+        <p class="lede" id="heroLede">Research that helps you spot today's opportunity for tomorrow's wealth at the intersection of DeFi, tokenized assets, and AI.</p>
+        <p class="join-kicker">Join the newsletter for everyday onchain investors.</p>
+        <div class="signup">
+          <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="c1d43cc7-0e5d-418c-900a-686c0e356964"></script>
+          <p class="signup-note">Join Machines &amp; Money for onchain finance research that doesn't waste your time.</p>
+        </div>
       </div>
+      <section class="chart-card">
+        <h2>DeFi20 total value locked</h2>
+        <p id="chartCaption">Combined TVL across the twenty tracked platforms.</p>
+        <svg class="area" id="tvlChart" role="img" aria-label="DeFi20 total TVL area chart"></svg>
+        <div class="stats">
+          <div class="stat"><span>Total market cap</span><strong id="statMcap">—</strong></div>
+          <div class="stat"><span>Total TVL</span><strong id="statTvl">—</strong></div>
+          <div class="stat"><span>Share of all DeFi TVL</span><strong id="statShare">—</strong></div>
+          <div class="stat"><span>Data as of</span><strong id="statDate">—</strong></div>
+        </div>
+      </section>
     </header>
-
-    <section class="chart-card">
-      <h2>DeFi20 total value locked</h2>
-      <p id="chartCaption">Combined TVL across the twenty tracked platforms.</p>
-      <svg class="area" id="tvlChart" role="img" aria-label="DeFi20 total TVL area chart"></svg>
-      <div class="stats">
-        <div class="stat"><span>Total market cap</span><strong id="statMcap">—</strong></div>
-        <div class="stat"><span>Total TVL</span><strong id="statTvl">—</strong></div>
-        <div class="stat"><span>Share of all DeFi TVL</span><strong id="statShare">—</strong></div>
-        <div class="stat"><span>Data as of</span><strong id="statDate">—</strong></div>
-      </div>
-    </section>
 
     <section id="pro">
       <h2 class="section-title">Pro is coming</h2>
