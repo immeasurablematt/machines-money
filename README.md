@@ -19,37 +19,72 @@ The tools here should support:
 - Stronger subscriber acquisition and retention
 - Future paid-subscription readiness
 
-## Current Project
+## Current Focus: Free DeFi Metrics Dashboard
 
-The first project is **Research Dossier**.
+The active build is the **free Machines & Money metrics dashboard** — a public, static
+web dashboard that helps readers compare projects, sectors, and metrics across DeFi,
+tokenized assets, derivatives, lending, asset management, infra, AI, and related markets.
+It doubles as a subscriber-acquisition surface for the newsletter.
 
-Research Dossier is intended to help Ian prepare project-focused articles in much less time without lowering the quality of the research. It is especially relevant for Friday Features and other issues that evaluate specific DeFi projects, yield opportunities, or onchain products.
+What is built today:
 
-The goal is not to replace Ian's judgment or writing. The goal is to automate the repetitive parts of project research: gathering source material, checking whether information is current, extracting metrics, identifying useful product actions, and organizing everything into a structured dossier that Ian can review and turn into a feature.
+- **Public dashboard** (`docs/dashboard/free.html`): a metric-first explorer with a
+  category/project selector, per-project detail panel, and a source/caveat panel for the
+  selected metric so every number is traceable to where it came from.
+- **Welcome landing page** (`docs/dashboard/welcome.html`): the entry point, with a
+  Beehiiv newsletter signup CTA pointing at <https://machinesandmoney.beehiiv.com> and a
+  DeFi20 aggregate TVL chart, plus teasers for future pro features.
+- **Live data refresh** (`scripts/refresh_dashboard_data.py`): pulls from a free-API stack
+  (CoinGecko demo API, Dune) into `docs/dashboard/generated-dashboard-data.{js,csv}`, with
+  snapshots and a `last-good` fallback for resilience.
+- **Static bundle + hosting** (`scripts/build_free_dashboard_bundle.sh`): assembles
+  `welcome.html` → `index.html` and `free.html` → `dashboard.html` plus the data file.
 
-Future projects may support other parts of the newsletter operation, such as audience growth, content repurposing, paid subscription packaging, or research library management.
+Automation (GitHub Actions):
 
-## News & Insights Scanner
+- `.github/workflows/free-dashboard-refresh.yml` — refreshes the dashboard data daily
+  (10:15 UTC) and commits the result.
+- `.github/workflows/free-dashboard-pages.yml` — deploys the bundle to GitHub Pages on
+  changes to the dashboard files.
 
-The repo also includes an MVP **X List News & Insights Scanner** for broad feed triage across announcements, adoption stats, charts, and deep dives. It is separate from Research Dossier: most scanner items become mentions, saved reads, chart/stat candidates, project-watch notes, or theme-watch notes instead of single-project dossiers.
+Live site: <https://immeasurablematt.github.io/machines-money/>
 
-Run the sample scanner:
+Planning and source-mapping artifacts live in `docs/dashboard/` (see
+`docs/dashboard/free-dashboard.md`, `mvp-spec.md`, `metric-inventory.csv`,
+`token-vs-product-metric-definitions.md`, `runbook.md`, and the `free-api-source-map-*`
+files) and the goal records in `docs/goals/free-dashboard-launch-ready/` and
+`docs/goals/free-dashboard-production-ready/`.
 
-```bash
-PYTHONPATH=src python3 -m news_insights_scanner \
-  --ingestion manual \
-  --input samples/news-insights-manual.json
-```
+## Research Dossier (research methodology / future direction)
 
-See `docs/news-insights-scanner/spec.md` and `docs/news-insights-scanner/runbook.md` for the source spec and operating notes.
+**Research Dossier** is the original product vision and is not the current build focus. The
+detailed research process, source-priority rules, and quality bar are documented below
+(see "Research Process" onward) and remain the standard for project-focused article
+research. The intent is to eventually automate the repetitive parts of project research —
+gathering sources, checking freshness, extracting metrics, and organizing a structured
+dossier Ian can turn into a feature — without replacing Ian's judgment.
 
-## Metrics Dashboard Discovery
+## Paused work
 
-The repo now includes early planning artifacts for a future **Machines & Money Metrics Dashboard**.
+The following is **parked as of 2026-06-10** while the dashboard is the focus. The code and
+docs are intentionally kept so it can be resumed; nothing has been deleted.
 
-The dashboard direction is to help Ian compare projects, sectors, and metrics across DeFi, tokenized assets, derivatives, lending, asset management, infra, AI, and related markets. The first step is source discovery, not a full build: each requested metric needs a source, pulled date, confidence level, and clear distinction between project-native, parent, and third-party data.
-
-See `docs/dashboard/ian-outline-analysis.md`, `docs/dashboard/mvp-spec.md`, `docs/dashboard/metric-inventory.csv`, `docs/dashboard/source-discovery-plan.md`, `docs/dashboard/starter-source-map.csv`, `docs/dashboard/source-check-notes.md`, `docs/dashboard/runbook.md`, and `docs/dashboard/prototype.html` for the initial discovery scope.
+- **News & Insights Scanner / Daily Digest.** An MVP X-list scanner
+  (`src/news_insights_scanner/`) that triages a broad feed into a short review queue, plus a
+  pipeline that delivered a daily digest to a Google Doc
+  (`scripts/deliver_digest.py`, `scripts/apps_script/digest_webhook.gs`).
+  - The scheduled run in `.github/workflows/daily-digest.yml` has been **disabled** (the
+    `schedule` trigger is commented out), so it no longer runs or emails failures. It can
+    still be triggered manually from the Actions tab.
+  - To run the scanner locally:
+    ```bash
+    PYTHONPATH=src python3 -m news_insights_scanner \
+      --ingestion manual \
+      --input samples/news-insights-manual.json
+    ```
+  - Specs and operating notes: `docs/news-insights-scanner/spec.md`,
+    `docs/news-insights-scanner/runbook.md`,
+    `docs/news-insights-scanner/production-setup.md`.
 
 ## Newsletter Context
 
@@ -228,4 +263,12 @@ The product should help Ian get from "what should I write about this project?" t
 
 ## Status
 
-This project is in initial planning.
+Current focus: the **free DeFi metrics dashboard** is launch-ready and deployed to GitHub
+Pages (<https://immeasurablematt.github.io/machines-money/>), with daily data refresh and
+deploy automation in place.
+
+The **News & Insights Scanner / daily digest** is paused as of 2026-06-10 (scheduled run
+disabled; code retained — see "Paused work").
+
+**Research Dossier** remains a future direction; its research methodology is documented
+above.

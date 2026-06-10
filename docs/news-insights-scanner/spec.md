@@ -1,5 +1,8 @@
 # X List News and Insights Scanner Spec
 
+> **PAUSED (2026-06-10).** This feature is parked while the project focuses on the free DeFi
+> dashboard. Spec retained for a future resume. See the README "Paused work" section.
+
 ## Summary
 
 Build a scanner that reviews Ian's curated X list and turns the stream into a short, source-linked news and insight inbox for Machines & Money.

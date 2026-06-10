@@ -43,7 +43,18 @@ When a task maps to Paperclip:
 
 ## Current Product Direction
 
-The first active project is **Research Dossier**: a tool or workflow that helps Ian research project-focused Machines & Money articles faster without lowering quality.
+The active build is the **free DeFi metrics dashboard**: a public, static web dashboard
+(welcome landing page + Beehiiv signup + metric explorer) deployed to GitHub Pages, with a
+daily free-API data refresh. It is both a reader tool and a subscriber-acquisition surface.
+See the README "Current Focus" section for what is built and how it is deployed.
+
+**Paused (2026-06-10):** the News & Insights Scanner / daily digest pipeline is parked. Its
+scheduled GitHub Actions run (`.github/workflows/daily-digest.yml`) is disabled; the code is
+retained for a future resume. Do not treat it as active work unless Matt re-prioritizes it.
+
+**Research Dossier** is a future direction (research methodology for project-focused
+articles), not the current build. Preserve its research-quality standards below when that
+work resumes.
 
 The broader business goal is to grow the free Machines & Money subscriber base first, then introduce a paid subscription once the audience is large and engaged enough.
 

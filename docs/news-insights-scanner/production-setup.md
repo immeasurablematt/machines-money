@@ -1,5 +1,10 @@
 # Production Setup: Daily Digest to Google Doc
 
+> **PAUSED (2026-06-10).** The daily digest is parked while the project focuses on the free
+> DeFi dashboard. The scheduled run in `.github/workflows/daily-digest.yml` is disabled and
+> the required GitHub Actions secrets are not configured, so this setup is not live. This
+> guide is kept for whenever the digest is resumed. See the README "Paused work" section.
+
 This guide takes the scanner from manual runs to production: every morning,
 GitHub runs the scanner against the live X list and saves the digest as a new
 Google Doc in baggetta@gmail.com's Drive.

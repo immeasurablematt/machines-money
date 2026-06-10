@@ -1,9 +1,14 @@
 name: daily-news-digest
 
+# PAUSED (2026-06-10): The News & Insights Scanner / daily digest is parked while
+# the project focuses on the free DeFi metrics dashboard. The daily schedule is
+# disabled so it no longer runs (or emails failures). The job is left intact and
+# can still be triggered manually from the Actions tab if needed. To resume the
+# daily run, restore the `schedule` block below. See README "Paused work".
 on:
-  schedule:
-    # 11:00 UTC = 7:00 AM US Eastern during daylight saving time.
-    - cron: "0 11 * * *"
+  # schedule:
+  #   # 11:00 UTC = 7:00 AM US Eastern during daylight saving time.
+  #   - cron: "0 11 * * *"
   workflow_dispatch: {}
 
 permissions:

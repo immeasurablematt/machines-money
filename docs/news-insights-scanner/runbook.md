@@ -1,5 +1,9 @@
 # X List News & Insights Scanner Runbook
 
+> **PAUSED (2026-06-10).** The scanner / daily digest is parked while the project focuses on
+> the free DeFi dashboard. Manual runs below still work; the scheduled daily run is disabled.
+> See the README "Paused work" section.
+
 ## Purpose
 
 The scanner turns a broad X-list feed into a short Machines & Money review queue. It should save Ian from reading every tweet himself: scan the recent list activity, drop low-signal posts, and retain only the most useful announcements, stats/charts, and deep-dive/article candidates. It is not newsletter copy and it is not Research Dossier. Only a high-priority single-project deep dive should emit an optional dossier seed.
