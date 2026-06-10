@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Machines & Money Free Dashboard</title>
   <meta name="description" content="The Machines & Money DeFi20 tracker: compare top DeFi projects by TVL, fees, revenue, volume, and usage, with sources and caveats you can check.">
-  <!-- Set og:url and a rel="canonical" link to the permanent dashboard URL once hosting is live. -->
+  <link rel="canonical" href="https://immeasurablematt.github.io/machines-money/">
+  <meta property="og:url" content="https://immeasurablematt.github.io/machines-money/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Machines & Money">
   <meta property="og:title" content="Machines & Money DeFi20 Dashboard">
@@ -1016,9 +1017,9 @@
     }));
     const meta = window.dashboardMeta || {};
 
-    // Set to the permanent dashboard URL once hosting is live; share links fall
-    // back to the current address until then.
-    const CANONICAL_URL = "";
+    // Permanent dashboard URL; share links fall back to the current address
+    // if this is ever cleared.
+    const CANONICAL_URL = "https://immeasurablematt.github.io/machines-money/";
 
     // Lightweight, privacy-safe analytics: events stay on the page, exposed via
     // window.mmDashboardEvents and a "mm:track" DOM event. Choosing a provider
