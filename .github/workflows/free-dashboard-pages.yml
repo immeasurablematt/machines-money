@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "docs/dashboard/free.html"
+      - "docs/dashboard/welcome.html"
       - "docs/dashboard/generated-dashboard-data.js"
       - "scripts/build_free_dashboard_bundle.sh"
       - ".github/workflows/free-dashboard-pages.yml"
