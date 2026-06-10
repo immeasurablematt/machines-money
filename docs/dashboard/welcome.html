@@ -38,6 +38,11 @@
     .chart-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:0 0 12px; }
     .chart-tabs button { border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,0.035); color:var(--muted); cursor:pointer; padding:8px 14px; font:inherit; font-size:13px; font-weight:650; }
     .chart-tabs button.active { background:rgba(80,210,193,0.14); border-color:var(--line-strong); color:var(--ink); }
+    .legend { display:flex; gap:8px; margin:0 0 10px; }
+    .legend button { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,0.035); color:var(--muted); cursor:pointer; padding:6px 12px; font:inherit; font-size:12px; font-weight:650; }
+    .legend button.on { color:var(--ink); border-color:var(--line-strong); }
+    .legend button.off .dot { opacity:0.25; }
+    .legend .dot { width:10px; height:10px; border-radius:3px; }
     .hero-stats { display:grid; gap:12px; }
     .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:14px; }
     .stat { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:14px; }
@@ -96,6 +101,7 @@
       <h2 id="chartTitle">Why these twenty matter</h2>
       <p id="chartCaption">Pick a lens: combined scale, share of all DeFi, or how the DeFi20 stack up against Bitcoin and the altcoin market.</p>
       <div class="chart-tabs" id="chartTabs"></div>
+      <div class="legend" id="chartLegend"></div>
       <svg class="area" id="tvlChart" role="img" aria-label="DeFi20 aggregate chart"></svg>
     </section>
 
@@ -140,12 +146,12 @@
       if (v >= 1e6) return "$" + (v/1e6).toFixed(0) + "M";
       return "$" + Math.round(v).toLocaleString();
     }
+    const pct = v => v.toFixed(1) + "%";
 
     const byProject = {};
     rows.forEach(r => {
       byProject[r.project] = byProject[r.project] || {};
-      const cur = byProject[r.project][r.metric] || 0;
-      byProject[r.project][r.metric] = Math.max(cur, r.value);
+      byProject[r.project][r.metric] = Math.max(byProject[r.project][r.metric] || 0, r.value);
     });
     const projects = Object.values(byProject);
     const totalMcap = projects.reduce((s,p) => s + (p["Market Cap"]||0), 0);
@@ -154,39 +160,71 @@
     document.getElementById("statTvl").textContent = money(totalTvl);
     document.getElementById("statDate").textContent = meta.generated_at || "—";
 
-    const lastAll = hist ? [...hist.all_defi_tvl].reverse().find(v => v > 0) : 0;
-    if (hist && lastAll > 0) {
-      const lastTvl = hist.defi20_tvl[hist.defi20_tvl.length - 1];
-      document.getElementById("statShare").textContent = (lastTvl / lastAll * 100).toFixed(1) + "%";
-    } else if (totalTvl) {
-      document.getElementById("statShare").textContent = "soon";
-    }
+    const sharePts = hist ? hist.dates.map((d,i) => ({d, tvl: hist.defi20_tvl[i], s: hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null})) : [];
+    const lastShare = [...sharePts].reverse().find(p => p.s !== null);
+    if (lastShare) document.getElementById("statShare").textContent = pct(lastShare.s);
+    else if (totalTvl) document.getElementById("statShare").textContent = "soon";
 
-    function drawArea(values, labelStart, labelEnd, fmt) {
+    const seriesOn = { tvl: true, share: true };
+    const W = 1000, H = 360, ML = 74, MR = 60, MT = 26, MB = 36;
+
+    function drawCombined() {
       const svg = document.getElementById("tvlChart");
-      const W = 1000, H = 340, pad = 8;
-      const max = Math.max(...values), min = Math.min(...values);
-      const x = i => pad + i * (W - 2*pad) / (values.length - 1);
-      const y = v => H - pad - (v - min) / (max - min || 1) * (H - 2*pad - 36);
-      let path = `M ${x(0)} ${y(values[0])}`;
-      values.forEach((v,i) => { if (i) path += ` L ${x(i)} ${y(v)}`; });
-      const area = path + ` L ${x(values.length-1)} ${H-pad} L ${x(0)} ${H-pad} Z`;
       svg.style.display = "block";
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-      svg.innerHTML = `
-        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#50d2c1" stop-opacity="0.45"/>
-          <stop offset="100%" stop-color="#50d2c1" stop-opacity="0.02"/>
-        </linearGradient></defs>
-        <path d="${area}" fill="url(#g)"/>
-        <path d="${path}" fill="none" stroke="#98fce4" stroke-width="2.5"/>
-        <text x="${pad+6}" y="22" fill="rgba(255,255,255,0.65)" font-size="14">${labelStart} → ${labelEnd}</text>
-        <text x="${W-pad-6}" y="22" text-anchor="end" fill="#98fce4" font-size="16" font-weight="700">${fmt(values[values.length-1])}</text>`;
+      const n = hist.dates.length;
+      const x = i => ML + i * (W - ML - MR) / (n - 1);
+      const parts = [];
+
+      // horizontal gridlines (4 bands)
+      for (let g = 0; g <= 3; g++) {
+        const y = MT + g * (H - MT - MB) / 3;
+        parts.push(`<line x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,0.09)"/>`);
+      }
+      // x date ticks (4)
+      [0, Math.floor(n/3), Math.floor(2*n/3), n-1].forEach(i => {
+        parts.push(`<text x="${x(i)}" y="${H-10}" text-anchor="${i===0?"start":i===n-1?"end":"middle"}" fill="rgba(255,255,255,0.45)" font-size="12">${hist.dates[i]}</text>`);
+      });
+
+      if (seriesOn.tvl) {
+        const vals = hist.defi20_tvl;
+        const max = Math.max(...vals), min = Math.min(...vals);
+        const y = v => H - MB - (v - min) / (max - min || 1) * (H - MT - MB);
+        let path = `M ${x(0)} ${y(vals[0])}`;
+        vals.forEach((v,i) => { if (i) path += ` L ${x(i)} ${y(v)}`; });
+        parts.push(`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#50d2c1" stop-opacity="0.4"/><stop offset="100%" stop-color="#50d2c1" stop-opacity="0.02"/></linearGradient></defs>`);
+        parts.push(`<path d="${path} L ${x(n-1)} ${H-MB} L ${x(0)} ${H-MB} Z" fill="url(#g)"/>`);
+        parts.push(`<path d="${path}" fill="none" stroke="#98fce4" stroke-width="2.5"/>`);
+        for (let g = 0; g <= 3; g++) {
+          const gy = MT + g * (H - MT - MB) / 3;
+          const gv = max - g * (max - min) / 3;
+          parts.push(`<text x="${ML-8}" y="${gy+4}" text-anchor="end" fill="#98fce4" font-size="12">${money(gv)}</text>`);
+        }
+      }
+      if (seriesOn.share) {
+        const pts = sharePts.map((p,i) => ({...p, i})).filter(p => p.s !== null);
+        if (pts.length > 1) {
+          const max = Math.max(...pts.map(p => p.s)), min = Math.min(...pts.map(p => p.s));
+          const y = v => H - MB - (v - min) / (max - min || 1) * (H - MT - MB);
+          let path = "";
+          pts.forEach((p,k) => { path += (k ? " L " : "M ") + x(p.i) + " " + y(p.s); });
+          parts.push(`<path d="${path}" fill="none" stroke="#87bfff" stroke-width="2" stroke-dasharray="${seriesOn.tvl ? "5 4" : "none"}"/>`);
+          for (let g = 0; g <= 3; g++) {
+            const gy = MT + g * (H - MT - MB) / 3;
+            const gv = max - g * (max - min) / 3;
+            parts.push(`<text x="${W-MR+8}" y="${gy+4}" fill="#87bfff" font-size="12">${pct(gv)}</text>`);
+          }
+        }
+      }
+      if (!seriesOn.tvl && !seriesOn.share) {
+        parts.push(`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="15">Toggle a series back on above.</text>`);
+      }
+      svg.innerHTML = parts.join("");
     }
 
     function drawBars(items) {
       const svg = document.getElementById("tvlChart");
-      const W = 1000, H = 340, left = 8, top = 30, rowH = 86, barH = 40;
+      const left = 8, top = 34, rowH = 96, barH = 44;
       const max = Math.max(...items.map(i => i.value));
       svg.style.display = "block";
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -194,31 +232,45 @@
         const y = top + i * rowH;
         const w = Math.max(8, item.value / max * (W - 2*left));
         return `
-          <text x="${left}" y="${y - 6}" fill="#fff" font-size="15" font-weight="650">${item.label}</text>
-          <rect x="${left}" y="${y}" width="${W - 2*left}" height="${barH}" rx="6" fill="rgba(255,255,255,0.06)"/>
+          <text x="${left}" y="${y-7}" fill="#fff" font-size="15" font-weight="650">${item.label} — ${(item.value/max*100).toFixed(1)}% of Bitcoin</text>
+          <rect x="${left}" y="${y}" width="${W-2*left}" height="${barH}" rx="6" fill="rgba(255,255,255,0.06)"/>
           <rect x="${left}" y="${y}" width="${w}" height="${barH}" rx="6" fill="${item.color}"/>
-          <text x="${Math.min(left + w + 10, W - 90)}" y="${y + barH/2 + 5}" fill="rgba(255,255,255,0.85)" font-size="15" font-weight="700">${money(item.value)}</text>`;
+          <text x="${Math.min(left+w+10, W-95)}" y="${y+barH/2+5}" fill="rgba(255,255,255,0.9)" font-size="15" font-weight="700">${money(item.value)}</text>`;
       }).join("");
     }
 
     const tabs = [
-      {id: "tvl", label: "Total TVL", available: () => hist && hist.dates.length > 1,
-        caption: "Combined value locked across the twenty tracked platforms over the past year.",
-        render: () => drawArea(hist.defi20_tvl, hist.dates[0], hist.dates[hist.dates.length-1], money)},
-      {id: "share", label: "Share of all DeFi", available: () => hist && hist.dates.length > 1 && hist.all_defi_tvl.some(v => v > 0),
-        caption: "The DeFi20's percentage of all DeFi TVL — how much of onchain finance these twenty command.",
-        render: () => {
-          const pts = hist.dates.map((d,i) => ({d, s: hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null})).filter(p => p.s !== null);
-          drawArea(pts.map(p => p.s), pts[0].d, pts[pts.length-1].d, v => v.toFixed(1) + "%");
-        }},
+      {id: "combo", label: "TVL & share of DeFi", available: () => hist && hist.dates.length > 1,
+        caption: "Combined DeFi20 value locked (solid, left axis) and its share of all DeFi TVL (dashed, right axis). Click the chips to toggle each series.",
+        legend: true, render: drawCombined},
       {id: "btc", label: "vs Bitcoin & alts", available: () => ctx && ctx.btc_market_cap > 0 && totalMcap > 0,
         caption: "Price-based market share today: DeFi20 combined market cap next to Bitcoin and the rest of the altcoin market.",
-        render: () => drawBars([
+        legend: false, render: () => drawBars([
           {label: "Bitcoin", value: ctx.btc_market_cap, color: "#ffb96d"},
           {label: "Altcoin market (ex-BTC)", value: ctx.altcoin_market_cap, color: "#87bfff"},
           {label: "DeFi20 combined", value: totalMcap, color: "#50d2c1"},
         ])},
     ];
+
+    function renderLegend(show) {
+      const wrap = document.getElementById("chartLegend");
+      wrap.innerHTML = "";
+      wrap.style.display = show ? "flex" : "none";
+      if (!show) return;
+      [{key:"tvl", label:"DeFi20 TVL", color:"#50d2c1"}, {key:"share", label:"Share of all DeFi", color:"#87bfff"}].forEach(item => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = seriesOn[item.key] ? "on" : "off";
+        b.innerHTML = `<span class="dot" style="background:${item.color}"></span>${item.label}`;
+        b.addEventListener("click", () => {
+          seriesOn[item.key] = !seriesOn[item.key];
+          track("series_toggle", item.key + ":" + seriesOn[item.key]);
+          renderLegend(true);
+          drawCombined();
+        });
+        wrap.appendChild(b);
+      });
+    }
 
     function renderTabs(activeId) {
       const wrap = document.getElementById("chartTabs");
@@ -227,6 +279,7 @@
       if (!usable.length) {
         document.getElementById("chartCaption").textContent = "Daily history is accruing — the charts appear after the next data refreshes.";
         document.getElementById("tvlChart").style.display = "none";
+        renderLegend(false);
         return;
       }
       const active = usable.find(t => t.id === activeId) || usable[0];
@@ -239,6 +292,7 @@
         wrap.appendChild(b);
       });
       document.getElementById("chartCaption").textContent = active.caption;
+      renderLegend(active.legend);
       active.render();
     }
 
@@ -252,7 +306,7 @@
       if (t) track(t.dataset.track, t.textContent.trim());
     });
 
-    renderTabs("tvl");
+    renderTabs("combo");
   </script>
 </body>
 </html>
