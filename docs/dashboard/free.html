@@ -1622,6 +1622,17 @@
 
     renderFilters();
     render();
+    // Ian's rule: the featured metric follows the vertical. AI/Infra fall back
+    // to fees until agent/message stats land via Dune (Phase 2).
+    const FEATURED_METRIC_BY_SECTOR = {
+      "Spot": "dexVolume",
+      "Derivatives": "derivVolume",
+      "Lending": "borrows",
+      "Asset Management": "stableSupply",
+      "Tokenization": "tvl",
+      "Infra": "fees",
+      "AI": "fees"
+    };
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
         track("category_click", card.dataset.metric || card.dataset.sector);
@@ -1633,6 +1644,11 @@
         }
         if (card.dataset.sector) {
           sectorFilter.value = card.dataset.sector;
+          const featured = FEATURED_METRIC_BY_SECTOR[card.dataset.sector];
+          if (featured) {
+            activeMetric = featured;
+            ensureActiveFrameForMetric();
+          }
           renderProjectFilter();
           render();
         }
