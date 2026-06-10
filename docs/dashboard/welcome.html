@@ -80,8 +80,7 @@
 
     <header class="hero">
       <div>
-        <p class="eyebrow">The DeFi20 — twenty platforms moving onchain finance</p>
-        <h1>Turning Onchain Data Into Smart Investing</h1>
+        <h1>Know Where the Money Is Moving Before the Crowd Does</h1>
         <p class="lede" id="heroLede">Research that helps you spot today's opportunity for tomorrow's wealth at the intersection of DeFi, tokenized assets, and AI.</p>
         <p class="join-kicker">Join the newsletter for everyday onchain investors.</p>
         <div class="signup">
@@ -93,20 +92,17 @@
         <div class="stat"><span>DeFi20 total market cap</span><strong id="statMcap">—</strong></div>
         <div class="stat"><span>DeFi20 total TVL</span><strong id="statTvl">—</strong></div>
         <div class="stat"><span>Share of all DeFi TVL</span><strong id="statShare">—</strong></div>
-        <div class="stat"><span>Data as of</span><strong id="statDate">—</strong></div>
       </div>
     </header>
 
     <section class="chart-card" id="aggregates">
-      <h2 id="chartTitle">Why these twenty matter</h2>
       <p id="chartCaption">Pick a lens: combined scale, share of all DeFi, or how the DeFi20 stack up against Bitcoin and the altcoin market.</p>
       <div class="legend" id="chartLegend"></div>
       <svg class="area" id="tvlChart" role="img" aria-label="DeFi20 aggregate chart"></svg>
     </section>
 
     <section id="pro">
-      <h2 class="section-title">Pro is coming</h2>
-      <p class="section-sub">Free answers "what's interesting?" Pro will answer "why exactly?" — locked previews of what subscribers get first.</p>
+      <h2 class="section-title">Machines &amp; Money Pro is coming</h2>
       <div class="pro-grid">
         <div class="pro-card"><span class="lock">Pro</span><strong>Token value accrual scorecard</strong><p>Which protocols convert fees into buybacks, burns, and staking payouts — ranked, with the receipts behind every score.</p></div>
         <div class="pro-card"><span class="lock">Pro</span><strong>Project deep pages</strong><p>EtherFi card spend, Ethena holder cohorts, Ondo tokenized stock flows, Virtuals agent GDP — the niche series that move first.</p></div>
@@ -157,7 +153,6 @@
     const totalTvl = projects.reduce((s,p) => s + (p["TVL"]||0), 0);
     document.getElementById("statMcap").textContent = money(totalMcap);
     document.getElementById("statTvl").textContent = money(totalTvl);
-    document.getElementById("statDate").textContent = meta.generated_at || "—";
 
     const sharePts = hist ? hist.dates.map((d,i) => ({d, s: hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null})) : [];
     const lastShare = [...sharePts].reverse().find(p => p.s !== null);
@@ -271,7 +266,7 @@
     }
 
     const captions = {
-      combo: "Combined DeFi20 value locked (solid, left axis) and its share of all DeFi TVL (dashed, right axis). Hover for exact values; click the chips to toggle.",
+      combo: "",
       btc: "Price-based market share today: DeFi20 combined market cap next to Bitcoin and the rest of the altcoin market."
     };
 
