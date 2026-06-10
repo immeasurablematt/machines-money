@@ -965,8 +965,28 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
         warnings.append(f"All-DeFi TVL history unavailable: {exc.__class__.__name__}")
         all_by_date = {}
 
+    market_context = {}
+    try:
+        headers = {}
+        api_key = os.environ.get("COINGECKO_DEMO_API_KEY")
+        if api_key:
+            headers["x-cg-demo-api-key"] = api_key
+        global_data = (fetch_json("https://api.coingecko.com/api/v3/global", headers=headers) or {}).get("data", {})
+        total_mcap = (global_data.get("total_market_cap") or {}).get("usd")
+        btc_share = (global_data.get("market_cap_percentage") or {}).get("btc")
+        if total_mcap and btc_share:
+            btc_mcap = total_mcap * btc_share / 100.0
+            market_context = {
+                "total_market_cap": round(total_mcap, 2),
+                "btc_market_cap": round(btc_mcap, 2),
+                "altcoin_market_cap": round(total_mcap - btc_mcap, 2),
+            }
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Global market context unavailable: {exc.__class__.__name__}")
+
     dates = sorted(by_date)[-365:]
     return {
+        "market_context": market_context,
         "dates": [date.fromtimestamp(ts).isoformat() for ts in dates],
         "defi20_tvl": [round(by_date[ts], 2) for ts in dates],
         "all_defi_tvl": [round(all_by_date.get(ts, 0), 2) for ts in dates],
