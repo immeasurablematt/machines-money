@@ -172,7 +172,7 @@
         <path d="${path}" fill="none" stroke="#98fce4" stroke-width="2"/>
         <text x="${pad+4}" y="18" fill="rgba(255,255,255,0.65)" font-size="13">${hist.dates[0]} → ${hist.dates[hist.dates.length-1]}</text>
         <text x="${W-pad-4}" y="18" text-anchor="end" fill="#98fce4" font-size="14" font-weight="700">${money(vals[vals.length-1])}</text>`;
-      const lastAll = hist.all_defi_tvl[hist.all_defi_tvl.length - 1];
+      const lastAll = [...hist.all_defi_tvl].reverse().find(v => v > 0);
       if (lastAll > 0) {
         document.getElementById("statShare").textContent = (vals[vals.length-1] / lastAll * 100).toFixed(1) + "%";
       }

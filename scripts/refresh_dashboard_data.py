@@ -715,16 +715,16 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 notes="Share of all DefiLlama-tracked DEX volume over 30D; record-level, not project-blended.",
             )
 
-    try:
-        deriv_data = fetch_json(
-            source_url(
-                "overview/derivatives?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true"
+    deriv_by_module = {}
+    for overview_path in ("overview/derivatives", "overview/perps"):
+        try:
+            deriv_data = fetch_json(
+                source_url(f"{overview_path}?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true")
             )
-        )
-        deriv_by_module = {item.get("module"): item for item in deriv_data.get("protocols", [])}
-    except Exception as exc:  # noqa: BLE001
-        warnings.append(f"Derivatives volume unavailable: {exc.__class__.__name__}")
-        deriv_by_module = {}
+            deriv_by_module = {item.get("module"): item for item in deriv_data.get("protocols", [])}
+            break
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Derivatives volume unavailable at {overview_path}: {exc.__class__.__name__}")
 
     deriv_category_total = sum(
         item.get("total30d") or 0 for item in deriv_by_module.values() if isinstance(item, dict)
@@ -807,11 +807,7 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
         pools = []
 
     for record in YIELD_POOL_RECORDS:
-        matches = [
-            pool for pool in pools
-            if pool.get("project") == record["pool_project"]
-            and pool.get("symbol") == record["symbol"]
-        ]
+        matches = [pool for pool in pools if pool.get("symbol") == record["symbol"]]
         if not matches:
             warnings.append(f"Current APY missing for {record['record']}")
             continue
