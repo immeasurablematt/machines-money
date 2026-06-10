@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Machines & Money Free Dashboard</title>
   <meta name="description" content="The Machines & Money DeFi20 tracker: compare top DeFi projects by TVL, fees, revenue, volume, and usage, with sources and caveats you can check.">
-  <!-- Set og:url and a rel="canonical" link to the permanent dashboard URL once hosting is live. -->
+  <link rel="canonical" href="https://immeasurablematt.github.io/machines-money/">
+  <meta property="og:url" content="https://immeasurablematt.github.io/machines-money/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Machines & Money">
   <meta property="og:title" content="Machines & Money DeFi20 Dashboard">
@@ -1016,9 +1017,9 @@
     }));
     const meta = window.dashboardMeta || {};
 
-    // Set to the permanent dashboard URL once hosting is live; share links fall
-    // back to the current address until then.
-    const CANONICAL_URL = "";
+    // Permanent dashboard URL; share links fall back to the current address
+    // if this is ever cleared.
+    const CANONICAL_URL = "https://immeasurablematt.github.io/machines-money/";
 
     // Lightweight, privacy-safe analytics: events stay on the page, exposed via
     // window.mmDashboardEvents and a "mm:track" DOM event. Choosing a provider
@@ -1064,7 +1065,10 @@
       {id: "wallets", label: "Active Wallets", frames: ["7d"], frame: "7d", metric: "7D Active Wallets", title: "Where Users Show Up", subtitle: "Available wallet rows; useful for questions, not conclusions", unit: "wallets", type: "usage"},
       {id: "fees", label: "Fees", frames: ["30d"], frame: "30d", metric: "30D Fees", title: "Who Gets Paid", subtitle: "Protocols turning activity into fees over the past month", unit: "USD", type: "product"},
       {id: "revenue", label: "Revenue", frames: ["30d"], frame: "30d", metric: "30D Revenue", title: "Who Keeps Revenue", subtitle: "Projects retaining more economics from real usage", unit: "USD", type: "product"},
-      {id: "dexVolume", label: "DEX Volume", frames: ["30d"], frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"}
+      {id: "dexVolume", label: "DEX Volume", frames: ["30d"], frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"},
+      {id: "derivVolume", label: "Perps Volume", frames: ["30d"], frame: "30d", metric: "30D Derivatives Volume", title: "Where Leverage Trades", subtitle: "Perp venues with the most notional volume this month", unit: "USD", type: "product"},
+      {id: "borrows", label: "Borrows", frames: ["current"], frame: "current", metric: "Outstanding Borrows", title: "Where Credit Is Drawn", subtitle: "Outstanding borrows right now (stock, not daily flow)", unit: "USD", type: "product"},
+      {id: "stableSupply", label: "Stablecoins", frames: ["current"], frame: "current", metric: "Stablecoin Supply", title: "Stablecoin Footprints", subtitle: "Circulating supply of tracked stablecoin products", unit: "USD", type: "product"}
     ];
 
     const timeframeConfig = [
@@ -1088,8 +1092,9 @@
     }
 
     function formatValue(value, unit = "USD") {
-      if (!value) return "-";
+      if (!value && value !== 0) return "-";
       if (unit === "wallets") return Math.round(value).toLocaleString();
+      if (unit === "%") return (value > 0 ? "+" : "") + Number(value).toFixed(2) + "%";
       return money(value);
     }
 
@@ -1183,6 +1188,9 @@
           "30D Fees": "fees",
           "30D Revenue": "revenue",
           "30D DEX Volume": "dexVolume",
+          "30D Derivatives Volume": "derivVolume",
+          "Outstanding Borrows": "borrows",
+          "Stablecoin Supply": "stableSupply",
           "7D Active Wallets": "wallets"
         }[row.metric];
         if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
@@ -1577,7 +1585,7 @@
 
       const project = projects.find(item => item.project === selectedProject);
       const records = (project?.records || []).slice().sort((a, b) => {
-        const metricOrder = ["Market Cap", "FDV", "24H Token Volume", "TVL", "30D Fees", "30D Revenue", "30D DEX Volume", "7D Active Wallets", "Token Price"];
+        const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "7D Revenue", "30D Revenue", "30D Holders Revenue", "30D DEX Volume", "30D DEX Volume Share", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
         return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
       });
       const productRows = records.filter(row => !(row.notes || "").includes("Token-level market metric"));
@@ -1590,7 +1598,7 @@
       projectMetricRows.innerHTML = records.map(row => `
         <tr>
           <td>${escapeHtml(row.metric)}</td>
-          <td class="num">${formatValue(row.value, row.unit === "wallets" ? "wallets" : "USD")}</td>
+          <td class="num">${formatValue(row.value, row.unit || "USD")}</td>
           <td>${escapeHtml(row.period)}</td>
           <td><a href="${escapeHtml(row.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
           <td>${escapeHtml(row.confidence || "unknown")}</td>
@@ -1614,6 +1622,17 @@
 
     renderFilters();
     render();
+    // Ian's rule: the featured metric follows the vertical. AI/Infra fall back
+    // to fees until agent/message stats land via Dune (Phase 2).
+    const FEATURED_METRIC_BY_SECTOR = {
+      "Spot": "dexVolume",
+      "Derivatives": "derivVolume",
+      "Lending": "borrows",
+      "Asset Management": "stableSupply",
+      "Tokenization": "tvl",
+      "Infra": "fees",
+      "AI": "fees"
+    };
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
         track("category_click", card.dataset.metric || card.dataset.sector);
@@ -1625,6 +1644,11 @@
         }
         if (card.dataset.sector) {
           sectorFilter.value = card.dataset.sector;
+          const featured = FEATURED_METRIC_BY_SECTOR[card.dataset.sector];
+          if (featured) {
+            activeMetric = featured;
+            ensureActiveFrameForMetric();
+          }
           renderProjectFilter();
           render();
         }

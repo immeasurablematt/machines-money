@@ -248,6 +248,39 @@ RECORDS = [
 ]
 
 
+# Perps/derivatives records matched against DefiLlama's derivatives overview by module.
+# Module slugs are confirmed or corrected from first live-run warnings.
+DERIVATIVES_RECORDS = [
+    {"module": "hyperliquid", "project": "Hyperliquid", "record": "Hyperliquid Perps", "sector": "Derivatives", "confidence": "high", "notes": "Perp notional volume from DefiLlama derivatives overview."},
+    {"module": "jupiter-perpetual-exchange", "project": "Jupiter", "record": "Jupiter Perpetual Exchange", "sector": "Derivatives", "confidence": "medium", "notes": "Perp notional volume from DefiLlama derivatives overview."},
+]
+
+# Stablecoin product supplies from stablecoins.llama.fi, matched by symbol.
+STABLECOIN_RECORDS = {
+    "USDe": {"project": "Ethena", "record": "Ethena USDe", "sector": "Asset Management", "confidence": "high", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
+    "USDtb": {"project": "Ethena", "record": "Ethena USDtb", "sector": "Asset Management", "confidence": "medium", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
+    "USDf": {"project": "Falcon", "record": "Falcon USDf", "sector": "Asset Management", "confidence": "medium", "notes": "Circulating stablecoin supply; reserve attestations need separate review."},
+    "USDY": {"project": "Ondo", "record": "Ondo USDY", "sector": "Tokenization", "confidence": "high", "notes": "Tokenized yield-asset supply via DefiLlama stablecoins."},
+    "USDS": {"project": "Sky", "record": "Sky USDS", "sector": "Asset Management", "confidence": "high", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
+}
+
+# Yield pools from yields.llama.fi matched by (project, symbol); current APY only.
+YIELD_POOL_RECORDS = [
+    {"pool_project": "ethena", "symbol": "SUSDE", "project": "Ethena", "record": "Ethena sUSDe", "sector": "Asset Management", "confidence": "high", "notes": "Current sUSDe staking APY from DefiLlama yields; methodology is pool-level."},
+    {"pool_project": "sky-money", "symbol": "SUSDS", "project": "Sky", "record": "Sky sUSDS", "sector": "Asset Management", "confidence": "medium", "notes": "Current sUSDS APY from DefiLlama yields; methodology is pool-level."},
+]
+
+# Lending records whose outstanding borrows (stock, not new-borrow flow) are read
+# from the protocol endpoint's borrowed TVL. Definition decided 2026-06-10:
+# the dashboard's "borrow volume" means outstanding borrows.
+BORROW_RECORDS = [
+    {"protocol_slug": "aave-v3", "project": "Aave", "record": "Aave V3", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
+    {"protocol_slug": "morpho-blue", "project": "Morpho", "record": "Morpho Blue", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
+    {"protocol_slug": "jupiter-lend", "project": "Jupiter", "record": "Jupiter Lend", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
+    {"protocol_slug": "sky-lending", "project": "Sky", "record": "Sky Lending", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
+]
+
+
 def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
     request_headers = {"User-Agent": USER_AGENT}
     if headers:
@@ -272,6 +305,7 @@ def append_row(
     source: str,
     unit: str = "USD",
     notes: str | None = None,
+    allow_negative: bool = False,
 ) -> None:
     if value is None:
         return
@@ -279,7 +313,9 @@ def append_row(
         numeric_value = float(value)
     except (TypeError, ValueError):
         return
-    if numeric_value <= 0:
+    if numeric_value != numeric_value:  # NaN guard
+        return
+    if not allow_negative and numeric_value <= 0:
         return
 
     rows.append(
@@ -289,7 +325,7 @@ def append_row(
             "record": record["record"],
             "sector": record["sector"],
             "metric": metric,
-            "value": round(numeric_value, 2),
+            "value": round(numeric_value, 2 if unit != "%" else 4),
             "unit": unit,
             "period": period,
             "source_name": source_name,
@@ -314,6 +350,7 @@ def coingecko_source_url(ids: list[str]) -> str:
         "https://api.coingecko.com/api/v3/coins/markets"
         f"?vs_currency=usd&ids={joined_ids}"
         "&order=market_cap_desc&per_page=250&page=1&sparkline=false"
+        "&price_change_percentage=24h%2C7d%2C30d%2C1y"
     )
 
 
@@ -400,6 +437,24 @@ def append_market_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -
             source=url,
             notes=notes,
         )
+        for metric, field, period in [
+            ("24H Token Performance", "price_change_percentage_24h_in_currency", "24H"),
+            ("7D Token Performance", "price_change_percentage_7d_in_currency", "7D"),
+            ("30D Token Performance", "price_change_percentage_30d_in_currency", "30D"),
+            ("1Y Token Performance", "price_change_percentage_1y_in_currency", "1Y"),
+        ]:
+            append_row(
+                metric_rows,
+                record=record,
+                metric=metric,
+                value=market.get(field),
+                unit="%",
+                period=period,
+                source_name="CoinGecko markets",
+                source=url,
+                notes="Token price change; market sentiment, not product adoption.",
+                allow_negative=True,
+            )
 
 
 def dune_request(path: str, api_key: str, *, data: dict[str, Any] | None = None) -> Any:
@@ -502,7 +557,8 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     metric_rows: list[dict[str, Any]] = []
 
     protocols = fetch_json(source_url("protocols"))
-    tvl_by_slug = {item.get("slug"): item.get("tvl") for item in protocols}
+    protocols_by_slug = {item.get("slug"): item for item in protocols}
+    tvl_by_slug = {slug: item.get("tvl") for slug, item in protocols_by_slug.items()}
 
     for record in RECORDS:
         append_row(
@@ -514,8 +570,25 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             source_name="DefiLlama protocol",
             source=source_url(f"protocol/{record['protocol_slug']}"),
         )
+        protocol_item = protocols_by_slug.get(record["protocol_slug"]) or {}
+        append_row(
+            metric_rows,
+            record=record,
+            metric="7D TVL Growth",
+            value=protocol_item.get("change_7d"),
+            unit="%",
+            period="7D",
+            source_name="DefiLlama protocol",
+            source=source_url("protocols"),
+            notes="Point-in-time TVL change over 7 days, precomputed by DefiLlama.",
+            allow_negative=True,
+        )
 
-    for metric, data_type in [("30D Fees", "dailyFees"), ("30D Revenue", "dailyRevenue")]:
+    for metric, data_type in [
+        ("30D Fees", "dailyFees"),
+        ("30D Revenue", "dailyRevenue"),
+        ("30D Holders Revenue", "dailyHoldersRevenue"),
+    ]:
         for record in RECORDS:
             fee_slug = record.get("fee_slug")
             if not fee_slug:
@@ -541,7 +614,52 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 source=source_url(url_path),
                 notes=f"{metric} from DefiLlama fees endpoint. Methodology should be reviewed before final citation.",
             )
+            if metric in ("30D Fees", "30D Revenue"):
+                seven_day_metric = metric.replace("30D", "7D")
+                append_row(
+                    metric_rows,
+                    record=record,
+                    metric=seven_day_metric,
+                    value=data.get("total7d"),
+                    period="7D",
+                    source_name="DefiLlama fees",
+                    source=source_url(url_path),
+                    notes=f"{seven_day_metric} from the same DefiLlama fees response as the 30D figure.",
+                )
             time.sleep(0.05)
+
+    try:
+        fees_overview = fetch_json(
+            source_url(
+                "overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true"
+            )
+        )
+        fees_by_module = {item.get("module"): item for item in fees_overview.get("protocols", [])}
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Fees overview unavailable: {exc.__class__.__name__}")
+        fees_by_module = {}
+
+    for record in RECORDS:
+        fee_slug = record.get("fee_slug")
+        overview_item = fees_by_module.get(fee_slug) if fee_slug else None
+        if not overview_item:
+            continue
+        for metric, field, period in [
+            ("7D Fee Growth", "change_7dover7d", "7D"),
+            ("30D Fee Growth", "change_1m", "30D"),
+        ]:
+            append_row(
+                metric_rows,
+                record=record,
+                metric=metric,
+                value=overview_item.get(field),
+                unit="%",
+                period=period,
+                source_name="DefiLlama fees overview",
+                source=source_url("overview/fees"),
+                notes="Fee growth precomputed by DefiLlama (current window vs prior window).",
+                allow_negative=True,
+            )
 
     try:
         dex_data = fetch_json(
@@ -573,6 +691,141 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 "overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true"
             ),
             notes="DEX volume is source-comparable only for DEX records; lending and derivatives volume still need separate source discovery.",
+        )
+
+    # DEX volume market share from the same overview response (per spec: one call, no math).
+    dex_category_total = sum(
+        item.get("total30d") or 0 for item in dex_by_module.values() if isinstance(item, dict)
+    )
+    if dex_category_total:
+        for record in RECORDS:
+            dex_module = record.get("dex_module")
+            dex_record = dex_by_module.get(dex_module) if dex_module else None
+            if not dex_record or not dex_record.get("total30d"):
+                continue
+            append_row(
+                metric_rows,
+                record=record,
+                metric="30D DEX Volume Share",
+                value=dex_record["total30d"] / dex_category_total * 100,
+                unit="%",
+                period="30D",
+                source_name="DefiLlama DEX overview",
+                source=source_url("overview/dexs"),
+                notes="Share of all DefiLlama-tracked DEX volume over 30D; record-level, not project-blended.",
+            )
+
+    try:
+        deriv_data = fetch_json(
+            source_url(
+                "overview/derivatives?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true"
+            )
+        )
+        deriv_by_module = {item.get("module"): item for item in deriv_data.get("protocols", [])}
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Derivatives volume unavailable: {exc.__class__.__name__}")
+        deriv_by_module = {}
+
+    deriv_category_total = sum(
+        item.get("total30d") or 0 for item in deriv_by_module.values() if isinstance(item, dict)
+    )
+    for record in DERIVATIVES_RECORDS:
+        deriv_record = deriv_by_module.get(record["module"])
+        if not deriv_record:
+            warnings.append(f"30D Derivatives Volume missing for {record['record']}")
+            continue
+        append_row(
+            metric_rows,
+            record=record,
+            metric="30D Derivatives Volume",
+            value=deriv_record.get("total30d"),
+            period="30D",
+            source_name="DefiLlama derivatives overview",
+            source=source_url("overview/derivatives"),
+            notes=record["notes"],
+        )
+        if deriv_category_total and deriv_record.get("total30d"):
+            append_row(
+                metric_rows,
+                record=record,
+                metric="30D Derivatives Volume Share",
+                value=deriv_record["total30d"] / deriv_category_total * 100,
+                unit="%",
+                period="30D",
+                source_name="DefiLlama derivatives overview",
+                source=source_url("overview/derivatives"),
+                notes="Share of all DefiLlama-tracked perp volume over 30D.",
+            )
+
+    for record in BORROW_RECORDS:
+        url_path = f"protocol/{record['protocol_slug']}"
+        try:
+            protocol_detail = fetch_json(source_url(url_path))
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Outstanding Borrows unavailable for {record['record']}: {exc.__class__.__name__}")
+            continue
+        borrowed = (protocol_detail.get("currentChainTvls") or {}).get("borrowed")
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Outstanding Borrows",
+            value=borrowed,
+            period="current",
+            source_name="DefiLlama protocol",
+            source=source_url(url_path),
+            notes=record["notes"],
+        )
+        time.sleep(0.1)
+
+    try:
+        stables = fetch_json("https://stablecoins.llama.fi/stablecoins")
+        stable_assets = stables.get("peggedAssets", [])
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Stablecoin supplies unavailable: {exc.__class__.__name__}")
+        stable_assets = []
+
+    for asset in stable_assets:
+        record = STABLECOIN_RECORDS.get(asset.get("symbol"))
+        if not record:
+            continue
+        circulating = (asset.get("circulating") or {}).get("peggedUSD")
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Stablecoin Supply",
+            value=circulating,
+            period="current",
+            source_name="DefiLlama stablecoins",
+            source="https://stablecoins.llama.fi/stablecoins",
+            notes=record["notes"],
+        )
+
+    try:
+        pools = fetch_json("https://yields.llama.fi/pools").get("data", [])
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Yield pool APYs unavailable: {exc.__class__.__name__}")
+        pools = []
+
+    for record in YIELD_POOL_RECORDS:
+        matches = [
+            pool for pool in pools
+            if pool.get("project") == record["pool_project"]
+            and pool.get("symbol") == record["symbol"]
+        ]
+        if not matches:
+            warnings.append(f"Current APY missing for {record['record']}")
+            continue
+        best = max(matches, key=lambda pool: pool.get("tvlUsd") or 0)
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Current APY",
+            value=best.get("apy"),
+            unit="%",
+            period="current",
+            source_name="DefiLlama yields",
+            source="https://yields.llama.fi/pools",
+            notes=record["notes"],
         )
 
     append_market_rows(metric_rows, warnings)
