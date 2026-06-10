@@ -716,13 +716,18 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             )
 
     deriv_by_module = {}
-    for overview_path in ("overview/derivatives", "overview/perps"):
+    for overview_path in (
+        "overview/derivatives?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true",
+        "overview/derivatives",
+        "overview/perps?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true",
+        "overview/perps",
+    ):
         try:
-            deriv_data = fetch_json(
-                source_url(f"{overview_path}?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true")
-            )
+            deriv_data = fetch_json(source_url(overview_path))
             deriv_by_module = {item.get("module"): item for item in deriv_data.get("protocols", [])}
             break
+        except urllib.error.HTTPError as exc:
+            warnings.append(f"Derivatives volume unavailable at {overview_path}: HTTP {exc.code}")
         except Exception as exc:  # noqa: BLE001
             warnings.append(f"Derivatives volume unavailable at {overview_path}: {exc.__class__.__name__}")
 
