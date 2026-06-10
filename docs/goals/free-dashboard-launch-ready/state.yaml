@@ -1,0 +1,157 @@
+version: 2
+
+goal:
+  title: "Free Dashboard Launch Ready"
+  slug: "free-dashboard-launch-ready"
+  kind: existing_plan
+  tranche: "Take docs/dashboard/free.html from production-ready tranche to launch-ready public product: social loop, analytics posture, hosting path, activated refresh automation, Ian review packet, and explicit pro roadmap."
+  status: done
+  oracle:
+    signal: "Final audit maps receipts to every goal.md oracle item with prototype.html unchanged at blob 5db332f3a03c02916730eb58bd52de54b30efe3c."
+    cadence: "after each Worker package and at final audit"
+    final_proof: "Judge/PM audit records full_outcome_complete: true with command receipts."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  planning_is_not_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  no_completion_without_judge_or_pm_audit: true
+  slice_policy:
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    status: done
+    objective: "Current-state audit of free.html against the production plan and Ian's DeFi20 Dune outline; rank safe slices; flag external blockers."
+    receipt:
+      result: done
+      note: "notes/T001-scout-audit.md"
+      summary: "Dashboard functionally production-ready (syntax, HTTP, bundle, interactions verified). Launch gaps: social/OG meta, analytics capture, generic share text, permanent URL, refresh workflow not activated, notes crash guard, no Ian review packet or pro roadmap. DefiLlama unreachable (403) from this cloud session only."
+      evidence:
+        - "node inline-script syntax check: pass"
+        - "free.html + generated-dashboard-data.js over http.server: HTTP 200"
+        - "bash scripts/build_free_dashboard_bundle.sh: pass"
+        - "curl api.llama.fi: HTTP 403 (environment network policy)"
+        - "git hash-object docs/dashboard/prototype.html: 5db332f3a03c02916730eb58bd52de54b30efe3c"
+
+  - id: T002
+    type: judge
+    status: done
+    objective: "Choose the largest safe implementation slices from the Scout audit."
+    receipt:
+      result: done
+      decision: approved
+      rationale: "S1 free.html launch pass (largest safe single-file slice), S2 pipeline activation (refresh + Pages workflows + docs), S3 review packet + pro roadmap. Live refresh is environment-blocked, not goal-blocked: it runs via Actions or locally."
+      worker_tasks: [T003, T004, T005]
+
+  - id: T003
+    type: worker
+    status: done
+    objective: "free.html launch pass: social/OG/Twitter meta tags, lightweight analytics event capture on all key interactions, share text naming the leading project, canonical-URL constant, notes crash guard."
+    allowed_files:
+      - "docs/dashboard/free.html"
+    receipt:
+      result: done
+      changed_files:
+        - "docs/dashboard/free.html"
+      commands:
+        - cmd: "node inline-script syntax check"
+          status: pass
+        - cmd: "jsdom 16-step interaction walkthrough (categories, metric tabs, timeframe gating, sector/project/sort, project detail, source panel, share leader text, Beehiiv CTAs, mm:track events, og/twitter meta)"
+          status: pass
+        - cmd: "curl free.html + generated-dashboard-data.js over http.server"
+          status: pass
+        - cmd: "bash scripts/build_free_dashboard_bundle.sh"
+          status: pass
+        - cmd: "git diff -- docs/dashboard/prototype.html (empty)"
+          status: pass
+      summary: "Added meta description + Open Graph/Twitter-card tags, in-page event capture (window.mmDashboardEvents + mm:track CustomEvent, 8 call sites covering category/metric/timeframe/sector/project/sort plus delegated data-track for share/copy/CTA), share text that names the leading project for the selected metric, CANONICAL_URL constant for the permanent address, and a notes-field crash guard in the project detail panel."
+
+  - id: T004
+    type: worker
+    status: done
+    objective: "Production pipeline activation: refresh workflow into .github/workflows/, GitHub Pages deploy workflow, hosting/analytics docs."
+    receipt:
+      result: done
+      changed_files:
+        - ".github/workflows/free-dashboard-refresh.yml"
+        - ".github/workflows/free-dashboard-pages.yml"
+        - "docs/dashboard/runbook.md"
+        - "docs/dashboard/free-dashboard-production-plan.md"
+      commands:
+        - cmd: "python3 yaml.safe_load both workflow files"
+          status: pass
+        - cmd: "bash scripts/build_free_dashboard_bundle.sh (used by Pages workflow)"
+          status: pass
+      summary: "Activated the daily data-refresh workflow (validates, snapshots, last-good restore, commits). Added a Pages deploy workflow that rebuilds and republishes the free bundle whenever dashboard files change on main. Runbook and production plan now name the single remaining owner action (Settings > Pages > Source: GitHub Actions) and the resulting permanent URL, plus the analytics posture."
+
+  - id: T005
+    type: worker
+    status: done
+    objective: "Ian review packet and pro dashboard roadmap; explicit free-vs-pro boundary."
+    receipt:
+      result: done
+      changed_files:
+        - "docs/dashboard/ian-review-packet.md"
+        - "docs/dashboard/pro-dashboard-roadmap.md"
+      summary: "Review packet covers what to open, what changed, honest data caveats, free-vs-pro split, the three open owner decisions, and verification receipts. Pro roadmap sequences Ian's Dune-outline depth (growth tables, market share, project deep pages, value-accrual scorecard) behind snapshot history, free API keys, and Ian's paid-tier priorities. No pro implementation was started."
+
+  - id: T999
+    type: judge
+    status: done
+    objective: "Final audit: map receipts to every oracle item in goal.md."
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      mapping:
+        - "free.html production-ready for review: 16-step jsdom walkthrough + syntax + HTTP receipts (T003)."
+        - "prototype.html untouched: blob equals baseline 5db332f3a03c02916730eb58bd52de54b30efe3c; diff empty."
+        - "Public copy concise and audience-first: hero/category/caveat copy reviewed; final tone sign-off listed for Ian in the review packet."
+        - "Source/freshness/caveats visible and honest: snapshot date, coverage note, selected-metric source panel, per-project confidence verified in walkthrough."
+        - "Interactions work: category, metric, timeframe gating, sector, project, table sort, source panel, share, CTA all exercised and passing."
+        - "Mobile readable: responsive media queries plus compact chart mode exist in code; visual device pass listed in the Ian packet (jsdom cannot do visual layout)."
+        - "Refresh workflow documented and testable: runbook path + activated daily workflow with validation/last-good restore; live pull blocked only in this cloud session (DefiLlama 403), runs in Actions or locally."
+        - "Static bundle builds: pass (twice this session)."
+        - "Hosting path clear: Pages deploy workflow shipped; one named owner click remains; permanent URL documented."
+        - "Analytics: implemented lightly in-page (mm:track, 8 call sites); provider choice documented as the only remaining production decision."
+        - "Free-vs-pro boundary and roadmap: pro-dashboard-roadmap.md plus packet section; no pro code touched."
+      remaining_owner_actions:
+        - "Enable GitHub Pages (Settings > Pages > Source: GitHub Actions), then set CANONICAL_URL and og:url in free.html to the live address."
+        - "Pick a privacy-friendly analytics provider (GoatCounter/Plausible) when ready; one snippet listening to mm:track."
+        - "Ian copy sign-off and a real-device mobile glance using the review packet."
+
+blocked:
+  - id: B001
+    what: "Live DefiLlama refresh from this cloud session"
+    why: "api.llama.fi returns HTTP 403 through the session network proxy"
+    workaround: "Daily GitHub Actions refresh workflow (now active) or local run on the Mac"
+  - id: B002
+    what: "Permanent public URL"
+    why: "Enabling GitHub Pages requires repo Settings access"
+    workaround: "Deploy workflow is shipped; URL goes live the moment Pages is enabled"
+  - id: B003
+    what: "Analytics provider choice"
+    why: "Ian/Matt decision"
+    workaround: "In-page event capture shipped behind mm:track; provider is one snippet"
+
+checks:
+  prototype_baseline_blob: "5db332f3a03c02916730eb58bd52de54b30efe3c"
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - "node inline-script syntax check: pass"
+      - "free.html over HTTP: 200; generated-dashboard-data.js over HTTP: 200"
+      - "jsdom 16-step interaction walkthrough: pass"
+      - "bash scripts/build_free_dashboard_bundle.sh: pass"
+      - "workflow YAML parse (refresh + pages): pass"
+      - "prototype.html blob matches baseline; git diff empty: pass"

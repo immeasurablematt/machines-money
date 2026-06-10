@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Refresh the Machines & Money dashboard prototype data.
+"""Refresh the Machines & Money dashboard data.
 
-The dashboard is still a static HTML prototype, so this script writes a small
-JavaScript data file that can be loaded directly from file:// without a server.
+The dashboard is static, so this script writes browser-loadable data files.
+Successful refreshes are snapshotted and copied to last-known-good files.
+Failed refreshes restore the last-known-good generated files instead of
+publishing broken or empty data.
 """
 
 from __future__ import annotations
 
 import csv
+import shutil
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -22,8 +26,34 @@ ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_DIR = ROOT / "docs" / "dashboard"
 DATA_JS = DASHBOARD_DIR / "generated-dashboard-data.js"
 DATA_CSV = DASHBOARD_DIR / "generated-dashboard-data.csv"
+TOKEN_MAP_CSV = DASHBOARD_DIR / "starter-token-map.csv"
+SNAPSHOT_DIR = DASHBOARD_DIR / "snapshots"
+LAST_GOOD_DIR = DASHBOARD_DIR / "last-good"
+LAST_GOOD_JS = LAST_GOOD_DIR / "generated-dashboard-data.js"
+LAST_GOOD_CSV = LAST_GOOD_DIR / "generated-dashboard-data.csv"
+MIN_REFRESH_ROWS = int(os.environ.get("DASHBOARD_MIN_ROWS", "40"))
+MIN_LAST_GOOD_RATIO = float(os.environ.get("DASHBOARD_MIN_LAST_GOOD_RATIO", "0.5"))
 
 USER_AGENT = "machines-money-dashboard-refresh/0.1"
+DUNE_API_BASE = "https://api.dune.com/api/v1"
+
+DUNE_DEX_ACTIVE_WALLETS_SQL = """
+SELECT
+  project,
+  count(DISTINCT tx_from) AS active_wallets_7d
+FROM dex.trades
+WHERE block_time >= now() - interval '7' day
+  AND lower(project) IN ('uniswap', 'curve', 'aerodrome')
+GROUP BY 1
+ORDER BY active_wallets_7d DESC
+LIMIT 20
+"""
+
+DUNE_DEX_PROJECTS = {
+    "aerodrome": {"project": "Aerodrome", "sector": "Spot"},
+    "curve": {"project": "Curve", "sector": "Spot"},
+    "uniswap": {"project": "Uniswap", "sector": "Spot"},
+}
 
 
 RECORDS = [
@@ -218,8 +248,11 @@ RECORDS = [
 ]
 
 
-def fetch_json(url: str) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
+    request_headers = {"User-Agent": USER_AGENT}
+    if headers:
+        request_headers.update(headers)
+    req = urllib.request.Request(url, headers=request_headers)
     with urllib.request.urlopen(req, timeout=25) as response:
         return json.load(response)
 
@@ -237,6 +270,7 @@ def append_row(
     period: str,
     source_name: str,
     source: str,
+    unit: str = "USD",
     notes: str | None = None,
 ) -> None:
     if value is None:
@@ -256,7 +290,7 @@ def append_row(
             "sector": record["sector"],
             "metric": metric,
             "value": round(numeric_value, 2),
-            "unit": "USD",
+            "unit": unit,
             "period": period,
             "source_name": source_name,
             "source": source,
@@ -265,6 +299,202 @@ def append_row(
             "notes": notes or record["notes"],
         }
     )
+
+
+def read_token_map() -> list[dict[str, str]]:
+    if not TOKEN_MAP_CSV.exists():
+        return []
+    with TOKEN_MAP_CSV.open(newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def coingecko_source_url(ids: list[str]) -> str:
+    joined_ids = ",".join(ids)
+    return (
+        "https://api.coingecko.com/api/v3/coins/markets"
+        f"?vs_currency=usd&ids={joined_ids}"
+        "&order=market_cap_desc&per_page=250&page=1&sparkline=false"
+    )
+
+
+def append_market_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -> None:
+    token_rows = [
+        row
+        for row in read_token_map()
+        if row.get("coingecko_id") and row.get("status") == "verified_search"
+    ]
+    if not token_rows:
+        warnings.append("CoinGecko market data skipped: no verified token mappings")
+        return
+
+    api_key = os.environ.get("COINGECKO_DEMO_API_KEY")
+    if not api_key:
+        warnings.append(
+            "CoinGecko market data skipped: set COINGECKO_DEMO_API_KEY after the free Demo key is available"
+        )
+        return
+
+    ids = sorted({row["coingecko_id"] for row in token_rows})
+    url = coingecko_source_url(ids)
+    try:
+        data = fetch_json(url, headers={"x-cg-demo-api-key": api_key})
+    except urllib.error.HTTPError as exc:
+        warnings.append(f"CoinGecko market data unavailable: HTTP {exc.code}")
+        return
+    except Exception as exc:  # noqa: BLE001 - retain source warning in generated metadata.
+        warnings.append(f"CoinGecko market data unavailable: {exc.__class__.__name__}")
+        return
+
+    by_id = {item.get("id"): item for item in data if isinstance(item, dict)}
+    for token in token_rows:
+        market = by_id.get(token["coingecko_id"])
+        if not market:
+            warnings.append(f"CoinGecko market data missing for {token['project']} / {token['coingecko_id']}")
+            continue
+
+        record = {
+            "project": token["project"],
+            "record": f"{token['token_symbol']} token",
+            "sector": token["sector"],
+            "confidence": "high",
+            "notes": token.get("notes", "Token-level market metric from CoinGecko."),
+        }
+        notes = "Token-level market metric from CoinGecko; do not treat as protocol/product usage."
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Token Price",
+            value=market.get("current_price"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="Market Cap",
+            value=market.get("market_cap"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="FDV",
+            value=market.get("fully_diluted_valuation"),
+            period="current",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+        append_row(
+            metric_rows,
+            record=record,
+            metric="24H Token Volume",
+            value=market.get("total_volume"),
+            period="24H",
+            source_name="CoinGecko markets",
+            source=url,
+            notes=notes,
+        )
+
+
+def dune_request(path: str, api_key: str, *, data: dict[str, Any] | None = None) -> Any:
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
+        "X-Dune-Api-Key": api_key,
+    }
+    body = json.dumps(data).encode() if data is not None else None
+    req = urllib.request.Request(f"{DUNE_API_BASE}{path}", data=body, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as response:
+        return json.load(response)
+
+
+def execute_dune_sql(sql: str, api_key: str, warnings: list[str]) -> list[dict[str, Any]]:
+    try:
+        execution = dune_request(
+            "/sql/execute",
+            api_key,
+            data={"sql": sql, "performance": "small"},
+        )
+    except urllib.error.HTTPError as exc:
+        warnings.append(f"Dune SQL execution unavailable: HTTP {exc.code}")
+        return []
+    except Exception as exc:  # noqa: BLE001 - keep refresh resilient if Dune is unavailable.
+        warnings.append(f"Dune SQL execution unavailable: {exc.__class__.__name__}")
+        return []
+
+    execution_id = execution.get("execution_id")
+    if not execution_id:
+        warnings.append("Dune SQL execution unavailable: no execution_id returned")
+        return []
+
+    state = execution.get("state")
+    for _ in range(30):
+        if state in {
+            "QUERY_STATE_COMPLETED",
+            "QUERY_STATE_FAILED",
+            "QUERY_STATE_CANCELLED",
+            "QUERY_STATE_EXPIRED",
+        }:
+            break
+        time.sleep(2)
+        try:
+            status = dune_request(f"/execution/{execution_id}/status", api_key)
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Dune SQL status unavailable: {exc.__class__.__name__}")
+            return []
+        state = status.get("state")
+
+    if state != "QUERY_STATE_COMPLETED":
+        warnings.append(f"Dune SQL execution did not complete: {state}")
+        return []
+
+    try:
+        result = dune_request(f"/execution/{execution_id}/results?limit=1000", api_key)
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Dune SQL results unavailable: {exc.__class__.__name__}")
+        return []
+
+    rows = result.get("result", {}).get("rows", [])
+    return rows if isinstance(rows, list) else []
+
+
+def append_dune_active_wallet_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -> None:
+    api_key = os.environ.get("DUNE_API_KEY")
+    if not api_key:
+        warnings.append("Dune active-wallet data skipped: set DUNE_API_KEY")
+        return
+
+    rows = execute_dune_sql(DUNE_DEX_ACTIVE_WALLETS_SQL, api_key, warnings)
+    for row in rows:
+        project_key = str(row.get("project", "")).lower()
+        project = DUNE_DEX_PROJECTS.get(project_key)
+        if not project:
+            continue
+        record = {
+            "project": project["project"],
+            "record": project["project"],
+            "sector": project["sector"],
+            "confidence": "medium",
+            "notes": "7D active wallets from Dune dex.trades using distinct tx_from across all supported chains for this project. Treat as protocol-interaction wallets for the covered DEX surface.",
+        }
+        append_row(
+            metric_rows,
+            record=record,
+            metric="7D Active Wallets",
+            value=row.get("active_wallets_7d"),
+            unit="wallets",
+            period="7D",
+            source_name="Dune dex.trades",
+            source=f"{DUNE_API_BASE}/sql/execute",
+            notes=record["notes"],
+        )
 
 
 def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
@@ -345,12 +575,17 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             notes="DEX volume is source-comparable only for DEX records; lending and derivatives volume still need separate source discovery.",
         )
 
+    append_market_rows(metric_rows, warnings)
+    append_dune_active_wallet_rows(metric_rows, warnings)
+
     metric_rows.sort(key=lambda row: (row["metric"], -row["value"], row["project"], row["record"]))
     return metric_rows, warnings
 
 
 def write_outputs(rows: list[dict[str, Any]], warnings: list[str]) -> None:
     DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
+    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    LAST_GOOD_DIR.mkdir(parents=True, exist_ok=True)
 
     fieldnames = [
         "pulled_date",
@@ -367,33 +602,122 @@ def write_outputs(rows: list[dict[str, Any]], warnings: list[str]) -> None:
         "confidence",
         "notes",
     ]
-    with DATA_CSV.open("w", newline="") as handle:
+
+    today = date.today().isoformat()
+    metadata = {
+        "generated_at": today,
+        "row_count": len(rows),
+        "warnings": warnings,
+        "source_note": "Generated from public DefiLlama endpoints; review methodology before final citation.",
+        "refresh_status": "fresh",
+        "last_known_good": today,
+    }
+
+    csv_text_path = DASHBOARD_DIR / ".generated-dashboard-data.csv.tmp"
+    js_text_path = DASHBOARD_DIR / ".generated-dashboard-data.js.tmp"
+
+    with csv_text_path.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
-    metadata = {
-        "generated_at": date.today().isoformat(),
-        "row_count": len(rows),
-        "warnings": warnings,
-        "source_note": "Generated from public DefiLlama endpoints; review methodology before final citation.",
-    }
     js = (
         "// Generated by scripts/refresh_dashboard_data.py. Do not edit by hand.\n"
         f"window.dashboardMeta = {json.dumps(metadata, indent=2)};\n"
         f"window.dashboardRows = {json.dumps(rows, indent=2)};\n"
     )
-    DATA_JS.write_text(js)
+    js_text_path.write_text(js)
+
+    shutil.move(str(csv_text_path), DATA_CSV)
+    shutil.move(str(js_text_path), DATA_JS)
+
+    snapshot_prefix = SNAPSHOT_DIR / f"dashboard-data-{today}"
+    shutil.copy2(DATA_CSV, snapshot_prefix.with_suffix(".csv"))
+    shutil.copy2(DATA_JS, snapshot_prefix.with_suffix(".js"))
+    shutil.copy2(DATA_CSV, LAST_GOOD_CSV)
+    shutil.copy2(DATA_JS, LAST_GOOD_JS)
+
+
+def row_count_from_csv(path: Path) -> int:
+    if not path.exists():
+        return 0
+    with path.open(newline="") as handle:
+        return sum(1 for _ in csv.DictReader(handle))
+
+
+def seed_last_good() -> None:
+    if LAST_GOOD_JS.exists() and LAST_GOOD_CSV.exists():
+        return
+    if not DATA_JS.exists() or not DATA_CSV.exists():
+        return
+    LAST_GOOD_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(DATA_JS, LAST_GOOD_JS)
+    shutil.copy2(DATA_CSV, LAST_GOOD_CSV)
+
+
+def restore_last_good() -> bool:
+    if not LAST_GOOD_JS.exists() or not LAST_GOOD_CSV.exists():
+        return False
+    shutil.copy2(LAST_GOOD_JS, DATA_JS)
+    shutil.copy2(LAST_GOOD_CSV, DATA_CSV)
+    return True
+
+
+def validate_refresh(rows: list[dict[str, Any]], warnings: list[str]) -> list[str]:
+    errors: list[str] = []
+    if len(rows) < MIN_REFRESH_ROWS:
+        errors.append(f"row count {len(rows)} is below DASHBOARD_MIN_ROWS={MIN_REFRESH_ROWS}")
+
+    last_good_count = row_count_from_csv(LAST_GOOD_CSV)
+    if last_good_count and len(rows) < last_good_count * MIN_LAST_GOOD_RATIO:
+        errors.append(
+            f"row count {len(rows)} is below {MIN_LAST_GOOD_RATIO:.0%} of last-known-good row count {last_good_count}"
+        )
+
+    required_metrics = {"TVL", "30D Fees", "30D Revenue"}
+    present_metrics = {row["metric"] for row in rows}
+    missing_metrics = sorted(required_metrics - present_metrics)
+    if missing_metrics:
+        errors.append(f"required metric families missing: {', '.join(missing_metrics)}")
+
+    if len(warnings) >= int(os.environ.get("DASHBOARD_MAX_WARNINGS", "50")):
+        errors.append(f"warning count {len(warnings)} is unexpectedly high")
+
+    return errors
 
 
 def main() -> int:
-    rows, warnings = build_rows()
+    seed_last_good()
+
+    try:
+        rows, warnings = build_rows()
+    except Exception as exc:  # noqa: BLE001 - preserve last-known-good files on refresh failure.
+        restored = restore_last_good()
+        print(f"Dashboard refresh failed: {exc.__class__.__name__}: {exc}", file=sys.stderr)
+        if restored:
+            print("Restored last-known-good dashboard data.", file=sys.stderr)
+        return 1
+
     if not rows:
+        restore_last_good()
         print("No dashboard rows generated.", file=sys.stderr)
         return 1
+
+    validation_errors = validate_refresh(rows, warnings)
+    if validation_errors:
+        restored = restore_last_good()
+        print("Dashboard refresh validation failed:", file=sys.stderr)
+        for error in validation_errors:
+            print(f"- {error}", file=sys.stderr)
+        if restored:
+            print("Restored last-known-good dashboard data.", file=sys.stderr)
+        return 1
+
     write_outputs(rows, warnings)
     print(f"Wrote {len(rows)} rows to {DATA_CSV}")
     print(f"Wrote {DATA_JS}")
+    print(f"Wrote dated snapshots to {SNAPSHOT_DIR}")
+    print(f"Updated last-known-good data in {LAST_GOOD_DIR}")
     if warnings:
         print("Warnings:")
         for warning in warnings:

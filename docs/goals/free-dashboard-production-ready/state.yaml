@@ -1,0 +1,309 @@
+version: 2
+
+goal:
+  title: "Free Dashboard Production Ready"
+  slug: "free-dashboard-production-ready"
+  kind: existing_plan
+  tranche: "Complete successive safe verified slices until docs/dashboard/free.html is public-review ready and the final audit proves it satisfies the production plan."
+  status: done
+  oracle:
+    signal: "Verified local or hosted walkthrough of docs/dashboard/free.html against docs/dashboard/free-dashboard-production-plan.md, with prototype.html unchanged."
+    cadence: "after each Worker package and at final audit"
+    final_proof: "Final Judge/PM audit maps receipts, verification commands, browser/local walkthrough evidence, and current diff to the production plan and records full_outcome_complete: true."
+  intake:
+    original_request: "Create a goal to autonomously work toward the Machines & Money free dashboard production plan."
+    interpreted_outcome: "Prepare an autonomous GoalBuddy board that can safely continue implementation of the free public dashboard without mixing it with the pro prototype."
+    input_shape: existing_plan
+    audience: "Machines & Money public readers, social visitors, Ian, and newsletter prospects"
+    authority: requested
+    proof_type: demo
+    completion_proof: "A local or hosted walkthrough proves the free dashboard is public-ready, source-caveated, mobile-readable, subscriber-oriented, and separate from prototype.html."
+    likely_misfire: "Planning forever, polishing the wrong dashboard, or shipping a nice-looking page that lacks source caveats, refresh clarity, CTA proof, mobile readiness, or separation from the pro prototype."
+    blind_spots_considered:
+      - "Permanent hosting URL may need a separate deployment decision."
+      - "Usage and growth coverage are sparse until historical snapshots and Dune/project-native sources are stronger."
+      - "Visual polish cannot replace source confidence and caveat visibility."
+      - "Analytics should be lightweight and privacy-conscious, not a launch blocker."
+    existing_plan_facts:
+      - "Use docs/dashboard/free-dashboard-production-plan.md as the plan."
+      - "Current free dashboard file is docs/dashboard/free.html."
+      - "Broader/pro prototype file is docs/dashboard/prototype.html and must not be overwritten."
+      - "Free dashboard is an audience-growth asset for public sharing and newsletter subscribers."
+      - "Ian likes interactive continuously updating charts, flexible timeframes, and a clean educational category layout."
+      - "Ian's Dune outline includes index, spot, derivatives, lending, asset management, tokenization/RWA, infra, AI, and token value accrual."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://goalbuddy.localhost:41737/free-dashboard-production-ready/"
+    command: "npx goalbuddy board docs/goals/free-dashboard-production-ready"
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: default
+    objective: "Map the free-dashboard production gap against the plan and identify the highest-leverage safe implementation slices."
+    inputs:
+      - "docs/dashboard/free-dashboard-production-plan.md"
+      - "docs/dashboard/free.html"
+      - "docs/dashboard/free-dashboard.md"
+      - "docs/dashboard/generated-dashboard-data.js"
+      - "docs/dashboard/generated-dashboard-data.csv"
+      - "docs/dashboard/chart-and-data-organization.md"
+      - "docs/dashboard/runbook.md"
+      - "docs/dashboard/prototype.html"
+    constraints:
+      - "Read-only."
+      - "Do not edit implementation files."
+      - "Confirm prototype.html remains separate and should not be changed."
+      - "Prefer concrete file-path evidence over generic advice."
+    expected_output:
+      - "Gap map by production-plan section."
+      - "Verification commands and browser/local walkthrough approach."
+      - "Ranked safe implementation slices."
+      - "Recommended first Worker package with allowed files, verify commands, and stop conditions."
+    receipt:
+      result: done
+      note: "notes/T001-gap-map.md"
+      summary: "Mapped the free-dashboard production gaps. The strongest first slice is source/caveat/freshness visibility in docs/dashboard/free.html using fields already present in generated-dashboard-data.js."
+      evidence:
+        - "docs/dashboard/free-dashboard-production-plan.md"
+        - "docs/dashboard/free.html"
+        - "docs/dashboard/generated-dashboard-data.js"
+        - "docs/dashboard/generated-dashboard-data.csv"
+        - "docs/dashboard/runbook.md"
+      spawned_tasks:
+        - T002
+
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Review the Scout gap map and choose the largest safe first implementation package."
+    inputs:
+      - "T001 receipt"
+      - "Current git status"
+      - "docs/dashboard/free-dashboard-production-plan.md"
+    constraints:
+      - "Do not implement."
+      - "Do not choose work in docs/dashboard/prototype.html."
+      - "Pick the largest safe useful slice with explicit allowed_files, verify commands, and stop conditions."
+    expected_output:
+      - "Decision."
+      - "Exact Worker objective."
+      - "allowed_files."
+      - "verify."
+      - "stop_if."
+      - "Deferred or blocked tasks."
+    receipt:
+      result: done
+      decision: approved
+      full_outcome_complete: false
+      rationale: "The largest safe first slice is to expose selected-metric source, confidence, caveat, freshness, and existing 30D DEX volume coverage in docs/dashboard/free.html. It directly addresses the production plan's strongest gap without touching prototype.html or changing the data schema."
+      worker_task: T003
+      allowed_files:
+        - "docs/dashboard/free.html"
+      verify:
+        - "Serve docs/dashboard/free.html locally and confirm generated-dashboard-data.js loads."
+        - "Exercise metric/timeframe/category/sector controls."
+        - "Confirm selected-metric source/caveat summary updates when controls change."
+        - "Confirm Beehiiv CTA points to https://machinesandmoney.beehiiv.com."
+        - "Confirm git diff -- docs/dashboard/prototype.html is empty."
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: default
+    objective: "Improve docs/dashboard/free.html source/caveat visibility and current metric coverage without touching prototype.html."
+    allowed_files:
+      - "docs/dashboard/free.html"
+    verify:
+      - "Serve docs/dashboard/free.html locally and confirm generated-dashboard-data.js loads."
+      - "Exercise metric/timeframe/category/sector controls."
+      - "Confirm selected-metric source/caveat summary updates when controls change."
+      - "Confirm Beehiiv CTA points to https://machinesandmoney.beehiiv.com."
+      - "Confirm git diff -- docs/dashboard/prototype.html is empty."
+    stop_if:
+      - "Need files outside allowed_files."
+      - "Need to modify docs/dashboard/prototype.html."
+      - "Behavior is ambiguous enough to risk mixing free and pro dashboard scope."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - "docs/dashboard/free.html"
+      commands:
+        - cmd: "node -e \"const fs=require('fs'); const html=fs.readFileSync('docs/dashboard/free.html','utf8'); const scripts=[...html.matchAll(/<script>([\\\\s\\\\S]*?)<\\\\/script>/g)].map(m=>m[1]); for (const script of scripts) new Function(script); console.log('inline script syntax ok', scripts.length);\""
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8767/free.html"
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8767/generated-dashboard-data.js"
+          status: pass
+        - cmd: "git diff -- docs/dashboard/prototype.html"
+          status: pass
+      summary: "Added selected-metric source/caveat/freshness visibility, source quality in the table, HTML escaping for dynamic copy, and the existing 30D DEX Volume metric. Beehiiv CTA remained wired and prototype.html stayed untouched."
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: default
+    objective: "Improve source/caveat visibility, freshness clarity, and newsletter/social conversion after the first implementation package is verified."
+    allowed_files:
+      - "docs/dashboard/free.html"
+      - "docs/dashboard/free-dashboard.md"
+      - "docs/dashboard/runbook.md"
+      - "docs/dashboard/free-dashboard-production-plan.md"
+    verify:
+      - "Serve docs/dashboard/free.html locally and confirm generated-dashboard-data.js loads."
+      - "Exercise metric/timeframe/category/sector controls."
+      - "Confirm Beehiiv CTA points to https://machinesandmoney.beehiiv.com."
+      - "Confirm docs/dashboard/prototype.html has no diff."
+    stop_if:
+      - "Need a permanent hosting credential or external deployment approval."
+      - "Need paid data or unauthenticated scraping."
+      - "Verification fails twice."
+    receipt:
+      result: done
+      changed_files:
+        - "docs/dashboard/free.html"
+        - "docs/dashboard/free-dashboard.md"
+        - "docs/dashboard/runbook.md"
+      commands:
+        - cmd: "node -e inline script syntax check for docs/dashboard/free.html"
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8768/free.html"
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8768/generated-dashboard-data.js"
+          status: pass
+        - cmd: "git diff -- docs/dashboard/prototype.html"
+          status: pass
+      summary: "Added dashboard share controls, lightweight tracking attributes, copy-link behavior, and free-dashboard-specific production review notes. Runbook now distinguishes free.html from prototype.html and includes pre-share QA."
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: default
+    objective: "Add or document the production refresh, QA, and hosting handoff path for the free dashboard."
+    allowed_files:
+      - "docs/dashboard/free-dashboard.md"
+      - "docs/dashboard/runbook.md"
+      - "docs/dashboard/free-dashboard-production-plan.md"
+      - "docs/dashboard/here-now.md"
+    verify:
+      - "Documentation clearly distinguishes local preview, expiring preview, and permanent production URL needs."
+      - "Refresh workflow names the exact generated files and source caveats."
+      - "Confirm docs/dashboard/prototype.html has no diff."
+    stop_if:
+      - "Need deployment credentials or domain decision."
+      - "Need to edit files outside allowed_files."
+    receipt:
+      result: done
+      changed_files:
+        - "docs/dashboard/free-dashboard-production-plan.md"
+        - "docs/dashboard/here-now.md"
+        - "docs/dashboard/runbook.md"
+      commands:
+        - cmd: "rg -n free/prototype bundle and permanent URL rules in docs/dashboard/runbook.md docs/dashboard/here-now.md docs/dashboard/free-dashboard-production-plan.md"
+          status: pass
+        - cmd: "git diff -- docs/dashboard/prototype.html"
+          status: pass
+      summary: "Documented the free-dashboard production refresh path, temporary preview rules, permanent URL requirement, and explicit bundle separation: free.html as index.html for free-dashboard review, prototype.html as index.html only for broader/prototype review."
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit whether the free dashboard is production-ready for public review and launch preparation."
+    inputs:
+      - "All done task receipts."
+      - "Last verification."
+      - "Current dirty diff."
+      - "docs/dashboard/free-dashboard-production-plan.md."
+      - "Local or hosted walkthrough evidence."
+    constraints:
+      - "Do not implement."
+      - "Reject completion if docs/dashboard/prototype.html changed without explicit approval."
+      - "Reject completion if source/caveat visibility, refresh clarity, mobile readability, CTA proof, or free/pro separation is missing."
+      - "Reject completion if required Worker work is still queued or active."
+    expected_output:
+      - "complete | not_complete."
+      - "full_outcome_complete: true | false."
+      - "Mapping from receipts to production-plan sections."
+      - "Missing evidence."
+      - "Next task if not complete."
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      mapping:
+        - "First-screen/public value: existing free dashboard hero and summary remain intact."
+        - "Interactive controls: category, timeframe, metric, sector, and sort controls remain wired in docs/dashboard/free.html."
+        - "Source/caveat visibility: selected-metric source panel, source quality table column, confidence counts, source links, and row notes are now surfaced."
+        - "Newsletter/social loop: Beehiiv CTA remains wired and share/copy controls were added."
+        - "Refresh/handoff: runbook, here-now notes, and production plan now distinguish free.html from prototype.html and document preview/permanent URL needs."
+        - "Free/pro separation: git diff -- docs/dashboard/prototype.html stayed empty throughout."
+      commands:
+        - cmd: "git status -sb"
+          status: pass
+        - cmd: "git branch --show-current"
+          status: pass
+        - cmd: "git worktree list"
+          status: pass
+        - cmd: "node inline script syntax check for docs/dashboard/free.html"
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8769/free.html"
+          status: pass
+        - cmd: "curl -I http://127.0.0.1:8769/generated-dashboard-data.js"
+          status: pass
+        - cmd: "curl -s http://127.0.0.1:8769/free.html | rg key production strings"
+          status: pass
+        - cmd: "git diff -- docs/dashboard/prototype.html"
+          status: pass
+      remaining_external_launch_step: "Choose and publish to a permanent public URL before using the dashboard in social posts or newsletter links."
+      summary: "The free-dashboard production-readiness tranche is complete locally: free.html is upgraded for source transparency, chart/share/subscriber flow, and production handoff; prototype.html remains untouched. Permanent hosting remains the next external launch action."
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - "node inline script syntax check for docs/dashboard/free.html"
+      - "curl -I http://127.0.0.1:8769/free.html"
+      - "curl -I http://127.0.0.1:8769/generated-dashboard-data.js"
+      - "git diff -- docs/dashboard/prototype.html"

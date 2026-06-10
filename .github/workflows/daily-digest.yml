@@ -1,0 +1,41 @@
+name: daily-news-digest
+
+on:
+  schedule:
+    # 11:00 UTC = 7:00 AM US Eastern during daylight saving time.
+    - cron: "0 11 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  scan-and-deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run scanner against the live X list
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+        run: |
+          PYTHONPATH=src python3 -m news_insights_scanner \
+            --ingestion x_api \
+            --top-n 12 \
+            --output-dir "outputs/news-insights-scanner/$(date -u +%F)"
+
+      - name: Send digest to Google Doc
+        env:
+          DIGEST_WEBHOOK_URL: ${{ secrets.DIGEST_WEBHOOK_URL }}
+          DIGEST_WEBHOOK_TOKEN: ${{ secrets.DIGEST_WEBHOOK_TOKEN }}
+        run: |
+          python3 scripts/deliver_digest.py \
+            "outputs/news-insights-scanner/$(date -u +%F)/digest.md"
+
+      - name: Keep a copy of the run output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_id }}
+          path: outputs/news-insights-scanner/
+          retention-days: 30
