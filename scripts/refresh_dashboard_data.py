@@ -34,7 +34,7 @@ LAST_GOOD_CSV = LAST_GOOD_DIR / "generated-dashboard-data.csv"
 MIN_REFRESH_ROWS = int(os.environ.get("DASHBOARD_MIN_ROWS", "40"))
 MIN_LAST_GOOD_RATIO = float(os.environ.get("DASHBOARD_MIN_LAST_GOOD_RATIO", "0.5"))
 
-USER_AGENT = "machines-money-dashboard-refresh/0.1"
+USER_AGENT = "machines-money-dashboard-refresh/0.2"
 DUNE_API_BASE = "https://api.dune.com/api/v1"
 
 DUNE_DEX_ACTIVE_WALLETS_SQL = """
