@@ -1,0 +1,45 @@
+name: Refresh Free Dashboard Data
+
+on:
+  schedule:
+    - cron: "15 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Refresh dashboard data
+        env:
+          COINGECKO_DEMO_API_KEY: ${{ secrets.COINGECKO_DEMO_API_KEY }}
+          DUNE_API_KEY: ${{ secrets.DUNE_API_KEY }}
+          DASHBOARD_MIN_ROWS: "40"
+          DASHBOARD_MIN_LAST_GOOD_RATIO: "0.5"
+        run: python3 scripts/refresh_dashboard_data.py
+
+      - name: Build free dashboard static bundle
+        run: bash scripts/build_free_dashboard_bundle.sh
+
+      - name: Commit refreshed dashboard data
+        run: |
+          if git diff --quiet -- docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good; then
+            echo "No dashboard data changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good
+          git commit -m "Refresh free dashboard data"
+          git push
