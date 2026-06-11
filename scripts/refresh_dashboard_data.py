@@ -262,6 +262,8 @@ STABLECOIN_RECORDS = {
     "USDf": {"project": "Falcon", "record": "Falcon USDf", "sector": "Asset Management", "confidence": "medium", "notes": "Circulating stablecoin supply; reserve attestations need separate review."},
     "USDY": {"project": "Ondo", "record": "Ondo USDY", "sector": "Tokenization", "confidence": "high", "notes": "Tokenized yield-asset supply via DefiLlama stablecoins."},
     "USDS": {"project": "Sky", "record": "Sky USDS", "sector": "Asset Management", "confidence": "high", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
+    "syrupUSDC": {"project": "Maple", "record": "Maple syrupUSDC", "sector": "Tokenization", "confidence": "medium", "notes": "Syrup product supply via DefiLlama stablecoins; confirm listing coverage."},
+    "syrupUSDT": {"project": "Maple", "record": "Maple syrupUSDT", "sector": "Tokenization", "confidence": "medium", "notes": "Syrup product supply via DefiLlama stablecoins; confirm listing coverage."},
 }
 
 # Yield pools from yields.llama.fi matched by (project, symbol); current APY only.
@@ -281,11 +283,14 @@ BORROW_RECORDS = [
 ]
 
 
-def fetch_json(url: str, headers: dict[str, str] | None = None) -> Any:
+def fetch_json(url: str, headers: dict[str, str] | None = None, post: dict[str, Any] | None = None) -> Any:
     request_headers = {"User-Agent": USER_AGENT}
+    if post is not None:
+        request_headers["Content-Type"] = "application/json"
     if headers:
         request_headers.update(headers)
-    req = urllib.request.Request(url, headers=request_headers)
+    body = json.dumps(post).encode() if post is not None else None
+    req = urllib.request.Request(url, data=body, headers=request_headers)
     with urllib.request.urlopen(req, timeout=25) as response:
         return json.load(response)
 
@@ -615,17 +620,18 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 notes=f"{metric} from DefiLlama fees endpoint. Methodology should be reviewed before final citation.",
             )
             if metric in ("30D Fees", "30D Revenue"):
-                seven_day_metric = metric.replace("30D", "7D")
-                append_row(
-                    metric_rows,
-                    record=record,
-                    metric=seven_day_metric,
-                    value=data.get("total7d"),
-                    period="7D",
-                    source_name="DefiLlama fees",
-                    source=source_url(url_path),
-                    notes=f"{seven_day_metric} from the same DefiLlama fees response as the 30D figure.",
-                )
+                for window, field in (("7D", "total7d"), ("24H", "total24h")):
+                    window_metric = metric.replace("30D", window)
+                    append_row(
+                        metric_rows,
+                        record=record,
+                        metric=window_metric,
+                        value=data.get(field),
+                        period=window,
+                        source_name="DefiLlama fees",
+                        source=source_url(url_path),
+                        notes=f"{window_metric} from the same DefiLlama fees response as the 30D figure.",
+                    )
             time.sleep(0.05)
 
     try:
@@ -680,18 +686,21 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
         if not dex_record:
             warnings.append(f"30D DEX Volume missing for {record['record']}")
             continue
-        append_row(
-            metric_rows,
-            record=record,
-            metric="30D DEX Volume",
-            value=dex_record.get("total30d"),
-            period="30D",
-            source_name="DefiLlama DEX overview",
-            source=source_url(
-                "overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true"
-            ),
-            notes="DEX volume is source-comparable only for DEX records; lending and derivatives volume still need separate source discovery.",
-        )
+        for metric, field, period in (
+            ("30D DEX Volume", "total30d", "30D"),
+            ("7D DEX Volume", "total7d", "7D"),
+            ("24H DEX Volume", "total24h", "24H"),
+        ):
+            append_row(
+                metric_rows,
+                record=record,
+                metric=metric,
+                value=dex_record.get(field),
+                period=period,
+                source_name="DefiLlama DEX overview",
+                source=source_url("overview/dexs"),
+                notes="DEX volume is source-comparable only for DEX records.",
+            )
 
     # DEX volume market share from the same overview response (per spec: one call, no math).
     dex_category_total = sum(
@@ -761,6 +770,22 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 source=source_url("overview/derivatives"),
                 notes="Share of all DefiLlama-tracked perp volume over 30D.",
             )
+
+    try:
+        hl = fetch_json("https://api.hyperliquid.xyz/info", post={"type": "metaAndAssetCtxs"})
+        day_volume = sum(float(a.get("dayNtlVlm") or 0) for a in (hl[1] if isinstance(hl, list) and len(hl) > 1 else []))
+        append_row(
+            metric_rows,
+            record={"project": "Hyperliquid", "record": "Hyperliquid Perps", "sector": "Derivatives", "confidence": "high", "notes": "24H perp notional volume summed across assets from the official Hyperliquid info API (project-native)."},
+            metric="24H Perps Volume",
+            value=day_volume,
+            period="24H",
+            source_name="Hyperliquid info API",
+            source="https://api.hyperliquid.xyz/info",
+            notes="24H perp notional volume summed across assets from the official Hyperliquid info API (project-native).",
+        )
+    except Exception as exc:  # noqa: BLE001
+        warnings.append(f"Hyperliquid native perps volume unavailable: {exc.__class__.__name__}")
 
     for record in BORROW_RECORDS:
         url_path = f"protocol/{record['protocol_slug']}"
