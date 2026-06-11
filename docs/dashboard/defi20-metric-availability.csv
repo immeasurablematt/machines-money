@@ -1,0 +1,47 @@
+section,metric,status,est_cost_monthly,source,notes
+Index,24H/7D/30D fees + growth,live,$0,DefiLlama fees,Live; growth precomputed by DefiLlama
+Index,24H/7D/30D spot volume,live,$0,DefiLlama DEX overview,Live across all three windows
+Index,Derivatives volume + growth (aggregate),paywalled,$300,DefiLlama paid API,Confirmed HTTP 402; Hyperliquid 24H live via native API at $0
+Index,7D/30D active users + growth,dune,$0-25,Dune,Scheduled queries; unique-address dedup in SQL
+Index,TVL + 7D growth,live,$0,DefiLlama protocols,Live
+Index,30D TVL growth,free_buildable,$0,Own snapshots,Auto-unlocks ~2026-07-10 when snapshot history reaches 30 days
+Index,Buybacks 30D/total (tokens + value),dune,$5-25,Dune buyback wallets,Uneven coverage; holders-revenue proxy already live at $0
+Index,Token performance 24H/7D/30D/1Y,live,$0,CoinGecko,Live
+Index,Token performance YTD,free_buildable,$0,CoinGecko history,~21 extra calls/day inside free quota
+Spot,Daily + cumulative fee charts,free_buildable,$0,DefiLlama totalDataChart,Data free; front-end chart work
+Spot,Fee market share,free_buildable,$0,DefiLlama fees overview,Free
+Spot,Daily + cumulative volume charts,free_buildable,$0,DefiLlama DEX summary,Free per-protocol history
+Spot,Volume market share,live,$0,DefiLlama DEX overview,30D share live
+Spot,Daily/total active users,dune,$0-25,Dune dex.trades,7D active wallets live for 3 DEXs; full coverage needs Dune phase
+Spot,1D/7D/30D fee + volume tables,live,$0,DefiLlama,Live
+Derivatives,Daily + cumulative fee charts,free_buildable,$0,DefiLlama totalDataChart,Fees are free even where volume is paywalled
+Derivatives,Fee market share,free_buildable,$0,DefiLlama fees overview,Free
+Derivatives,Daily + cumulative volume charts,paywalled,$300,DefiLlama paid API,Aggregate paywalled; per-protocol daily via Hyperliquid native API at $0
+Derivatives,Volume market share,paywalled,$300,DefiLlama paid API,No free denominator for total perps volume
+Derivatives,24H Perps Volume (Hyperliquid),live,$0,Hyperliquid info API,Live; project-native
+Derivatives,Daily/total active users,dune,$0-25,Dune,Dune phase
+Lending,TVL chart/current/growth,live,$0,DefiLlama,Live
+Lending,Daily/cumulative fees + share,free_buildable,$0,DefiLlama,Free fee history; chart work
+Lending,Borrow volume (outstanding),live,$0,DefiLlama borrowed TVL,Live; stock definition per decision
+Lending,Daily new-borrow flow + share,dune,$0-25,Dune borrow events,Dune phase
+Asset Management,EtherFi card users + spend,dune,$0-25,Dune (official ether.fi Cash dashboard),Fork + schedule
+Asset Management,EtherFi eETH yield paid,dune,$0-25,Dune,Dune phase
+Asset Management,Ethena USDe/sUSDe holders,dune,$0-25,Dune,No free REST source; Etherscan holder counts paywalled
+Asset Management,sUSDe yield (current),live,$0,DefiLlama yields,Live
+Asset Management,sUSDe yield history,free_buildable,$0,DefiLlama yields chart,One extra call
+Asset Management,sUSDe yield paid (cumulative),dune,$0-25,Dune,Dune phase
+Asset Management,Falcon USDf mcap + vault deposits,live,$0,DefiLlama,Live
+Tokenization/RWA,Ondo tokenized mcap by category,no_clean_source,quote,rwa.xyz,No self-serve API; email data@rwa.xyz; headline numbers live at $0
+Tokenization/RWA,Ondo stock volume + holders,dune,$0-25,Dune (Ondo GM dashboards),Dune phase
+Tokenization/RWA,Centrifuge by category + holders,free_buildable,$0-25,Centrifuge GraphQL + Dune,Native GraphQL verified live; holders via Dune
+Tokenization/RWA,Maple syrupUSDC/syrupUSDT mcaps,live,$0,DefiLlama stablecoins,Live
+Tokenization/RWA,Maple syrup yield paid,dune,$0-25,Dune or Maple GraphQL,Dune phase
+Infra,LayerZero messages/volume/users,dune,$0-25,Dune decoded tables,Scan API is message-level only
+Infra,Canton burns + active users,no_clean_source,build days,Splice Scan API,Free API but heavy custom parsing; The Tie has no API; recommend defer
+AI,Virtuals daily volume/users/fees,dune,$0-25,Dune (official Virtuals dashboards),Dune phase
+AI,Virtuals total aGDP,dune,$0-25,Dune (hashed_official ACP),Dune phase
+AI,Virtuals daily new agents/total agents,dune,$0-25,Dune launchpad dashboard,api.virtuals.io undocumented fallback
+AI,Virtuals funds raised for builders,manual,manual hours,Announcements,Not dashboard data
+Value Accrual,Holders revenue + revenue/fees split,live,$0,DefiLlama fees,Live
+Value Accrual,Buyback specifics,dune,$5-25,Dune,Same queries as Index buybacks
+Value Accrual,P/F and P/S ratios,free_buildable,$0,Computed,From live mcap + fees/revenue
