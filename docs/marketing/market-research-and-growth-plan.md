@@ -18,10 +18,8 @@ The marketable asset inventory today (this is what the prior draft missed):
 | **Welcome landing page** | Live (`/index.html`), embedded Beehiiv signup, live DeFi20 TVL / share-of-DeFi / %-of-Bitcoin chart | Conversion page; headline: "Know Where the Money Is Moving Before the Crowd Does" |
 | **DeFi20 Index** | 20 confirmed projects (Uniswap, Aave, Pendle, Hyperliquid, Ethena, Sky, Ondo, Aerodrome, Morpho, Jupiter, Curve, Kamino, Euler, Centrifuge, Maple, EtherFi, Falcon, Canton, LayerZero, Virtuals), 308 data rows / 22 metric families | Proprietary editorial IP; the recurring hook for charts and social posts |
 | **Pro dashboard** (value-accrual scorecard, project deep pages, growth & share trends) | Roadmap only; teaser cards live on welcome page | Future paid tier; snapshot history is accruing daily now to enable it |
-| **News & Insights Scanner** | Paused 2026-06-10 | Future content-velocity tool, not a current channel |
-| **Research Dossier methodology** | Documented standard, not yet automated | Quality moat; what makes the content trustworthy |
 
-### Content formats (corrected)
+### Content formats
 
 - **DeFi In Five** — weekly context on important crypto/DeFi developments
 - **Mid-Week Market Check** — market observations, DeFi20 tracking, yield opportunities
@@ -29,9 +27,7 @@ The marketable asset inventory today (this is what the prior draft missed):
 - **Truth Within Trends** — data-driven market/macro/geopolitical analysis
 - **Building The Future** — accessible explanations of why DeFi matters
 
-(The prior draft's "Yield Spotlight" series does not exist; cadence is multiple recurring formats, not a fixed "three weekly series".)
-
-### Business sequencing (non-negotiable, from the repo)
+### Business sequencing
 
 **Grow the free subscriber base first. Introduce paid only once the audience is large and engaged enough.** The Pro dashboard roadmap has an explicit gate: free dashboard launched and growing, 30+ days of snapshot history, and Ian's confirmation of which pro sections matter. Any "launch paid tier" objective must respect this sequencing — see funnel math in §7.
 
