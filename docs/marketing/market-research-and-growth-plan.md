@@ -213,3 +213,40 @@ KPI tree:
 - **Brand split risk:** Machines & Money (retail) vs. A1 Research (institutional) need consistent but distinct voices; don't let institutional jargon leak into retail surfaces or vice versa.
 - **Sparse-data honesty:** active-wallet coverage is 3 DEX records; never headline it in marketing until the Dune phase expands coverage (repo constraint).
 - Open question for Ian: does John's DefiLlama plan include **API** access ($300/mo product)? It would unlock paywalled derivatives/users endpoints and change the §10 supply-risk picture.
+
+- Here's my recommendation, grounded in what you already run (GitHub Actions in this repo, Beehiiv, n8n, Slack) and the hard requirement of human edits before anything ships.
+
+## Recommended architecture: Content Repurposing Automation
+
+**Beehiiv → Claude API → Typefully drafts → human edits → scheduled publish.** Four stages, only one of which is manual:
+
+1. **Trigger — new issue detected.** Beehiiv exposes every publication via RSS and an API. A scheduled job (GitHub Action in this repo, same pattern as your daily dashboard refresh, or an n8n cron if you'd rather keep it there) polls for new posts three times a week and pulls the full article content when one appears.
+
+2. **Generation — per-account drafts via the Claude API.** One call per account, each with its own voice guide:
+   - **Ian personal:** practitioner first-person, "here's what I'm actually doing with this," opinionated.
+   - **@machinesmoneyA1:** chart-led, data hooks, links back to the dashboard/welcome page (with the UTM tags from the growth plan).
+   - **A1 Research:** institutional framing, implications for allocators.
+   
+   Per article, generate something like one thread (the article's core argument) plus 3–5 standalone tweets per account — that's a week of pipeline from three articles. The voice guides live as markdown files in this repo so you and Ian can edit the prompts without touching code.
+
+3. **Review — Typefully as the approval surface.** This is the piece I'd buy rather than build. Typefully has an API for programmatically creating drafts, supports multiple connected X accounts, and its whole product is a clean editor for reviewing/editing/reordering threads before scheduling. The pipeline drops drafts into the right account's queue and pings you in Slack with links. Ian edits or kills drafts in a UI built for exactly that, then hits schedule. Hypefury is the runner-up; Buffer/Publer work too but are weaker for threads.
+
+4. **Publishing — Typefully handles it.** This neatly sidesteps the X API problem: posting directly to three accounts yourself means managing OAuth for each and X's API pricing (the free write tier is very limited; paid starts around $200/mo). A scheduler absorbs all of that for roughly $30–50/mo on a multi-account plan — verify current pricing, it shifts.
+
+## Why this split
+
+- **The only manual step is the one you want manual.** Everything up to "drafts waiting in your queue" is hands-off; nothing publishes without a human clicking schedule.
+- **It reuses your existing rails.** Scheduled GitHub Actions with encrypted secrets is exactly how the dashboard refresh already works, and the paused news-scanner code has reusable patterns (content triage, Slack-style delivery).
+- **Don't build the review UI.** A homegrown approval flow (Notion database + n8n + X API) is doable but you'd spend your effort recreating a worse Typefully, plus pay for X API access anyway.
+
+## Alternative if you want zero code
+
+n8n end-to-end: RSS trigger → Claude node → Typefully (or Buffer) node → Slack notification. Faster to stand up, but the prompts/voice guides end up buried in n8n nodes instead of version-controlled in this repo where agents can iterate on them, and you lose the audit trail of what changed. Given this repo is already your automation home, I'd build it here.
+
+## One quality lever worth adding
+
+Have the generation step also pull the latest dashboard data (`generated-dashboard-data.csv` is right here in the repo) so tweets can cite live DeFi20 numbers, not just recycle the article — that's the differentiated, chart-led voice from the growth plan rather than generic article summarization.
+
+**Costs:** Typefully multi-account plan (~$30–50/mo ballpark) + Claude API (pennies per article at this volume) + $0 for the GitHub Action. No X API subscription needed.
+
+If you want, I can build stage 1–3 in this repo now: the workflow file, the repurposing script with per-account voice-guide markdown files, and Typefully/Slack wiring behind repo secrets — you'd just need to create the Typefully account and connect the three X handles.
