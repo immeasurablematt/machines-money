@@ -665,12 +665,6 @@
       background: rgba(80, 210, 193, 0.08);
     }
 
-    #project-sources .source-row { align-items: start; }
-    #project-sources .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; line-height: 1.45; font-size: 11px; color: var(--muted); }
-    #project-sources .source-row span:not(.quality-chip) a { color: var(--mint-bright); font-weight: 500; }
-    #project-sources .source-row > div > a { display: block; margin-bottom: 3px; font-size: 13px; }
-    #methodology .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; }
-
     .quality-chip.medium {
       color: var(--orange);
       border-color: rgba(255, 185, 109, 0.24);
@@ -747,6 +741,11 @@
       color: var(--mint-bright);
     }
 
+    th[data-sortable] { cursor: pointer; user-select: none; }
+    th[data-sortable]:hover { color: var(--ink); }
+    th[data-sortable].sorted-desc::after { content: " ▼"; color: var(--mint-bright); }
+    th[data-sortable].sorted-asc::after { content: " ▲"; color: var(--mint-bright); }
+
     .empty {
       padding: 38px 18px;
       text-align: center;
@@ -771,6 +770,10 @@
       .stats, .source-strip, .category-map { grid-template-columns: 1fr; }
       .tabs button, .timeframes button { flex: 1 1 auto; }
       svg { height: 480px; }
+      #leaderboard table { min-width: 0; }
+      #leaderboard th:nth-child(3), #leaderboard td:nth-child(3),
+      #leaderboard th:nth-child(8), #leaderboard td:nth-child(8) { display: none; }
+      th, td { padding: 8px 5px; font-size: 12px; }
     }
   </style>
 </head>
@@ -988,13 +991,13 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Project</th>
+            <th data-sortable="name">Project</th>
             <th>Sector</th>
-            <th>Market Cap</th>
-            <th>TVL</th>
-            <th>30D Fees</th>
-            <th>30D Revenue</th>
-            <th>7D Active Wallets</th>
+            <th data-sortable="marketCap">Market Cap</th>
+            <th data-sortable="tvl">TVL</th>
+            <th data-sortable="fees">30D Fees</th>
+            <th data-sortable="revenue">30D Revenue</th>
+            <th data-sortable="wallets">7D Active Wallets</th>
             <th>Confidence</th>
           </tr>
         </thead>
@@ -1039,7 +1042,7 @@
       <div style="padding:14px;display:grid;gap:18px;">
 
         <div>
-          <h3 style="margin:0 0 10px;font-size:11px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;letter-spacing:0.04em;">Spot</h3>
+          <h3 style="margin:0 0 10px;font-size:14px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Spot</h3>
           <div class="source-list">
             <div class="source-row"><div><a href="https://defillama.com/protocol/uniswap" target="_blank" rel="noopener">Uniswap</a><span>DefiLlama — fees, volume, active users; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a>; <a href="https://defillama.com/holders-revenue" target="_blank" rel="noopener">holders revenue</a></span></div><span class="quality-chip high">high</span></div>
             <div class="source-row"><div><a href="https://defillama.com/protocol/curve-finance" target="_blank" rel="noopener">Curve</a><span>DefiLlama — fees, volume; <a href="https://tokenterminal.com/explorer/projects/curve/metrics/user-dau" target="_blank" rel="noopener">active users (Token Terminal)</a>; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a></span></div><span class="quality-chip high">high</span></div>
@@ -1193,6 +1196,7 @@
 
     let activeMetric = "tvl";
     let activeFrame = "current";
+    let tableSort = { col: null, dir: "desc" };
 
     function money(value) {
       if (!Number.isFinite(value)) return "-";
@@ -1239,29 +1243,6 @@
     function sourceLabel(row) {
       const relationship = row.source_relationship ? row.source_relationship.replace(/_/g, " ") : "source";
       return `${row.source_name || "Unknown source"} / ${relationship}`;
-    }
-
-    function humanUrl(apiUrl) {
-      if (!apiUrl || apiUrl === "#") return "#";
-      try {
-        const u = new URL(apiUrl);
-        if (u.hostname === "api.llama.fi") {
-          const feeSlug = u.pathname.match(/^\/summary\/fees\/([^/?]+)/);
-          if (feeSlug) return `https://defillama.com/protocol/${feeSlug[1]}`;
-          const protocolSlug = u.pathname.match(/^\/protocol\/([^/?]+)/);
-          if (protocolSlug) return `https://defillama.com/protocol/${protocolSlug[1]}`;
-          if (u.pathname.startsWith("/overview/dexs")) return "https://defillama.com/dexs";
-          if (u.pathname.startsWith("/overview/fees")) return "https://defillama.com/fees";
-          if (u.pathname.startsWith("/overview/derivatives") || u.pathname.startsWith("/overview/perps")) return "https://defillama.com/perps";
-          if (u.pathname.startsWith("/overview/options")) return "https://defillama.com/options";
-          if (u.pathname.startsWith("/stablecoins")) return "https://defillama.com/stablecoins";
-          if (u.pathname.startsWith("/yields")) return "https://defillama.com/yields";
-          return "https://defillama.com";
-        }
-        if (u.hostname === "api.coingecko.com" || u.hostname === "pro-api.coingecko.com") return "https://www.coingecko.com";
-        if (u.hostname.includes("hyperliquid")) return "https://hl.eco/";
-        return apiUrl;
-      } catch { return "#"; }
     }
 
     function qualitySummary(project) {
@@ -1647,23 +1628,47 @@
         stories.push({
           badge: "Lead signal",
           title: `${top.project} leads ${config.label}`,
-          body: `Start here when deciding what deserves deeper research.`
+          body: `${formatValue(top.value, config.unit)} — start here when deciding what deserves deeper research.`
         });
       }
       if (top && second) {
         stories.push({
           badge: "Comparison",
           title: `${top.project} vs ${second.project}`,
-          body: `${formatValue(top.value - second.value, config.unit)} separates the leader from the next closest project.`
+          body: `${formatValue(top.value - second.value, config.unit)} separates the leader from the second-place project.`
         });
       }
+
+      const allProjects = filteredProjects();
+      const efficient = [...allProjects]
+        .filter(p => p.fees > 0 && p.tvl > 0)
+        .sort((a, b) => (b.fees / b.tvl) - (a.fees / a.tvl))[0];
+      if (efficient && efficient.fees / efficient.tvl > 0.05 && config.id !== "wallets") {
+        stories.push({
+          badge: "Capital efficiency",
+          title: `${efficient.project} earns the most per $ locked`,
+          body: `${Math.round(efficient.fees / efficient.tvl * 100)}% 30D fees-to-TVL — high capital utilisation relative to peers.`
+        });
+      }
+
+      const highMargin = [...allProjects]
+        .filter(p => p.fees > 0 && p.revenue > 0)
+        .sort((a, b) => (b.revenue / b.fees) - (a.revenue / a.fees))[0];
+      if (highMargin && config.id === "revenue" && stories.length < 3) {
+        stories.push({
+          badge: "Value capture",
+          title: `${highMargin.project} keeps the most of its fees`,
+          body: `${Math.round(highMargin.revenue / highMargin.fees * 100)}% revenue-to-fees ratio — strongest protocol margin in the set.`
+        });
+      }
+
       if (config.id === "wallets") {
         stories.push({
           badge: "Usage caveat",
           title: "Usage data is still narrow",
-          body: "Use wallet rows to find leads, then verify them in the source."
+          body: "Use wallet rows to find leads, then verify them in the source before drawing conclusions."
         });
-      } else if (lagging.length) {
+      } else if (stories.length < 3 && lagging.length) {
         stories.push({
           badge: "Missing signal",
           title: `${lagging.map(row => row.project).join(" and ")} need more context`,
@@ -1714,7 +1719,7 @@
       const caveatText = caveats.length ? shortLabel(caveats.join(" "), 150) : "Confirm the source methodology before using this signal.";
 
       sourceSummaryTitle.textContent = `${rows.length} ${config.label} rows / ${confidenceText || "confidence unknown"}`;
-      sourceSummaryCopy.textContent = `${periodText}. ${relationshipText}. ${caveatText}`;
+      sourceSummaryCopy.textContent = `${periodText}. ${relationshipText}. ${caveatText}${warningCount ? ` Caveats: ${meta.warnings.join(" ")}` : ""}`;
       sourceList.innerHTML = sources.slice(0, 4).map(source => {
         const sourceRows = rows.filter(row => row.source_name === source);
         const first = sourceRows[0];
@@ -1723,7 +1728,7 @@
         return `
           <div class="source-row">
             <div>
-              <a href="${escapeHtml(humanUrl(first.source))}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>
+              <a href="${escapeHtml(first.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>
               <span>${escapeHtml(sourceLabel(first))} / ${sourceRows.length} rows</span>
             </div>
             <span class="quality-chip ${escapeHtml(topConfidence)}">${escapeHtml(topConfidence)}</span>
@@ -1761,7 +1766,15 @@
     }
 
     function renderTable() {
-      const data = filteredProjects();
+      let data = filteredProjects();
+      if (tableSort.col) {
+        data = [...data].sort((a, b) => {
+          const av = tableSort.col === "name" ? a.project : (a[tableSort.col] || 0);
+          const bv = tableSort.col === "name" ? b.project : (b[tableSort.col] || 0);
+          if (typeof av === "string") return tableSort.dir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+          return tableSort.dir === "asc" ? av - bv : bv - av;
+        });
+      }
       if (!data.length) {
         projectRows.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px 16px;">No projects match — try clearing the search or changing the filter.</td></tr>`;
         return;
@@ -1769,7 +1782,7 @@
       projectRows.innerHTML = data.map((project, index) => {
         const tokenOnly = !project.tvl && !project.fees && !project.revenue;
         return `
-        <tr${tokenOnly ? ' class="token-only"' : ""}>
+        <tr${tokenOnly ? ' class="token-only"' : ""} data-project="${escapeHtml(project.project)}" style="cursor:pointer;">
           <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
           <td>${escapeHtml(project.project)}</td>
           <td>${escapeHtml(project.sector)}</td>
@@ -1783,6 +1796,16 @@
           <td>${escapeHtml(qualitySummary(project))}</td>
         </tr>`;
       }).join("");
+      projectRows.querySelectorAll("tr[data-project]").forEach(row => {
+        row.addEventListener("click", () => {
+          const name = row.dataset.project;
+          projectFilter.value = name;
+          track("table_row_click", name);
+          render();
+          const el = document.getElementById("project-detail");
+          if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
+        });
+      });
     }
 
     function renderProjectDetail() {
@@ -1800,9 +1823,10 @@
       }
 
       const project = projects.find(item => item.project === selectedProject);
-      const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
-      const metricIdx = m => { const i = metricOrder.indexOf(m); return i === -1 ? metricOrder.length : i; };
-      const records = (project?.records || []).slice().sort((a, b) => metricIdx(a.metric) - metricIdx(b.metric) || b.value - a.value);
+      const records = (project?.records || []).slice().sort((a, b) => {
+        const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
+        return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
+      });
       const productRows = records.filter(row => !(row.notes || "").includes("Token-level market metric"));
       projectDetailTitle.textContent = selectedProject;
       projectDetailSubtitle.textContent = project?.sector || "Project detail";
@@ -1815,10 +1839,18 @@
           <td>${escapeHtml(row.metric)}</td>
           <td class="num">${formatValue(row.value, row.unit || "USD")}</td>
           <td>${escapeHtml(row.period)}</td>
-          <td><a href="${escapeHtml(humanUrl(row.source))}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
+          <td><a href="${escapeHtml(row.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
           <td>${escapeHtml(row.confidence || "unknown")}</td>
         </tr>
       `).join("");
+    }
+
+    function renderTableHeader() {
+      document.querySelectorAll("#leaderboard th[data-sortable]").forEach(th => {
+        const key = th.dataset.sortable;
+        th.classList.remove("sorted-asc", "sorted-desc");
+        if (tableSort.col === key) th.classList.add(tableSort.dir === "asc" ? "sorted-asc" : "sorted-desc");
+      });
     }
 
     function render() {
@@ -1832,11 +1864,25 @@
       renderSourceDetail();
       updateShareLinks();
       renderTable();
+      renderTableHeader();
       renderProjectDetail();
     }
 
     renderFilters();
     render();
+    document.querySelectorAll("#leaderboard th[data-sortable]").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.sortable;
+        if (tableSort.col === key) {
+          tableSort.dir = tableSort.dir === "desc" ? "asc" : "desc";
+        } else {
+          tableSort.col = key;
+          tableSort.dir = "desc";
+        }
+        track("table_sort", key);
+        render();
+      });
+    });
     // Ian's rule: the featured metric follows the vertical. AI/Infra fall back
     // to fees until agent/message stats land via Dune (Phase 2).
     const FEATURED_METRIC_BY_SECTOR = {
@@ -1896,7 +1942,11 @@
       track("project_search", document.getElementById("projectSearch").value);
       render();
     });
-    window.addEventListener("resize", renderChart);
+    let _resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(_resizeTimer);
+      _resizeTimer = setTimeout(renderChart, 150);
+    });
   </script>
 </body>
 </html>
