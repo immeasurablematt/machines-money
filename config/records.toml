@@ -273,10 +273,9 @@ notes = "Centrifuge RWA tokenization TVL and fees; asset-class detail needs RWA.
 project = "LayerZero"
 record = "LayerZero V2"
 sector = "Infra"
-protocol_slug = "layerzero"
 fee_slug = "layerzero"
 confidence = "medium"
-notes = "Cross-chain messaging fees (ExecutorFeePaid + DVNFeePaid events across 40+ chains); 0% protocol take rate — all fees pass to DVNs and Executors. Bridge volume available separately via DefiLlama bridges endpoint."
+notes = "Cross-chain messaging fees (ExecutorFeePaid + DVNFeePaid events across 40+ chains); 0% protocol take rate — all fees pass to DVNs and Executors. No TVL (messaging protocol, no custody). Bridge volume tracked separately via DefiLlama bridges endpoint; >$166B cumulative."
 
 [[records]]
 project = "Virtuals"
