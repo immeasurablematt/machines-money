@@ -34,6 +34,7 @@
       --shadow: 0 16px 42px rgba(0, 0, 0, 0.44), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
     }
 
+    html { scroll-behavior: smooth; }
     * { box-sizing: border-box; }
 
     body {
@@ -357,7 +358,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto auto auto;
       gap: 10px;
-      align-items: center;
+      align-items: start;
       margin: 18px 0 14px;
     }
 
@@ -413,6 +414,21 @@
       color: #ffffff;
     }
 
+    .search-input {
+      display: block;
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      padding: 7px 10px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .search-input::placeholder { color: var(--dim); }
+    .search-input:focus { border-color: var(--line-strong); }
+
     .dashboard {
       display: grid;
       grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
@@ -441,6 +457,9 @@
       text-align: right;
       font-size: 12px;
     }
+    #sectorLegend { display: flex; flex-wrap: wrap; gap: 10px; grid-column: 1 / -1; margin-top: 4px; }
+    .legend-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+    .legend-chip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
     .chart-wrap {
       padding: 16px;
@@ -560,6 +579,8 @@
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
+    tr.token-only td { opacity: 0.5; }
+    td.token-only-note { font-size: 11px; color: var(--dim); font-style: italic; }
 
     .source-strip {
       display: grid;
@@ -886,6 +907,7 @@
     <section id="dashboard">
       <div class="toolbar">
         <div>
+          <input type="search" id="projectSearch" class="search-input" placeholder="Search projects…" aria-label="Search projects">
           <div class="tabs" id="metricTabs" aria-label="Chart metric selector"></div>
           <div class="timeframes" id="timeframeTabs" aria-label="Available timeframe selector"></div>
         </div>
@@ -908,6 +930,7 @@
           <div class="panel-header">
             <h2 id="chartTitle">Fundamentals Leaderboard</h2>
             <span id="chartSubtitle">Pick a signal to compare</span>
+            <div id="sectorLegend"></div>
           </div>
           <div class="chart-wrap">
             <svg id="chart" role="img" aria-label="Fundamentals bar chart"></svg>
@@ -923,6 +946,11 @@
         </aside>
       </div>
     </section>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:14px 0;padding:12px 16px;border:1px solid var(--line-strong);border-radius:8px;background:rgba(80,210,193,0.06);">
+      <p style="margin:0;color:var(--muted);font-size:13px;">Get weekly insight on what these signals mean for your research.</p>
+      <a class="cta" href="https://machinesandmoney.beehiiv.com" data-track="subscribe_midpage" style="flex-shrink:0;">Subscribe free →</a>
+    </div>
 
     <section id="project-detail" class="panel project-detail">
       <div class="panel-header">
@@ -959,6 +987,7 @@
       <table>
         <thead>
           <tr>
+            <th>#</th>
             <th>Project</th>
             <th>Sector</th>
             <th>Market Cap</th>
@@ -975,7 +1004,7 @@
 
     <section id="methodology" class="panel methodology">
       <div class="panel-header">
-        <h2>Read This Carefully</h2>
+        <h2>Data Methodology</h2>
         <span id="methodologySubtitle">What the data can and cannot tell you</span>
       </div>
       <div class="methodology-body">
@@ -1307,13 +1336,21 @@
 
     const projects = aggregateByProject();
 
+    if (!rawRows.length) {
+      document.getElementById("heroTakeaway").textContent = "Data unavailable";
+      document.getElementById("heroCopy").textContent = "The dashboard data couldn't load. Try refreshing the page — data is updated daily and should be back shortly.";
+      document.getElementById("refreshStatus").textContent = "Data unavailable — try refreshing";
+    }
+
     function filteredProjects() {
       const selectedSector = sectorFilter.value;
       const selectedProject = projectFilter.value;
+      const searchTerm = (document.getElementById("projectSearch")?.value || "").toLowerCase().trim();
       const filtered = projects.filter(project => {
         const sectorMatch = selectedSector === "all" || project.sector.includes(selectedSector);
         const projectMatch = selectedProject === "all" || project.project === selectedProject;
-        return sectorMatch && projectMatch;
+        const searchMatch = !searchTerm || project.project.toLowerCase().includes(searchTerm);
+        return sectorMatch && projectMatch && searchMatch;
       });
       const key = sortMode.value === "metric" ? activeMetricConfig().id : sortMode.value;
       return filtered.sort((a, b) => {
@@ -1372,6 +1409,33 @@
       });
     }
 
+    function updateCategoryCardStats() {
+      const sectorTotals = {};
+      let totalMcap = 0, totalRevenue = 0;
+      projects.forEach(p => {
+        if (!sectorTotals[p.sector]) sectorTotals[p.sector] = { fees: 0, tvl: 0 };
+        sectorTotals[p.sector].fees += p.fees || 0;
+        sectorTotals[p.sector].tvl += p.tvl || 0;
+        totalMcap += p.marketCap || 0;
+        totalRevenue += p.revenue || 0;
+      });
+      categoryCards.forEach(card => {
+        const em = card.querySelector("em");
+        if (!em) return;
+        const sector = card.dataset.sector;
+        const metric = card.dataset.metric;
+        if (sector && sectorTotals[sector]) {
+          const { fees, tvl } = sectorTotals[sector];
+          if (fees > 0) em.textContent = `${money(fees)} 30D fees`;
+          else if (tvl > 0) em.textContent = `${money(tvl)} TVL`;
+        } else if (metric === "marketCap" && totalMcap > 0) {
+          em.textContent = `${money(totalMcap)} total mcap`;
+        } else if (metric === "revenue" && totalRevenue > 0) {
+          em.textContent = `${money(totalRevenue)} 30D revenue`;
+        }
+      });
+    }
+
     function renderFilters() {
       [...new Set(projects.map(project => project.sector))].sort().forEach(sector => {
         const option = document.createElement("option");
@@ -1380,6 +1444,7 @@
         sectorFilter.appendChild(option);
       });
       renderProjectFilter();
+      updateCategoryCardStats();
     }
 
     function renderProjectFilter() {
@@ -1399,6 +1464,19 @@
       projectFilter.value = eligibleProjects.includes(currentProject) ? currentProject : "all";
     }
 
+    function relativeDate(dateStr) {
+      if (!dateStr) return "recently";
+      const target = String(dateStr).slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}/.test(target)) return dateStr;
+      const today = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (target === today) return "today";
+      if (target === yesterday) return "yesterday";
+      const diffDays = Math.round((new Date(today) - new Date(target)) / 86400000);
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return target;
+    }
+
     function renderStats() {
       const totalMarketCap = projects.reduce((sum, row) => sum + (row.marketCap || 0), 0);
       const totalTvl = projects.reduce((sum, row) => sum + (row.tvl || 0), 0);
@@ -1410,14 +1488,22 @@
       document.getElementById("projectCount").textContent = projects.length.toLocaleString();
       document.getElementById("totalMarketCap").textContent = money(totalMarketCap);
       document.getElementById("totalTvl").textContent = money(totalTvl);
-      document.getElementById("snapshotDate").textContent = meta.generated_at || rawRows[0]?.pulled_date || "-";
+      document.getElementById("snapshotDate").textContent = relativeDate(meta.generated_at || rawRows[0]?.pulled_date);
       document.getElementById("coverageNote").textContent = `${usageCount}/${projects.length} have active-wallet rows`;
+      const freshLabel = relativeDate(meta.generated_at || rawRows[0]?.pulled_date);
       document.getElementById("refreshStatus").textContent =
-        `${refreshStatus === "fresh" ? "Updated" : "Using saved data"} ${meta.generated_at || rawRows[0]?.pulled_date || "recently"} / ${rowCount} signals / ${warningCount ? `${warningCount} caveats` : "sources checked"}`;
-      document.getElementById("heroTakeaway").textContent = topTvl ? `${topTvl.project} leads TVL` : "Data loading";
-      document.getElementById("heroCopy").textContent = topTvl
-        ? `${topTvl.project} currently has the deepest DeFi20 product footprint. The next question is whether usage and fees support it.`
-        : "Data is still loading. Check back shortly for the latest DeFi20 signal set.";
+        `${refreshStatus === "fresh" ? "Updated" : "Saved data from"} ${freshLabel} · ${rowCount} signals · ${warningCount ? `${warningCount} caveats` : "sources checked"}`;
+      const topFees = [...projects].sort((a, b) => (b.fees || 0) - (a.fees || 0))[0];
+      if (topFees && topTvl && topFees.project !== topTvl.project && topFees.fees > 0) {
+        document.getElementById("heroTakeaway").textContent = `${topFees.project} leads 30D fees`;
+        document.getElementById("heroCopy").textContent = `${topFees.project} generated ${money(topFees.fees)} in fees last month — more than any other tracked protocol. Compare that against TVL leader ${topTvl.project} to check capital efficiency.`;
+      } else if (topTvl) {
+        document.getElementById("heroTakeaway").textContent = `${topTvl.project} leads TVL`;
+        document.getElementById("heroCopy").textContent = `${topTvl.project} currently has the deepest DeFi20 product footprint with ${money(topTvl.tvl)}. The next question is whether fees and usage confirm the scale.`;
+      } else {
+        document.getElementById("heroTakeaway").textContent = "Data loading";
+        document.getElementById("heroCopy").textContent = "Finding the clearest signal across capital, usage, fees, and token activity.";
+      }
     }
 
     function renderChart() {
@@ -1429,6 +1515,20 @@
 
       document.getElementById("chartTitle").textContent = config.title;
       document.getElementById("chartSubtitle").textContent = config.subtitle;
+      const sectorDescriptions = {
+        "Spot": "DEX and trading platforms",
+        "Derivatives": "Perps, options, and risk markets",
+        "Lending": "Onchain credit and borrowing",
+        "Asset Management": "Yield, stablecoins, and vaults",
+        "Tokenization": "Real-world assets onchain",
+        "Infra": "Protocol infrastructure and bridging",
+        "AI": "AI agent networks"
+      };
+      const sectors = [...new Set(data.map(p => p.sector))].sort();
+      const legend = document.getElementById("sectorLegend");
+      legend.innerHTML = sectors.length > 1
+        ? sectors.map(s => `<span class="legend-chip" title="${escapeHtml(sectorDescriptions[s] || s)}"><i style="background:${sectorColor(s)}"></i>${s}</span>`).join("")
+        : "";
       chart.innerHTML = "";
 
       if (!data.length) {
@@ -1640,7 +1740,7 @@
       const config = activeMetricConfig();
       const leader = [...projects].sort((a, b) => (b[config.id] || 0) - (a[config.id] || 0))[0];
       const text = leader && leader[config.id]
-        ? `${config.title}: ${leader.project} leads ${config.label} on the Machines & Money DeFi20 dashboard.`
+        ? `${leader.project} leads ${config.label} with ${formatValue(leader[config.id], config.unit)} — ${config.title} | Machines & Money DeFi20`
         : `Machines & Money DeFi20 signal: ${config.title}.`;
       shareOnX.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl())}`;
     }
@@ -1662,18 +1762,27 @@
 
     function renderTable() {
       const data = filteredProjects();
-      projectRows.innerHTML = data.map(project => `
-        <tr>
+      if (!data.length) {
+        projectRows.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px 16px;">No projects match — try clearing the search or changing the filter.</td></tr>`;
+        return;
+      }
+      projectRows.innerHTML = data.map((project, index) => {
+        const tokenOnly = !project.tvl && !project.fees && !project.revenue;
+        return `
+        <tr${tokenOnly ? ' class="token-only"' : ""}>
+          <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
           <td>${escapeHtml(project.project)}</td>
           <td>${escapeHtml(project.sector)}</td>
           <td class="num">${formatValue(project.marketCap)}</td>
-          <td class="num">${formatValue(project.tvl)}</td>
+          ${tokenOnly
+            ? `<td colspan="4" class="token-only-note">token data only — no onchain protocol tracked</td>`
+            : `<td class="num">${formatValue(project.tvl)}</td>
           <td class="num">${formatValue(project.fees)}</td>
           <td class="num">${formatValue(project.revenue)}</td>
-          <td class="num">${formatValue(project.wallets, "wallets")}</td>
+          <td class="num">${formatValue(project.wallets, "wallets")}</td>`}
           <td>${escapeHtml(qualitySummary(project))}</td>
-        </tr>
-      `).join("");
+        </tr>`;
+      }).join("");
     }
 
     function renderProjectDetail() {
@@ -1739,6 +1848,13 @@
       "Infra": "fees",
       "AI": "fees"
     };
+    function scrollToDashboard() {
+      const el = document.getElementById("dashboard");
+      if (!el) return;
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    }
+
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
         track("category_click", card.dataset.metric || card.dataset.sector);
@@ -1746,6 +1862,7 @@
           sectorFilter.value = "all";
           projectFilter.value = "all";
           setMetric(card.dataset.metric);
+          scrollToDashboard();
           return;
         }
         if (card.dataset.sector) {
@@ -1757,6 +1874,7 @@
           }
           renderProjectFilter();
           render();
+          scrollToDashboard();
         }
       });
     });
@@ -1774,6 +1892,10 @@
       render();
     });
     copyDashboardLink.addEventListener("click", copyShareLink);
+    document.getElementById("projectSearch").addEventListener("input", () => {
+      track("project_search", document.getElementById("projectSearch").value);
+      render();
+    });
     window.addEventListener("resize", renderChart);
   </script>
 </body>
