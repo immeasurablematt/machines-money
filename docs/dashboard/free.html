@@ -1173,19 +1173,23 @@
     const shareOnX = document.getElementById("shareOnX");
     const copyDashboardLink = document.getElementById("copyDashboardLink");
 
+    const _metricSchemaMap = (window.dashboardMeta || {}).metricMap || {};
+    const _csvName = Object.fromEntries(Object.entries(_metricSchemaMap).map(([csv, js]) => [js, csv]));
+
     const metricConfig = [
-      {id: "tvl", label: "TVL", frames: ["current"], frame: "current", metric: "TVL", title: "Where Capital Is Parked", subtitle: "Which DeFi20 projects have the largest product footprint", unit: "USD", type: "product"},
-      {id: "marketCap", label: "Market Cap", frames: ["current"], frame: "current", metric: "Market Cap", title: "What The Market Believes", subtitle: "Where token holders are assigning the most value today", unit: "USD", type: "token"},
-      {id: "fdv", label: "FDV", frames: ["current"], frame: "current", metric: "FDV", title: "What Is Priced In", subtitle: "Which projects already carry the biggest future expectations", unit: "USD", type: "token"},
-      {id: "volume", label: "Token Volume", frames: ["24h"], frame: "24h", metric: "24H Token Volume", title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation", unit: "USD", type: "token"},
-      {id: "wallets", label: "Active Wallets", frames: ["7d"], frame: "7d", metric: "7D Active Wallets", title: "Where Users Show Up", subtitle: "Available wallet rows; useful for questions, not conclusions", unit: "wallets", type: "usage"},
-      {id: "fees", label: "Fees", frames: ["30d"], frame: "30d", metric: "30D Fees", title: "Who Gets Paid", subtitle: "Protocols turning activity into fees over the past month", unit: "USD", type: "product"},
-      {id: "revenue", label: "Revenue", frames: ["30d"], frame: "30d", metric: "30D Revenue", title: "Who Keeps Revenue", subtitle: "Projects retaining more economics from real usage", unit: "USD", type: "product"},
-      {id: "dexVolume", label: "DEX Volume", frames: ["30d"], frame: "30d", metric: "30D DEX Volume", title: "Where Swaps Happen", subtitle: "Trading venues with the most recent flow", unit: "USD", type: "product"},
-      {id: "derivVolume", label: "Perps Volume", frames: ["30d"], frame: "30d", metric: "30D Derivatives Volume", title: "Where Leverage Trades", subtitle: "Perp venues with the most notional volume this month", unit: "USD", type: "product"},
-      {id: "borrows", label: "Borrows", frames: ["current"], frame: "current", metric: "Outstanding Borrows", title: "Where Credit Is Drawn", subtitle: "Outstanding borrows right now (stock, not daily flow)", unit: "USD", type: "product"},
-      {id: "stableSupply", label: "Stablecoins", frames: ["current"], frame: "current", metric: "Stablecoin Supply", title: "Stablecoin Footprints", subtitle: "Circulating supply of tracked stablecoin products", unit: "USD", type: "product"}
+      {id: "tvl",          label: "TVL",            frames: ["current"], frame: "current", title: "Where Capital Is Parked",  subtitle: "Which DeFi20 projects have the largest product footprint",      unit: "USD",     type: "product"},
+      {id: "marketCap",    label: "Market Cap",     frames: ["current"], frame: "current", title: "What The Market Believes", subtitle: "Where token holders are assigning the most value today",        unit: "USD",     type: "token"},
+      {id: "fdv",          label: "FDV",            frames: ["current"], frame: "current", title: "What Is Priced In",        subtitle: "Which projects already carry the biggest future expectations",   unit: "USD",     type: "token"},
+      {id: "volume",       label: "Token Volume",   frames: ["24h"],     frame: "24h",     title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation",             unit: "USD",     type: "token"},
+      {id: "wallets",      label: "Active Wallets", frames: ["7d"],      frame: "7d",      title: "Where Users Show Up",      subtitle: "Available wallet rows; useful for questions, not conclusions",  unit: "wallets", type: "usage"},
+      {id: "fees",         label: "Fees",           frames: ["30d"],     frame: "30d",     title: "Who Gets Paid",            subtitle: "Protocols turning activity into fees over the past month",      unit: "USD",     type: "product"},
+      {id: "revenue",      label: "Revenue",        frames: ["30d"],     frame: "30d",     title: "Who Keeps Revenue",        subtitle: "Projects retaining more economics from real usage",             unit: "USD",     type: "product"},
+      {id: "dexVolume",    label: "DEX Volume",     frames: ["30d"],     frame: "30d",     title: "Where Swaps Happen",       subtitle: "Trading venues with the most recent flow",                      unit: "USD",     type: "product"},
+      {id: "derivVolume",  label: "Perps Volume",   frames: ["30d"],     frame: "30d",     title: "Where Leverage Trades",    subtitle: "Perp venues with the most notional volume this month",          unit: "USD",     type: "product"},
+      {id: "borrows",      label: "Borrows",        frames: ["current"], frame: "current", title: "Where Credit Is Drawn",    subtitle: "Outstanding borrows right now (stock, not daily flow)",         unit: "USD",     type: "product"},
+      {id: "stableSupply", label: "Stablecoins",    frames: ["current"], frame: "current", title: "Stablecoin Footprints",    subtitle: "Circulating supply of tracked stablecoin products",             unit: "USD",     type: "product"},
     ];
+    metricConfig.forEach(c => { c.metric = _csvName[c.id] || c.id; });
 
     const timeframeConfig = [
       {id: "current", label: "Current", description: "Current scale and valuation"},
@@ -1287,29 +1291,14 @@
     }
 
     function aggregateByProject() {
+      const metricMap = (window.dashboardMeta || {}).metricMap || {};
       const projects = {};
       rawRows.forEach(row => {
         if (!projects[row.project]) {
-          projects[row.project] = {
-            project: row.project,
-            sector: row.sector,
-            records: []
-          };
+          projects[row.project] = { project: row.project, sector: row.sector, records: [] };
         }
         projects[row.project].records.push(row);
-        const key = {
-          "Market Cap": "marketCap",
-          "FDV": "fdv",
-          "24H Token Volume": "volume",
-          "TVL": "tvl",
-          "30D Fees": "fees",
-          "30D Revenue": "revenue",
-          "30D DEX Volume": "dexVolume",
-          "30D Derivatives Volume": "derivVolume",
-          "Outstanding Borrows": "borrows",
-          "Stablecoin Supply": "stableSupply",
-          "7D Active Wallets": "wallets"
-        }[row.metric];
+        const key = metricMap[row.metric];
         if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
       });
       return Object.values(projects);

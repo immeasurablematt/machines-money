@@ -15,6 +15,7 @@ import json
 import os
 import sys
 import time
+import tomllib
 import urllib.error
 import urllib.request
 from datetime import date
@@ -49,314 +50,33 @@ ORDER BY active_wallets_7d DESC
 LIMIT 20
 """
 
-DUNE_DEX_PROJECTS = {
-    "aerodrome": {"project": "Aerodrome", "sector": "Spot"},
-    "curve": {"project": "Curve", "sector": "Spot"},
-    "uniswap": {"project": "Uniswap", "sector": "Spot"},
+# Canonical mapping: CSV metric name → JS property key.
+# Python injects this into dashboardMeta so the JS dashboard can read it
+# instead of maintaining its own hardcoded copy.
+METRIC_MAP: dict[str, str] = {
+    "TVL": "tvl",
+    "Market Cap": "marketCap",
+    "FDV": "fdv",
+    "24H Token Volume": "volume",
+    "30D Fees": "fees",
+    "30D Revenue": "revenue",
+    "30D DEX Volume": "dexVolume",
+    "30D Derivatives Volume": "derivVolume",
+    "Outstanding Borrows": "borrows",
+    "Stablecoin Supply": "stableSupply",
+    "7D Active Wallets": "wallets",
 }
 
+# Load all record definitions from the human-editable TOML config.
+with (ROOT / "config" / "records.toml").open("rb") as _f:
+    _CONFIG = tomllib.load(_f)
 
-RECORDS = [
-    {
-        "project": "Uniswap",
-        "record": "Uniswap V3",
-        "sector": "Spot",
-        "protocol_slug": "uniswap-v3",
-        "fee_slug": "uniswap-v3",
-        "dex_module": "uniswap-v3",
-        "confidence": "high",
-        "notes": "Version-specific record; do not silently blend with V2/V4.",
-    },
-    {
-        "project": "Uniswap",
-        "record": "Uniswap V2",
-        "sector": "Spot",
-        "protocol_slug": "uniswap-v2",
-        "fee_slug": "uniswap-v2",
-        "dex_module": "uniswap-v2",
-        "confidence": "high",
-        "notes": "Version-specific legacy liquidity record.",
-    },
-    {
-        "project": "Uniswap",
-        "record": "Uniswap V4",
-        "sector": "Spot",
-        "protocol_slug": "uniswap-v4",
-        "fee_slug": "uniswap-v4",
-        "dex_module": "uniswap-v4",
-        "confidence": "high",
-        "notes": "Version-specific record; aggregation rule needs to stay visible.",
-    },
-    {
-        "project": "Aave",
-        "record": "Aave V3",
-        "sector": "Lending",
-        "protocol_slug": "aave-v3",
-        "fee_slug": "aave-v3",
-        "confidence": "high",
-        "notes": "Primary Aave MVP lending record.",
-    },
-    {
-        "project": "Aave",
-        "record": "Aave V4",
-        "sector": "Lending",
-        "protocol_slug": "aave-v4",
-        "fee_slug": "aave-v4",
-        "confidence": "medium",
-        "notes": "V4 hub/spoke detail still needs native source discovery.",
-    },
-    {
-        "project": "Pendle",
-        "record": "Pendle",
-        "sector": "Derivatives",
-        "protocol_slug": "pendle",
-        "fee_slug": "pendle",
-        "confidence": "high",
-        "notes": "PT/YT volume and vePENDLE yield require separate source discovery.",
-    },
-    {
-        "project": "Hyperliquid",
-        "record": "Hyperliquid Exchange",
-        "sector": "Derivatives",
-        "fee_slug": "hyperliquid",
-        "confidence": "high",
-        "notes": "Main Hyperliquid perps exchange fees; TVL tracked separately via HLP and spot-orderbook records.",
-    },
-    {
-        "project": "Hyperliquid",
-        "record": "Hyperliquid HLP",
-        "sector": "Derivatives",
-        "protocol_slug": "hyperliquid-hlp",
-        "fee_slug": "hyperliquid-hlp",
-        "confidence": "medium",
-        "notes": "HLP liquidity vault record; not total Hyperliquid perps activity.",
-    },
-    {
-        "project": "Hyperliquid",
-        "record": "Hyperliquid Spot Orderbook",
-        "sector": "Derivatives",
-        "protocol_slug": "hyperliquid-spot-orderbook",
-        "confidence": "medium",
-        "notes": "Spot-orderbook record; keep separate from HLP and perps.",
-    },
-    {
-        "project": "Ethena",
-        "record": "Ethena USDe",
-        "sector": "Asset Management",
-        "protocol_slug": "ethena-usde",
-        "fee_slug": "ethena-usde",
-        "confidence": "high",
-        "notes": "USDe-specific record; reserves and APY need native source checks.",
-    },
-    {
-        "project": "Ethena",
-        "record": "Ethena USDtb",
-        "sector": "Asset Management",
-        "protocol_slug": "ethena-usdtb",
-        "fee_slug": "ethena-usdtb",
-        "confidence": "medium",
-        "notes": "Separate Ethena stablecoin product.",
-    },
-    {
-        "project": "Sky",
-        "record": "Sky Lending",
-        "sector": "Lending",
-        "protocol_slug": "sky-lending",
-        "fee_slug": "sky-lending",
-        "confidence": "high",
-        "notes": "Lending/CDP record; APY and Agent metrics need native source checks.",
-    },
-    {
-        "project": "Sky",
-        "record": "Sky Money",
-        "sector": "Asset Management",
-        "protocol_slug": "sky-money",
-        "confidence": "medium",
-        "notes": "Separate Sky money product record.",
-    },
-    {
-        "project": "Sky",
-        "record": "Sky RWA",
-        "sector": "Tokenization",
-        "protocol_slug": "sky-rwa",
-        "confidence": "medium",
-        "notes": "Separate Sky RWA record.",
-    },
-    {
-        "project": "Ondo",
-        "record": "Ondo Yield Assets",
-        "sector": "Tokenization",
-        "protocol_slug": "ondo-yield-assets",
-        "fee_slug": "ondo-yield-assets",
-        "confidence": "high",
-        "notes": "Good tokenized-assets starter record.",
-    },
-    {
-        "project": "Ondo",
-        "record": "Ondo Global Markets",
-        "sector": "Tokenization",
-        "protocol_slug": "ondo-global-markets",
-        "confidence": "medium",
-        "notes": "Separate Ondo product; confirm MVP scope.",
-    },
-    {
-        "project": "Aerodrome",
-        "record": "Aerodrome Slipstream",
-        "sector": "Spot",
-        "protocol_slug": "aerodrome-slipstream",
-        "fee_slug": "aerodrome-slipstream",
-        "dex_module": "aerodrome-slipstream",
-        "confidence": "high",
-        "notes": "Concentrated-liquidity record; keep separate from V1 unless labeled.",
-    },
-    {
-        "project": "Aerodrome",
-        "record": "Aerodrome V1",
-        "sector": "Spot",
-        "protocol_slug": "aerodrome-v1",
-        "fee_slug": "aerodrome",
-        "dex_module": "aerodrome",
-        "confidence": "high",
-        "notes": "V1 record; keep version labels.",
-    },
-    {
-        "project": "Curve",
-        "record": "Curve Finance",
-        "sector": "Spot",
-        "protocol_slug": "curve-dex",
-        "fee_slug": "curve-finance",
-        "dex_module": "curve",
-        "confidence": "high",
-        "notes": "Curve DEX TVL, fees, and volume; active users via Dune dex.trades.",
-    },
-    {
-        "project": "Morpho",
-        "record": "Morpho Blue",
-        "sector": "Lending",
-        "protocol_slug": "morpho-blue",
-        "fee_slug": "morpho-blue",
-        "confidence": "high",
-        "notes": "Curator data needs Morpho-native or Dune source.",
-    },
-    {
-        "project": "Jupiter",
-        "record": "Jupiter Lend",
-        "sector": "Lending",
-        "protocol_slug": "jupiter-lend",
-        "confidence": "medium",
-        "notes": "Separate product record; not aggregator usage.",
-    },
-    {
-        "project": "Jupiter",
-        "record": "Jupiter Perpetual Exchange",
-        "sector": "Derivatives",
-        "protocol_slug": "jupiter-perpetual-exchange",
-        "fee_slug": "jupiter-perpetual-exchange",
-        "confidence": "medium",
-        "notes": "Perps product record; derivatives overview access may be restricted.",
-    },
-    {
-        "project": "Jupiter",
-        "record": "Jupiter Staked SOL",
-        "sector": "Asset Management",
-        "protocol_slug": "jupiter-staked-sol",
-        "confidence": "medium",
-        "notes": "Liquid-staking product record.",
-    },
-    {
-        "project": "EtherFi",
-        "record": "EtherFi Cash",
-        "sector": "Asset Management",
-        "protocol_slug": "etherfi-cash-liquid",
-        "fee_slug": "etherfi-cash-liquid",
-        "confidence": "medium",
-        "notes": "EtherFi liquid restaking and Cash card product; card metrics need PaymentScan source.",
-    },
-    {
-        "project": "Euler",
-        "record": "Euler V2",
-        "sector": "Lending",
-        "protocol_slug": "euler-v2",
-        "fee_slug": "euler-v2",
-        "confidence": "high",
-        "notes": "Euler V2 lending TVL and fees; outstanding borrows tracked separately.",
-    },
-    {
-        "project": "Falcon",
-        "record": "Falcon Finance",
-        "sector": "Asset Management",
-        "protocol_slug": "falcon-finance",
-        "fee_slug": "falcon-finance",
-        "confidence": "medium",
-        "notes": "Falcon Finance USDf/sUSDf TVL and fees; sUSDf APY needs native source.",
-    },
-    {
-        "project": "Kamino",
-        "record": "Kamino",
-        "sector": "Lending",
-        "protocol_slug": "kamino-lend",
-        "fee_slug": "kamino",
-        "confidence": "high",
-        "notes": "Kamino Solana lending TVL and fees; outstanding borrows tracked separately.",
-    },
-    {
-        "project": "Maple",
-        "record": "Maple Finance",
-        "sector": "Lending",
-        "protocol_slug": "maple",
-        "fee_slug": "maple",
-        "confidence": "high",
-        "notes": "Maple institutional lending TVL and fees; syrup stablecoin products tracked via stablecoins endpoint.",
-    },
-    {
-        "project": "Centrifuge",
-        "record": "Centrifuge",
-        "sector": "Tokenization",
-        "protocol_slug": "centrifuge-protocol",
-        "fee_slug": "centrifuge",
-        "confidence": "high",
-        "notes": "Centrifuge RWA tokenization TVL and fees; asset-class detail needs RWA.xyz source.",
-    },
-]
-
-
-# Perps/derivatives records matched against DefiLlama's derivatives overview by module.
-# Module slugs are confirmed or corrected from first live-run warnings.
-DERIVATIVES_RECORDS = [
-    {"module": "hyperliquid", "project": "Hyperliquid", "record": "Hyperliquid Perps", "sector": "Derivatives", "confidence": "high", "notes": "Perp notional volume from DefiLlama derivatives overview."},
-    {"module": "jupiter-perpetual-exchange", "project": "Jupiter", "record": "Jupiter Perpetual Exchange", "sector": "Derivatives", "confidence": "medium", "notes": "Perp notional volume from DefiLlama derivatives overview."},
-]
-
-# Stablecoin product supplies from stablecoins.llama.fi, matched by symbol.
-STABLECOIN_RECORDS = {
-    "USDe": {"project": "Ethena", "record": "Ethena USDe", "sector": "Asset Management", "confidence": "high", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
-    "USDtb": {"project": "Ethena", "record": "Ethena USDtb", "sector": "Asset Management", "confidence": "medium", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
-    "USDf": {"project": "Falcon", "record": "Falcon USDf", "sector": "Asset Management", "confidence": "medium", "notes": "Circulating stablecoin supply; reserve attestations need separate review."},
-    "USDY": {"project": "Ondo", "record": "Ondo USDY", "sector": "Tokenization", "confidence": "high", "notes": "Tokenized yield-asset supply via DefiLlama stablecoins."},
-    "USDS": {"project": "Sky", "record": "Sky USDS", "sector": "Asset Management", "confidence": "high", "notes": "Circulating stablecoin supply; product metric, not token market cap."},
-    "syrupUSDC": {"project": "Maple", "record": "Maple syrupUSDC", "sector": "Tokenization", "confidence": "medium", "notes": "Syrup product supply via DefiLlama stablecoins; confirm listing coverage."},
-    "syrupUSDT": {"project": "Maple", "record": "Maple syrupUSDT", "sector": "Tokenization", "confidence": "medium", "notes": "Syrup product supply via DefiLlama stablecoins; confirm listing coverage."},
-}
-
-# Yield pools from yields.llama.fi matched by (project, symbol); current APY only.
-YIELD_POOL_RECORDS = [
-    {"pool_project": "ethena", "symbol": "SUSDE", "project": "Ethena", "record": "Ethena sUSDe", "sector": "Asset Management", "confidence": "high", "notes": "Current sUSDe staking APY from DefiLlama yields; methodology is pool-level."},
-    {"pool_project": "sky-money", "symbol": "SUSDS", "project": "Sky", "record": "Sky sUSDS", "sector": "Asset Management", "confidence": "medium", "notes": "Current sUSDS APY from DefiLlama yields; methodology is pool-level."},
-]
-
-# Lending records whose outstanding borrows (stock, not new-borrow flow) are read
-# from the protocol endpoint's borrowed TVL. Definition decided 2026-06-10:
-# the dashboard's "borrow volume" means outstanding borrows.
-BORROW_RECORDS = [
-    {"protocol_slug": "aave-v3", "project": "Aave", "record": "Aave V3", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "morpho-blue", "project": "Morpho", "record": "Morpho Blue", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "jupiter-lend", "project": "Jupiter", "record": "Jupiter Lend", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "sky-lending", "project": "Sky", "record": "Sky Lending", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "kamino-lend", "project": "Kamino", "record": "Kamino", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; Solana lending pools."},
-    {"protocol_slug": "euler-v2", "project": "Euler", "record": "Euler V2", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "maple", "project": "Maple", "record": "Maple Finance", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; institutional credit pools."},
-    {"protocol_slug": "centrifuge-protocol", "project": "Centrifuge", "record": "Centrifuge", "sector": "Tokenization", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."},
-]
+RECORDS = _CONFIG["records"]
+DERIVATIVES_RECORDS = _CONFIG["derivatives_records"]
+STABLECOIN_RECORDS = _CONFIG["stablecoin_records"]
+YIELD_POOL_RECORDS = _CONFIG["yield_pool_records"]
+BORROW_RECORDS = _CONFIG["borrow_records"]
+DUNE_DEX_PROJECTS = _CONFIG["dune_dex_projects"]
 
 
 def fetch_json(url: str, headers: dict[str, str] | None = None, post: dict[str, Any] | None = None) -> Any:
@@ -992,6 +712,7 @@ def write_outputs(rows: list[dict[str, Any]], warnings: list[str], history: dict
         "source_note": "Generated from public DefiLlama endpoints; review methodology before final citation.",
         "refresh_status": "fresh",
         "last_known_good": today,
+        "metricMap": METRIC_MAP,
     }
 
     csv_text_path = DASHBOARD_DIR / ".generated-dashboard-data.csv.tmp"

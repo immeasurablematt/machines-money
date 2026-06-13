@@ -9,6 +9,7 @@ on:
     paths:
       - ".github/workflows/free-dashboard-refresh.yml"
       - "scripts/refresh_dashboard_data.py"
+      - "config/records.toml"
       - "docs/dashboard/starter-token-map.csv"
 
 permissions:
@@ -33,6 +34,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Restore data from data branch
+        run: |
+          git fetch origin data
+          git archive origin/data -- docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good 2>/dev/null | tar -x || true
+
       - name: Refresh dashboard data
         env:
           COINGECKO_DEMO_API_KEY: ${{ secrets.COINGECKO_DEMO_API_KEY }}
@@ -41,22 +47,33 @@ jobs:
           DASHBOARD_MIN_LAST_GOOD_RATIO: "0.5"
         run: python3 scripts/refresh_dashboard_data.py
 
-      - name: Build free dashboard static bundle
-        run: bash scripts/build_free_dashboard_bundle.sh
-
-      - name: Commit refreshed dashboard data
+      - name: Prune old snapshots (keep 7 days)
         run: |
-          if git diff --quiet -- docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good; then
-            echo "No dashboard data changes to commit."
-            exit 0
+          SNAP_DIR="docs/dashboard/snapshots"
+          if [ -d "$SNAP_DIR" ]; then
+            ls "$SNAP_DIR" | sort -r | tail -n +8 | xargs -r -I{} rm -rf "$SNAP_DIR/{}"
           fi
+
+      - name: Push refreshed data to data branch
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/dashboard/generated-dashboard-data.csv docs/dashboard/generated-dashboard-data.js docs/dashboard/snapshots docs/dashboard/last-good
-          git commit -m "Refresh free dashboard data"
-          git push
+          git worktree add --detach /tmp/data-branch origin/data
+          mkdir -p /tmp/data-branch/docs/dashboard/snapshots /tmp/data-branch/docs/dashboard/last-good
+          cp docs/dashboard/generated-dashboard-data.csv /tmp/data-branch/docs/dashboard/ 2>/dev/null || true
+          cp docs/dashboard/generated-dashboard-data.js /tmp/data-branch/docs/dashboard/ 2>/dev/null || true
+          [ -d docs/dashboard/snapshots ] && rsync -a --delete docs/dashboard/snapshots/ /tmp/data-branch/docs/dashboard/snapshots/ || true
+          [ -d docs/dashboard/last-good ] && rsync -a --delete docs/dashboard/last-good/ /tmp/data-branch/docs/dashboard/last-good/ || true
+          cd /tmp/data-branch
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No data changes to push."
+          else
+            git commit -m "Refresh free dashboard data"
+            git push origin HEAD:refs/heads/data
+          fi
 
-      - name: Rebuild bundle with refreshed data
+      - name: Build free dashboard static bundle
         run: bash scripts/build_free_dashboard_bundle.sh site
 
       - name: Upload Pages artifact

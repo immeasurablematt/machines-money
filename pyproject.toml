@@ -1,0 +1,4 @@
+[project]
+name = "machines-money"
+description = "Machines & Money DeFi20 dashboard data pipeline"
+requires-python = ">=3.11"
