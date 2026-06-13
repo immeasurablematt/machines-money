@@ -269,6 +269,31 @@ fee_slug = "centrifuge"
 confidence = "high"
 notes = "Centrifuge RWA tokenization TVL and fees; asset-class detail needs RWA.xyz source."
 
+[[records]]
+project = "LayerZero"
+record = "LayerZero V2"
+sector = "Infra"
+fee_slug = "layerzero"
+confidence = "medium"
+notes = "Cross-chain messaging fees (ExecutorFeePaid + DVNFeePaid events across 40+ chains); 0% protocol take rate — all fees pass to DVNs and Executors. No TVL (messaging protocol, no custody). Bridge volume tracked separately via DefiLlama bridges endpoint; >$166B cumulative."
+
+[[records]]
+project = "Virtuals"
+record = "Virtuals Protocol"
+sector = "AI"
+protocol_slug = "virtuals-protocol"
+fee_slug = "virtual-protocol"
+confidence = "medium"
+notes = "AI agent launchpad on Base; TVL from VIRTUAL locked in bonding curves and staking contracts; fees from agent trading volume (1%), CBBTC prototype/sentient flows, and Solana prototype activity."
+
+[[records]]
+project = "Canton"
+record = "Canton Network"
+sector = "Infra"
+fee_slug = "canton"
+confidence = "medium"
+notes = "Enterprise DLT for regulated financial markets; fees are CC token burns across 7 fee types (Traffic Purchase, Preapproval, Setup, Dust Expire, Holding, Sender Change) — 100% deflationary. No on-chain TVL adapter; chain-level analytics at DefiLlama chain/canton."
+
 
 # ── Derivatives records ────────────────────────────────────────────────────
 # Matched against DefiLlama's derivatives overview by module slug.
