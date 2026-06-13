@@ -647,6 +647,7 @@
     #project-sources .source-row { align-items: start; }
     #project-sources .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; line-height: 1.45; font-size: 11px; color: var(--muted); }
     #project-sources .source-row span:not(.quality-chip) a { color: var(--mint-bright); font-weight: 500; }
+    #project-sources .source-row > div > a { display: block; margin-bottom: 3px; font-size: 13px; }
 
     .quality-chip.medium {
       color: var(--orange);
@@ -1589,7 +1590,7 @@
       const caveatText = caveats.length ? shortLabel(caveats.join(" "), 150) : "Confirm the source methodology before using this signal.";
 
       sourceSummaryTitle.textContent = `${rows.length} ${config.label} rows / ${confidenceText || "confidence unknown"}`;
-      sourceSummaryCopy.textContent = `${periodText}. ${relationshipText}. ${caveatText}${warningCount ? ` Caveats: ${meta.warnings.join(" ")}` : ""}`;
+      sourceSummaryCopy.textContent = `${periodText}. ${relationshipText}. ${caveatText}`;
       sourceList.innerHTML = sources.slice(0, 4).map(source => {
         const sourceRows = rows.filter(row => row.source_name === source);
         const first = sourceRows[0];
