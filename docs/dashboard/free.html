@@ -746,6 +746,17 @@
     th[data-sortable].sorted-desc::after { content: " ▼"; color: var(--mint-bright); }
     th[data-sortable].sorted-asc::after { content: " ▲"; color: var(--mint-bright); }
 
+    .pos { color: var(--mint-bright); }
+    .neg { color: var(--red); }
+    .table-views { display: flex; gap: 6px; padding: 10px 16px 8px; }
+    .table-views button { border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.035); color: var(--muted); cursor: pointer; padding: 5px 10px; font: inherit; font-size: 11px; font-weight: 650; }
+    .table-views button.active { background: rgba(80,210,193,0.14); border-color: var(--line-strong); color: var(--ink); }
+    .fee-bar-cell { display: inline-flex; align-items: center; gap: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .fee-bar { display: inline-block; height: 3px; min-width: 2px; background: var(--mint); border-radius: 2px; opacity: 0.45; flex-shrink: 0; }
+    .bar-clickable { cursor: pointer; }
+    .bar-clickable:hover .bar { opacity: 0.85; }
+    .bar-clickable:hover .bar-bg { fill: rgba(255,255,255,0.11); }
+
     .empty {
       padding: 38px 18px;
       text-align: center;
@@ -772,6 +783,7 @@
       svg { height: 480px; }
       #leaderboard table { min-width: 0; }
       #leaderboard th:nth-child(3), #leaderboard td:nth-child(3),
+      #leaderboard th:nth-child(7), #leaderboard td:nth-child(7),
       #leaderboard th:nth-child(8), #leaderboard td:nth-child(8) { display: none; }
       th, td { padding: 8px 5px; font-size: 12px; }
     }
@@ -985,22 +997,13 @@
     <section id="leaderboard" class="panel table-panel">
       <div class="panel-header">
         <h2>Project Signal Table</h2>
-        <span>Scale, activity, and confidence</span>
+        <div class="table-views" id="tableViewButtons">
+          <button type="button" class="active" data-table-view="fundamentals">Fundamentals</button>
+          <button type="button" data-table-view="performance">Token Returns</button>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th data-sortable="name">Project</th>
-            <th>Sector</th>
-            <th data-sortable="marketCap">Market Cap</th>
-            <th data-sortable="tvl">TVL</th>
-            <th data-sortable="fees">30D Fees</th>
-            <th data-sortable="revenue">30D Revenue</th>
-            <th data-sortable="wallets">7D Active Wallets</th>
-            <th>Confidence</th>
-          </tr>
-        </thead>
+      <table id="leaderboardTable">
+        <thead id="leaderboardHead"></thead>
         <tbody id="projectRows"></tbody>
       </table>
     </section>
@@ -1201,6 +1204,7 @@
     let activeMetric = "tvl";
     let activeFrame = "current";
     let tableSort = { col: null, dir: "desc" };
+    let tableView = "fundamentals";
 
     function money(value) {
       if (!Number.isFinite(value)) return "-";
@@ -1217,6 +1221,14 @@
       if (unit === "wallets") return Math.round(value).toLocaleString();
       if (unit === "%") return (value > 0 ? "+" : "") + Number(value).toFixed(2) + "%";
       return money(value);
+    }
+
+    function formatPct(value) {
+      if (value === undefined || value === null || !Number.isFinite(value)) return "<span style=\"color:var(--dim)\">–</span>";
+      const sign = value >= 0 ? "+" : "";
+      const cls = value > 0.1 ? "pos" : value < -0.1 ? "neg" : "";
+      const display = Math.abs(value) >= 10 ? Math.round(value) : value.toFixed(1);
+      return `<span class="${cls}">${sign}${display}%</span>`;
     }
 
     function shortLabel(label, max = 34) {
@@ -1292,6 +1304,20 @@
 
     function aggregateByProject() {
       const metricMap = (window.dashboardMeta || {}).metricMap || {};
+      // Extended metrics not in the main metricMap (Python sorts rows by metric, -value, project
+      // so the first row encountered for a project+metric pair is the highest-value one).
+      const extMap = {
+        "7D Fees": "fees7d",
+        "24H Fees": "fees24h",
+        "7D Revenue": "revenue7d",
+        "7D Fee Growth": "feeGrowth7d",
+        "30D Fee Growth": "feeGrowth30d",
+        "7D TVL Growth": "tvlGrowth7d",
+        "24H Token Performance": "perf24h",
+        "7D Token Performance": "perf7d",
+        "30D Token Performance": "perf30d",
+        "1Y Token Performance": "perf1y",
+      };
       const projects = {};
       rawRows.forEach(row => {
         if (!projects[row.project]) {
@@ -1300,6 +1326,10 @@
         projects[row.project].records.push(row);
         const key = metricMap[row.metric];
         if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
+        const extKey = extMap[row.metric];
+        if (extKey !== undefined && projects[row.project][extKey] === undefined) {
+          projects[row.project][extKey] = row.value;
+        }
       });
       return Object.values(projects);
     }
@@ -1589,6 +1619,22 @@
         rect.setAttribute("style", `fill: ${sectorColor(row.sector)}`);
         chart.appendChild(rect);
 
+        // Click any bar element to select that project
+        const handleBarClick = () => {
+          projectFilter.value = row.project;
+          track("chart_bar_click", row.project);
+          render();
+          const el = document.getElementById("project-detail");
+          if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
+        };
+        const titleEl = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        titleEl.textContent = `${row.project}: ${formatValue(row.value, config.unit)} — click to view detail`;
+        rect.appendChild(titleEl);
+        [rect, bg, label].forEach(svgEl => {
+          svgEl.style.cursor = "pointer";
+          svgEl.addEventListener("click", handleBarClick);
+        });
+
         if (!compact) {
           const value = document.createElementNS("http://www.w3.org/2000/svg", "text");
           const valueX = Math.min(margin.left + widthRatio + 8, width - 4);
@@ -1629,10 +1675,46 @@
       }
 
       const allProjects = filteredProjects();
+
+      // Fee momentum — biggest 30D fee growth
+      const topFeeGrower = [...allProjects]
+        .filter(p => p.feeGrowth30d !== undefined && Number.isFinite(p.feeGrowth30d) && p.fees > 0)
+        .sort((a, b) => b.feeGrowth30d - a.feeGrowth30d)[0];
+      if (topFeeGrower && topFeeGrower.feeGrowth30d > 10 && stories.length < 3) {
+        const sign = topFeeGrower.feeGrowth30d > 0 ? "+" : "";
+        stories.push({
+          badge: "Fee momentum",
+          title: `${topFeeGrower.project} fees up ${sign}${Math.round(topFeeGrower.feeGrowth30d)}% this month`,
+          body: `Strongest 30D fee growth in the current view — check whether a structural usage gain or a one-time event is driving it.`
+        });
+      }
+
+      // Token performance — best 30D return
+      const bestToken = [...allProjects]
+        .filter(p => p.perf30d !== undefined && Number.isFinite(p.perf30d))
+        .sort((a, b) => b.perf30d - a.perf30d)[0];
+      const worstToken = [...allProjects]
+        .filter(p => p.perf30d !== undefined && Number.isFinite(p.perf30d))
+        .sort((a, b) => a.perf30d - b.perf30d)[0];
+      if (bestToken && bestToken.perf30d > 10 && stories.length < 3) {
+        stories.push({
+          badge: "Token momentum",
+          title: `${bestToken.project} up ${Math.round(bestToken.perf30d)}% (30D)`,
+          body: `Strongest 30D token return in the view. Cross-check fees and TVL to see if fundamentals justify the move.`
+        });
+      } else if (worstToken && worstToken.perf30d < -10 && stories.length < 3) {
+        stories.push({
+          badge: "Underperformer",
+          title: `${worstToken.project} down ${Math.round(Math.abs(worstToken.perf30d))}% (30D)`,
+          body: `Weakest 30D token return — worth checking whether product metrics (fees, TVL) are holding or also declining.`
+        });
+      }
+
+      // Capital efficiency
       const efficient = [...allProjects]
         .filter(p => p.fees > 0 && p.tvl > 0)
         .sort((a, b) => (b.fees / b.tvl) - (a.fees / a.tvl))[0];
-      if (efficient && efficient.fees / efficient.tvl > 0.05 && config.id !== "wallets") {
+      if (efficient && efficient.fees / efficient.tvl > 0.05 && config.id !== "wallets" && stories.length < 3) {
         stories.push({
           badge: "Capital efficiency",
           title: `${efficient.project} earns the most per $ locked`,
@@ -1640,6 +1722,7 @@
         });
       }
 
+      // High margin
       const highMargin = [...allProjects]
         .filter(p => p.fees > 0 && p.revenue > 0)
         .sort((a, b) => (b.revenue / b.fees) - (a.revenue / a.fees))[0];
@@ -1758,33 +1841,59 @@
       let data = filteredProjects();
       if (tableSort.col) {
         data = [...data].sort((a, b) => {
-          const av = tableSort.col === "name" ? a.project : (a[tableSort.col] || 0);
-          const bv = tableSort.col === "name" ? b.project : (b[tableSort.col] || 0);
+          const av = tableSort.col === "name" ? a.project : a[tableSort.col];
+          const bv = tableSort.col === "name" ? b.project : b[tableSort.col];
           if (typeof av === "string") return tableSort.dir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-          return tableSort.dir === "asc" ? av - bv : bv - av;
+          const an = Number.isFinite(av) ? av : -Infinity;
+          const bn = Number.isFinite(bv) ? bv : -Infinity;
+          return tableSort.dir === "asc" ? an - bn : bn - an;
         });
       }
       if (!data.length) {
-        projectRows.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px 16px;">No projects match — try clearing the search or changing the filter.</td></tr>`;
+        projectRows.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px 16px;">No projects match — try clearing the search or changing the filter.</td></tr>`;
         return;
       }
-      projectRows.innerHTML = data.map((project, index) => {
-        const tokenOnly = !project.tvl && !project.fees && !project.revenue;
-        return `
-        <tr${tokenOnly ? ' class="token-only"' : ""} data-project="${escapeHtml(project.project)}" style="cursor:pointer;">
-          <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
-          <td>${escapeHtml(project.project)}</td>
-          <td>${escapeHtml(project.sector)}</td>
-          <td class="num">${formatValue(project.marketCap)}</td>
-          ${tokenOnly
-            ? `<td colspan="4" class="token-only-note">token data only — no onchain protocol tracked</td>`
-            : `<td class="num">${formatValue(project.tvl)}</td>
-          <td class="num">${formatValue(project.fees)}</td>
-          <td class="num">${formatValue(project.revenue)}</td>
-          <td class="num">${formatValue(project.wallets, "wallets")}</td>`}
-          <td>${escapeHtml(qualitySummary(project))}</td>
-        </tr>`;
-      }).join("");
+      const maxFees = Math.max(...data.map(p => p.fees || 0), 1);
+
+      if (tableView === "performance") {
+        projectRows.innerHTML = data.map((project, index) => `
+          <tr data-project="${escapeHtml(project.project)}" style="cursor:pointer;">
+            <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
+            <td>${escapeHtml(project.project)}</td>
+            <td>${escapeHtml(project.sector)}</td>
+            <td class="num">${formatValue(project.marketCap)}</td>
+            <td class="num">${formatValue(project.fdv)}</td>
+            <td class="num">${formatPct(project.perf24h)}</td>
+            <td class="num">${formatPct(project.perf7d)}</td>
+            <td class="num">${formatPct(project.perf30d)}</td>
+            <td class="num">${formatPct(project.perf1y)}</td>
+            <td>${escapeHtml(qualitySummary(project))}</td>
+          </tr>`
+        ).join("");
+      } else {
+        projectRows.innerHTML = data.map((project, index) => {
+          const tokenOnly = !project.tvl && !project.fees && !project.revenue;
+          const barWidth = project.fees ? Math.max(2, Math.round((project.fees / maxFees) * 44)) : 0;
+          const feeCell = project.fees
+            ? `<span class="fee-bar-cell">${formatValue(project.fees)}<span class="fee-bar" style="width:${barWidth}px" title="${Math.round(project.fees / maxFees * 100)}% of view max"></span></span>`
+            : "–";
+          return `
+            <tr${tokenOnly ? ' class="token-only"' : ""} data-project="${escapeHtml(project.project)}" style="cursor:pointer;">
+              <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
+              <td>${escapeHtml(project.project)}</td>
+              <td>${escapeHtml(project.sector)}</td>
+              <td class="num">${formatValue(project.marketCap)}</td>
+              ${tokenOnly
+                ? `<td colspan="5" class="token-only-note">token data only — no onchain protocol tracked</td>`
+                : `<td class="num">${formatValue(project.tvl)}</td>
+                <td class="num">${feeCell}</td>
+                <td class="num">${formatPct(project.feeGrowth30d)}</td>
+                <td class="num">${formatValue(project.revenue)}</td>
+                <td class="num">${formatValue(project.wallets, "wallets")}</td>`}
+              <td>${escapeHtml(qualitySummary(project))}</td>
+            </tr>`;
+        }).join("");
+      }
       projectRows.querySelectorAll("tr[data-project]").forEach(row => {
         row.addEventListener("click", () => {
           const name = row.dataset.project;
@@ -1835,10 +1944,47 @@
     }
 
     function renderTableHeader() {
-      document.querySelectorAll("#leaderboard th[data-sortable]").forEach(th => {
-        const key = th.dataset.sortable;
+      const head = document.getElementById("leaderboardHead");
+      if (!head) return;
+      if (tableView === "performance") {
+        head.innerHTML = `<tr>
+          <th>#</th>
+          <th data-sortable="name">Project</th>
+          <th>Sector</th>
+          <th data-sortable="marketCap">Mkt Cap</th>
+          <th data-sortable="fdv">FDV</th>
+          <th data-sortable="perf24h">24H</th>
+          <th data-sortable="perf7d">7D</th>
+          <th data-sortable="perf30d">30D</th>
+          <th data-sortable="perf1y">1Y</th>
+          <th>Data</th>
+        </tr>`;
+      } else {
+        head.innerHTML = `<tr>
+          <th>#</th>
+          <th data-sortable="name">Project</th>
+          <th>Sector</th>
+          <th data-sortable="marketCap">Mkt Cap</th>
+          <th data-sortable="tvl">TVL</th>
+          <th data-sortable="fees">30D Fees</th>
+          <th data-sortable="feeGrowth30d">30D Δ%</th>
+          <th data-sortable="revenue">30D Revenue</th>
+          <th data-sortable="wallets">7D Wallets</th>
+          <th>Data</th>
+        </tr>`;
+      }
+      head.querySelectorAll("th[data-sortable]").forEach(th => {
         th.classList.remove("sorted-asc", "sorted-desc");
-        if (tableSort.col === key) th.classList.add(tableSort.dir === "asc" ? "sorted-asc" : "sorted-desc");
+        if (tableSort.col === th.dataset.sortable) {
+          th.classList.add(tableSort.dir === "asc" ? "sorted-asc" : "sorted-desc");
+        }
+        th.addEventListener("click", () => {
+          const key = th.dataset.sortable;
+          tableSort.dir = tableSort.col === key && tableSort.dir === "desc" ? "asc" : "desc";
+          tableSort.col = key;
+          track("table_sort", key);
+          render();
+        });
       });
     }
 
@@ -1859,16 +2005,12 @@
 
     renderFilters();
     render();
-    document.querySelectorAll("#leaderboard th[data-sortable]").forEach(th => {
-      th.addEventListener("click", () => {
-        const key = th.dataset.sortable;
-        if (tableSort.col === key) {
-          tableSort.dir = tableSort.dir === "desc" ? "asc" : "desc";
-        } else {
-          tableSort.col = key;
-          tableSort.dir = "desc";
-        }
-        track("table_sort", key);
+    document.querySelectorAll("#tableViewButtons button[data-table-view]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        tableView = btn.dataset.tableView;
+        document.querySelectorAll("#tableViewButtons button").forEach(b => b.classList.toggle("active", b === btn));
+        tableSort.col = null;
+        track("table_view_change", tableView);
         render();
       });
     });
