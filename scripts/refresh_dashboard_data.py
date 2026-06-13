@@ -118,10 +118,9 @@ RECORDS = [
         "project": "Hyperliquid",
         "record": "Hyperliquid Exchange",
         "sector": "Derivatives",
-        "protocol_slug": "hyperliquid",
         "fee_slug": "hyperliquid",
         "confidence": "high",
-        "notes": "Main Hyperliquid perps exchange fees and TVL; kept separate from HLP vault and spot orderbook.",
+        "notes": "Main Hyperliquid perps exchange fees; TVL tracked separately via HLP and spot-orderbook records.",
     },
     {
         "project": "Hyperliquid",
@@ -224,7 +223,7 @@ RECORDS = [
         "project": "Curve",
         "record": "Curve Finance",
         "sector": "Spot",
-        "protocol_slug": "curve-finance",
+        "protocol_slug": "curve-dex",
         "fee_slug": "curve-finance",
         "dex_module": "curve",
         "confidence": "high",
@@ -295,7 +294,7 @@ RECORDS = [
         "project": "Kamino",
         "record": "Kamino",
         "sector": "Lending",
-        "protocol_slug": "kamino",
+        "protocol_slug": "kamino-lend",
         "fee_slug": "kamino",
         "confidence": "high",
         "notes": "Kamino Solana lending TVL and fees; outstanding borrows tracked separately.",
@@ -313,7 +312,7 @@ RECORDS = [
         "project": "Centrifuge",
         "record": "Centrifuge",
         "sector": "Tokenization",
-        "protocol_slug": "centrifuge",
+        "protocol_slug": "centrifuge-prime",
         "fee_slug": "centrifuge",
         "confidence": "high",
         "notes": "Centrifuge RWA tokenization TVL and fees; asset-class detail needs RWA.xyz source.",
@@ -353,10 +352,10 @@ BORROW_RECORDS = [
     {"protocol_slug": "morpho-blue", "project": "Morpho", "record": "Morpho Blue", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
     {"protocol_slug": "jupiter-lend", "project": "Jupiter", "record": "Jupiter Lend", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
     {"protocol_slug": "sky-lending", "project": "Sky", "record": "Sky Lending", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
-    {"protocol_slug": "kamino", "project": "Kamino", "record": "Kamino", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; Solana lending pools."},
+    {"protocol_slug": "kamino-lend", "project": "Kamino", "record": "Kamino", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; Solana lending pools."},
     {"protocol_slug": "euler-v2", "project": "Euler", "record": "Euler V2", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
     {"protocol_slug": "maple", "project": "Maple", "record": "Maple Finance", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; institutional credit pools."},
-    {"protocol_slug": "centrifuge", "project": "Centrifuge", "record": "Centrifuge", "sector": "Tokenization", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."},
+    {"protocol_slug": "centrifuge-prime", "project": "Centrifuge", "record": "Centrifuge", "sector": "Tokenization", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."},
 ]
 
 
@@ -642,29 +641,33 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     protocols_by_slug = {item.get("slug"): item for item in protocols}
     tvl_by_slug = {slug: item.get("tvl") for slug, item in protocols_by_slug.items()}
 
-    # Validate all protocol slugs up front so missing ones surface as explicit warnings.
+    # Validate protocol slugs up front; records without protocol_slug are fee-only entries.
     for record in RECORDS:
-        if record["protocol_slug"] not in protocols_by_slug:
+        slug = record.get("protocol_slug")
+        if slug and slug not in protocols_by_slug:
             warnings.append(
-                f"SLUG NOT FOUND in DefiLlama protocols: '{record['protocol_slug']}' "
+                f"SLUG NOT FOUND in DefiLlama protocols: '{slug}' "
                 f"({record['record']}) — TVL and TVL growth will be missing for this record."
             )
 
     for record in RECORDS:
-        if tvl_by_slug.get(record["protocol_slug"]) is None and record["protocol_slug"] in protocols_by_slug:
+        slug = record.get("protocol_slug")
+        if not slug:
+            continue
+        if tvl_by_slug.get(slug) is None and slug in protocols_by_slug:
             warnings.append(
-                f"TVL is null/zero in DefiLlama protocols for '{record['protocol_slug']}' ({record['record']})."
+                f"TVL is null/zero in DefiLlama protocols for '{slug}' ({record['record']})."
             )
         append_row(
             metric_rows,
             record=record,
             metric="TVL",
-            value=tvl_by_slug.get(record["protocol_slug"]),
+            value=tvl_by_slug.get(slug),
             period="current",
             source_name="DefiLlama protocol",
-            source=source_url(f"protocol/{record['protocol_slug']}"),
+            source=source_url(f"protocol/{slug}"),
         )
-        protocol_item = protocols_by_slug.get(record["protocol_slug"]) or {}
+        protocol_item = protocols_by_slug.get(slug) or {}
         append_row(
             metric_rows,
             record=record,
@@ -691,11 +694,13 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             try:
                 data = fetch_json(source_url(url_path))
             except urllib.error.HTTPError as exc:
-                if exc.code in (400, 404):
+                if exc.code == 404:
                     warnings.append(
-                        f"FEE SLUG NOT FOUND: '{fee_slug}' returned HTTP {exc.code} "
+                        f"FEE SLUG NOT FOUND: '{fee_slug}' returned HTTP 404 "
                         f"for {record['record']} ({metric}) — check slug against DefiLlama /fees page."
                     )
+                elif exc.code == 400:
+                    pass  # data type not available for this protocol — expected, skip silently
                 else:
                     warnings.append(f"{metric} unavailable for {record['record']}: HTTP {exc.code}")
                 continue
