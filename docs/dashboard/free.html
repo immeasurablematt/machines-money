@@ -441,6 +441,9 @@
       text-align: right;
       font-size: 12px;
     }
+    #sectorLegend { display: flex; flex-wrap: wrap; gap: 10px; grid-column: 1 / -1; margin-top: 4px; }
+    .legend-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+    .legend-chip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 
     .chart-wrap {
       padding: 16px;
@@ -560,6 +563,8 @@
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
+    tr.token-only td { opacity: 0.5; }
+    td.token-only-note { font-size: 11px; color: var(--dim); font-style: italic; }
 
     .source-strip {
       display: grid;
@@ -902,6 +907,7 @@
           <div class="panel-header">
             <h2 id="chartTitle">Fundamentals Leaderboard</h2>
             <span id="chartSubtitle">Pick a signal to compare</span>
+            <div id="sectorLegend"></div>
           </div>
           <div class="chart-wrap">
             <svg id="chart" role="img" aria-label="Fundamentals bar chart"></svg>
@@ -1400,6 +1406,11 @@
 
       document.getElementById("chartTitle").textContent = config.title;
       document.getElementById("chartSubtitle").textContent = config.subtitle;
+      const sectors = [...new Set(data.map(p => p.sector))].sort();
+      const legend = document.getElementById("sectorLegend");
+      legend.innerHTML = sectors.length > 1
+        ? sectors.map(s => `<span class="legend-chip"><i style="background:${sectorColor(s)}"></i>${s}</span>`).join("")
+        : "";
       chart.innerHTML = "";
 
       if (!data.length) {
@@ -1633,18 +1644,22 @@
 
     function renderTable() {
       const data = filteredProjects();
-      projectRows.innerHTML = data.map(project => `
-        <tr>
+      projectRows.innerHTML = data.map(project => {
+        const tokenOnly = !project.tvl && !project.fees && !project.revenue;
+        return `
+        <tr${tokenOnly ? ' class="token-only"' : ""}>
           <td>${escapeHtml(project.project)}</td>
           <td>${escapeHtml(project.sector)}</td>
           <td class="num">${formatValue(project.marketCap)}</td>
-          <td class="num">${formatValue(project.tvl)}</td>
+          ${tokenOnly
+            ? `<td colspan="4" class="token-only-note">token data only — no onchain protocol tracked</td>`
+            : `<td class="num">${formatValue(project.tvl)}</td>
           <td class="num">${formatValue(project.fees)}</td>
           <td class="num">${formatValue(project.revenue)}</td>
-          <td class="num">${formatValue(project.wallets, "wallets")}</td>
+          <td class="num">${formatValue(project.wallets, "wallets")}</td>`}
           <td>${escapeHtml(qualitySummary(project))}</td>
-        </tr>
-      `).join("");
+        </tr>`;
+      }).join("");
     }
 
     function renderProjectDetail() {

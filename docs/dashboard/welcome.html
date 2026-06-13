@@ -96,7 +96,7 @@
         <div class="stat"><span>DeFi20 Total TVL</span><strong id="statTvl">—</strong><em id="statTvlShare" class="stat-share">Share of DeFi: —</em></div>
         <div class="stat"><span>30D Total Fees</span><strong id="statFees">—</strong><em class="stat-share">Protocol earnings</em></div>
         <div class="stat"><span>DeFi20 Market Cap</span><strong id="statMcap">—</strong><em id="statAltShare" class="stat-share">% of altcoins: —</em></div>
-        <div class="stat"><span>Active Wallets (7D)</span><strong id="statUsers">—</strong><em class="stat-share">wallets tracked</em></div>
+        <div class="stat"><span id="statUsersLabel">DEX Active Wallets (7D)</span><strong id="statUsers">—</strong><em class="stat-share" id="statUsersSub">Uniswap · Curve · Aerodrome</em></div>
       </div>
     </header>
 
@@ -157,10 +157,17 @@
     const totalTvl = projects.reduce((s,p) => s + (p["TVL"]||0), 0);
     const totalFees = projects.reduce((s,p) => s + (p["30D Fees"]||0), 0);
     const totalUsers = projects.reduce((s,p) => s + (p["7D Active Wallets"]||0), 0);
+    const totalRevenue = projects.reduce((s,p) => s + (p["30D Revenue"]||0), 0);
     document.getElementById("statMcap").textContent = money(totalMcap);
     document.getElementById("statTvl").textContent = money(totalTvl);
     document.getElementById("statFees").textContent = money(totalFees);
-    document.getElementById("statUsers").textContent = totalUsers > 0 ? totalUsers.toLocaleString() : "—";
+    if (totalUsers > 0) {
+      document.getElementById("statUsers").textContent = totalUsers.toLocaleString();
+    } else if (totalRevenue > 0) {
+      document.getElementById("statUsersLabel").textContent = "30D Total Revenue";
+      document.getElementById("statUsers").textContent = money(totalRevenue);
+      document.getElementById("statUsersSub").textContent = "Protocol net earnings";
+    }
 
     const mc = hist && hist.market_context ? hist.market_context : null;
     const altcoinPct = mc && mc.altcoin_market_cap > 0 && totalMcap > 0
