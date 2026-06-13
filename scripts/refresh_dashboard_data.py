@@ -380,7 +380,7 @@ def compute_rolling_30d_perp_volume(
         return []
 
     # Walk historical snapshots newest-first; today's not written yet so won't appear.
-    snap_files = sorted(SNAPSHOT_DIR.glob("dashboard-data-*.csv"), reverse=True)
+    snap_files = sorted(SNAPSHOT_DIR.glob("dashboard-data-*.csv"), reverse=True) if SNAPSHOT_DIR.exists() else []
     files_read = 0
     for snap_path in snap_files:
         if files_read >= 29:  # today + 29 history = 30 days max
