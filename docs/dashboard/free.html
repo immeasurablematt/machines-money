@@ -648,6 +648,7 @@
     #project-sources .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; line-height: 1.45; font-size: 11px; color: var(--muted); }
     #project-sources .source-row span:not(.quality-chip) a { color: var(--mint-bright); font-weight: 500; }
     #project-sources .source-row > div > a { display: block; margin-bottom: 3px; font-size: 13px; }
+    #methodology .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; }
 
     .quality-chip.medium {
       color: var(--orange);
@@ -1211,6 +1212,29 @@
       return `${row.source_name || "Unknown source"} / ${relationship}`;
     }
 
+    function humanUrl(apiUrl) {
+      if (!apiUrl || apiUrl === "#") return "#";
+      try {
+        const u = new URL(apiUrl);
+        if (u.hostname === "api.llama.fi") {
+          const feeSlug = u.pathname.match(/^\/summary\/fees\/([^/?]+)/);
+          if (feeSlug) return `https://defillama.com/protocol/${feeSlug[1]}`;
+          const protocolSlug = u.pathname.match(/^\/protocol\/([^/?]+)/);
+          if (protocolSlug) return `https://defillama.com/protocol/${protocolSlug[1]}`;
+          if (u.pathname.startsWith("/overview/dexs")) return "https://defillama.com/dexs";
+          if (u.pathname.startsWith("/overview/fees")) return "https://defillama.com/fees";
+          if (u.pathname.startsWith("/overview/derivatives") || u.pathname.startsWith("/overview/perps")) return "https://defillama.com/perps";
+          if (u.pathname.startsWith("/overview/options")) return "https://defillama.com/options";
+          if (u.pathname.startsWith("/stablecoins")) return "https://defillama.com/stablecoins";
+          if (u.pathname.startsWith("/yields")) return "https://defillama.com/yields";
+          return "https://defillama.com";
+        }
+        if (u.hostname === "api.coingecko.com" || u.hostname === "pro-api.coingecko.com") return "https://www.coingecko.com";
+        if (u.hostname.includes("hyperliquid")) return "https://hl.eco/";
+        return apiUrl;
+      } catch { return "#"; }
+    }
+
     function qualitySummary(project) {
       const counts = countBy(project.records, "confidence");
       const parts = ["high", "medium", "low"].filter(key => counts[key]).map(key => `${counts[key]} ${key}`);
@@ -1599,7 +1623,7 @@
         return `
           <div class="source-row">
             <div>
-              <a href="${escapeHtml(first.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>
+              <a href="${escapeHtml(humanUrl(first.source))}" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>
               <span>${escapeHtml(sourceLabel(first))} / ${sourceRows.length} rows</span>
             </div>
             <span class="quality-chip ${escapeHtml(topConfidence)}">${escapeHtml(topConfidence)}</span>
@@ -1682,7 +1706,7 @@
           <td>${escapeHtml(row.metric)}</td>
           <td class="num">${formatValue(row.value, row.unit || "USD")}</td>
           <td>${escapeHtml(row.period)}</td>
-          <td><a href="${escapeHtml(row.source || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
+          <td><a href="${escapeHtml(humanUrl(row.source))}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.source_name || "Source")}</a></td>
           <td>${escapeHtml(row.confidence || "unknown")}</td>
         </tr>
       `).join("");
