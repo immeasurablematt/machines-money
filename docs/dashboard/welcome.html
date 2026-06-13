@@ -43,7 +43,8 @@
     .legend button.on { color:var(--ink); border-color:var(--line-strong); }
     .legend button.off .dot { opacity:0.25; }
     .legend .dot { width:10px; height:10px; border-radius:3px; }
-    .hero-stats { display:grid; gap:12px; }
+    .hero-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .stat-share { color:var(--dim); font-size:11px; display:block; margin-top:4px; }
     .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:14px; }
     .stat { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:14px; }
     .stat span { color:var(--muted); font-size:11px; font-weight:650; text-transform:uppercase; display:block; margin-bottom:6px; }
@@ -80,18 +81,22 @@
 
     <header class="hero">
       <div>
-        <h1>Know Where the Money Is Moving Before the Crowd Does</h1>
-        <p class="lede" id="heroLede">Research that helps you spot today's opportunity for tomorrow's wealth at the intersection of DeFi, tokenized assets, and AI.</p>
+        <h1>Your Gateway To The Onchain Economy</h1>
+        <p class="lede" id="heroLede">Real-time insights to help you spot opportunities across DeFi's most influential applications.</p>
         <p class="join-kicker">Join the newsletter for everyday onchain investors.</p>
         <div class="signup">
           <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="c1d43cc7-0e5d-418c-900a-686c0e356964"></script>
           <p class="signup-note">Join Machines &amp; Money for onchain finance research that doesn't waste your time.</p>
         </div>
+        <div style="margin-top:14px;">
+          <a class="secondary" href="https://drive.google.com/file/d/1UgVQ3CVYAEBKpFJ5ud4NaF-ZSsv3QLmE/view" target="_blank" rel="noopener noreferrer" data-track="what_is_defi20" style="font-size:13px;padding:9px 16px;">What Is The DeFi20 Index? →</a>
+        </div>
       </div>
       <div class="hero-stats">
-        <div class="stat"><span>DeFi20 total market cap</span><strong id="statMcap">—</strong></div>
-        <div class="stat"><span>DeFi20 total TVL</span><strong id="statTvl">—</strong></div>
-        <div class="stat"><span>Share of all DeFi TVL</span><strong id="statShare">—</strong></div>
+        <div class="stat"><span>DeFi20 Total TVL</span><strong id="statTvl">—</strong><em id="statTvlShare" class="stat-share">Share of DeFi: —</em></div>
+        <div class="stat"><span>30D Total Fees</span><strong id="statFees">—</strong><em class="stat-share">Protocol earnings</em></div>
+        <div class="stat"><span>DeFi20 Market Cap</span><strong id="statMcap">—</strong><em id="statAltShare" class="stat-share">% of altcoins: —</em></div>
+        <div class="stat"><span>Active Wallets (7D)</span><strong id="statUsers">—</strong><em class="stat-share">wallets tracked</em></div>
       </div>
     </header>
 
@@ -150,28 +155,40 @@
     const projects = Object.values(byProject);
     const totalMcap = projects.reduce((s,p) => s + (p["Market Cap"]||0), 0);
     const totalTvl = projects.reduce((s,p) => s + (p["TVL"]||0), 0);
+    const totalFees = projects.reduce((s,p) => s + (p["30D Fees"]||0), 0);
+    const totalUsers = projects.reduce((s,p) => s + (p["7D Active Wallets"]||0), 0);
     document.getElementById("statMcap").textContent = money(totalMcap);
     document.getElementById("statTvl").textContent = money(totalTvl);
+    document.getElementById("statFees").textContent = money(totalFees);
+    document.getElementById("statUsers").textContent = totalUsers > 0 ? totalUsers.toLocaleString() : "—";
+
+    const mc = hist && hist.market_context ? hist.market_context : null;
+    const altcoinPct = mc && mc.altcoin_market_cap > 0 && totalMcap > 0
+      ? pct(totalMcap / mc.altcoin_market_cap * 100) : null;
+    if (altcoinPct) document.getElementById("statAltShare").textContent = "% of altcoins: " + altcoinPct;
 
     const n = hist ? hist.dates.length : 0;
     const shareVals = hist ? hist.dates.map((d,i) => hist.all_defi_tvl[i] > 0 ? hist.defi20_tvl[i] / hist.all_defi_tvl[i] * 100 : null) : [];
-    const btcVals = hist && hist.btc_mcap ? hist.dates.map((d,i) => (hist.btc_mcap[i] > 0 && hist.defi20_mcap[i] > 0) ? hist.defi20_mcap[i] / hist.btc_mcap[i] * 100 : null) : [];
+    const altcoinRatio = mc && mc.btc_market_cap > 0 ? mc.altcoin_market_cap / mc.btc_market_cap : null;
+    const altcoinVals = hist && altcoinRatio && hist.btc_mcap
+      ? hist.dates.map((d,i) => { const est = hist.btc_mcap[i] * altcoinRatio; return (est > 0 && hist.defi20_mcap[i] > 0) ? hist.defi20_mcap[i] / est * 100 : null; })
+      : [];
     const lastShare = [...shareVals].reverse().find(v => v !== null);
-    if (lastShare) document.getElementById("statShare").textContent = pct(lastShare);
-    else if (totalTvl) document.getElementById("statShare").textContent = "soon";
+    if (lastShare) document.getElementById("statTvlShare").textContent = "Share of DeFi: " + pct(lastShare);
+    else if (totalTvl) document.getElementById("statTvlShare").textContent = "Share of DeFi: soon";
 
     const seriesDefs = [
       {key: "tvl", label: "DeFi20 TVL", color: "#50d2c1", stroke: "#98fce4", kind: "usd",
        vals: hist ? hist.defi20_tvl : [], dash: "none", area: true,
        fmt: money, tip: v => "TVL " + money(v)},
-      {key: "share", label: "Share of all DeFi", color: "#87bfff", stroke: "#87bfff", kind: "pct",
+      {key: "share", label: "Share of all DeFi TVL", color: "#87bfff", stroke: "#87bfff", kind: "pct",
        vals: shareVals, dash: "5 4", area: false,
-       fmt: pct, tip: v => "DeFi share " + pct(v)},
-      {key: "btc", label: "% of Bitcoin (mcap)", color: "#ffb96d", stroke: "#ffb96d", kind: "pct",
-       vals: btcVals, dash: "2 3", area: false,
-       fmt: pct, tip: v => "of Bitcoin " + pct(v)},
+       fmt: pct, tip: v => "DeFi TVL share " + pct(v)},
+      {key: "altcoin", label: "% of Altcoin Market", color: "#ffb96d", stroke: "#ffb96d", kind: "pct",
+       vals: altcoinVals, dash: "2 3", area: false,
+       fmt: pct, tip: v => "of Altcoins " + pct(v)},
     ];
-    const seriesOn = { tvl: true, share: true, btc: true };
+    const seriesOn = { tvl: true, share: true, altcoin: true };
     const usable = seriesDefs.filter(sd => sd.vals.filter(v => v !== null && v > 0).length > 1);
 
     const W = 1000, H = 360, ML = 74, MR = 60, MT = 26, MB = 36;

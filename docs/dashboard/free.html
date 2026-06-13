@@ -984,15 +984,93 @@
     <section id="sources" class="source-strip" aria-label="Dashboard data sources">
       <div class="source-card">
         <strong>Market conviction</strong>
-        <p>CoinGecko token price, market cap, FDV, and 24H volume.</p>
+        <p>CoinGecko token price, market cap, FDV, and 24H volume for all 20 DeFi20 tokens.</p>
       </div>
       <div class="source-card">
         <strong>Product traction</strong>
-        <p>DefiLlama TVL, fees, revenue, and DEX volume.</p>
+        <p>DefiLlama TVL, fees, revenue, DEX/perps volume, and active loan data per protocol version.</p>
       </div>
       <div class="source-card">
         <strong>User activity</strong>
-        <p>Dune wallet rows where available. Treat usage as a signal to verify, not a final verdict.</p>
+        <p>Dune Analytics wallet-level activity, Token Terminal active addresses, and protocol-native dashboards where available.</p>
+      </div>
+    </section>
+
+    <section id="project-sources" class="panel methodology" style="margin-top:14px;">
+      <div class="panel-header">
+        <h2>Data Sources by Project</h2>
+        <span>Primary sources for each metric category — verify data directly</span>
+      </div>
+      <div style="padding:14px;display:grid;gap:18px;">
+
+        <div>
+          <h3 style="margin:0 0 10px;font-size:14px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Spot</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://defillama.com/protocol/uniswap" target="_blank" rel="noopener">Uniswap</a><span>DefiLlama — fees, volume, active users; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a>; <a href="https://defillama.com/holders-revenue" target="_blank" rel="noopener">holders revenue</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/curve-finance" target="_blank" rel="noopener">Curve</a><span>DefiLlama — fees, volume; <a href="https://tokenterminal.com/explorer/projects/curve/metrics/user-dau" target="_blank" rel="noopener">active users (Token Terminal)</a>; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/aerodrome?activeAddresses=true" target="_blank" rel="noopener">Aerodrome</a><span>DefiLlama — fees, volume, active users; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/jupiter" target="_blank" rel="noopener">Jupiter</a><span>DefiLlama — fees, volume; <a href="https://tokenterminal.com/explorer/projects/jupiter/metrics/active-addresses-daily" target="_blank" rel="noopener">active users (Token Terminal)</a>; <a href="https://defillama.com/dex-aggregators" target="_blank" rel="noopener">aggregator volume share</a></span></div><span class="quality-chip high">high</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Derivatives</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://defillama.com/protocol/pendle?dexVolume=true&groupBy=cumulative&activeAddresses=true" target="_blank" rel="noopener">Pendle</a><span>DefiLlama — fees, volume, users; <a href="https://defillama.com/protocol/boros?perpVolume=true" target="_blank" rel="noopener">Boros fees/volume</a>; <a href="https://tokenterminal.com/explorer/projects/pendle/boros/metrics/active-addresses-weekly" target="_blank" rel="noopener">Boros users</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://hl.eco/" target="_blank" rel="noopener">Hyperliquid</a><span>hl.eco — native explorer; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/perps" target="_blank" rel="noopener">perps volume market share</a></span></div><span class="quality-chip high">high</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Lending</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://defillama.com/protocol/aave" target="_blank" rel="noopener">Aave</a><span>DefiLlama — TVL, fees, active loans; <a href="https://defillama.com/active-loans" target="_blank" rel="noopener">active loan market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/morpho" target="_blank" rel="noopener">Morpho</a><span>DefiLlama — TVL, fees, active loans; <a href="https://defillama.com/active-loans" target="_blank" rel="noopener">active loan market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/sky" target="_blank" rel="noopener">Sky</a><span>DefiLlama — TVL, fees; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/kamino" target="_blank" rel="noopener">Kamino</a><span>DefiLlama — TVL, fees, active loans; <a href="https://defillama.com/active-loans" target="_blank" rel="noopener">active loan market share</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/euler" target="_blank" rel="noopener">Euler</a><span>DefiLlama — TVL, fees, active loans; <a href="https://defillama.com/active-loans" target="_blank" rel="noopener">active loan market share</a></span></div><span class="quality-chip high">high</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Asset Management</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://defillama.com/protocol/etherfi-cash-liquid" target="_blank" rel="noopener">EtherFi</a><span>DefiLlama — TVL, fees; <a href="https://paymentscan.xyz/cards/etherfi" target="_blank" rel="noopener">card transactions, card volume, active users (PaymentScan)</a>; <a href="https://paymentscan.xyz/" target="_blank" rel="noopener">card market share</a></span></div><span class="quality-chip medium">medium</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/ethena" target="_blank" rel="noopener">Ethena</a><span>DefiLlama — fees; <a href="https://app.ethena.fi/dashboards/transparency" target="_blank" rel="noopener">USDe supply (Ethena native)</a>; <a href="https://dune.com/entropy_advisors/ethena-susde-usde-staking" target="_blank" rel="noopener">sUSDe supply, staking ratio, APY (Dune)</a>; <a href="https://tokenterminal.com/explorer/projects/ethena/metrics/asset-holders" target="_blank" rel="noopener">asset holders</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/falcon-finance" target="_blank" rel="noopener">Falcon</a><span>DefiLlama — fees; <a href="https://app.rwa.xyz/assets/USDf" target="_blank" rel="noopener">USDf holders, active addresses</a>; <a href="https://dune.com/hashed_official/falcon-finance" target="_blank" rel="noopener">sUSDf supply, staking ratio (Dune)</a>; <a href="https://www.stablewatch.io/analytics/assets/sUSDf-Falcon-Finance" target="_blank" rel="noopener">sUSDf APY and yield paid</a></span></div><span class="quality-chip medium">medium</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Tokenization / RWA</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://defillama.com/protocol/ondo-finance" target="_blank" rel="noopener">Ondo</a><span>DefiLlama — fees; <a href="https://app.rwa.xyz/platforms/ondo" target="_blank" rel="noopener">tokenized market cap by asset class, total holders</a>; <a href="https://defillama.com/protocol/ondo-global-markets" target="_blank" rel="noopener">Ondo Global Markets (stocks) volume</a>; <a href="https://www.stablewatch.io/analytics/assets/USDY-Ondo" target="_blank" rel="noopener">USDY APY</a>; <a href="https://www.stablewatch.io/analytics/assets/OUSG-Ondo" target="_blank" rel="noopener">OUSG APY</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/centrifuge" target="_blank" rel="noopener">Centrifuge</a><span>DefiLlama — fees, active loans; <a href="https://app.rwa.xyz/platforms/centrifuge" target="_blank" rel="noopener">tokenized market cap by asset class, total holders</a></span></div><span class="quality-chip high">high</span></div>
+            <div class="source-row"><div><a href="https://defillama.com/protocol/maple" target="_blank" rel="noopener">Maple</a><span>DefiLlama — fees, active loans; <a href="https://dune.com/maple-finance/maple-finance" target="_blank" rel="noopener">institutional active loans (Dune)</a>; <a href="https://app.rwa.xyz/platforms/maple" target="_blank" rel="noopener">syrupUSDC/syrupUSDT market cap, holders</a>; <a href="https://www.stablewatch.io/analytics/assets/syrupUSDC-Maple" target="_blank" rel="noopener">syrupUSDC APY</a>; <a href="https://www.stablewatch.io/analytics/assets/syrupUSDT-Maple" target="_blank" rel="noopener">syrupUSDT APY</a></span></div><span class="quality-chip high">high</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Infra</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://digital-asset-interoperability.com/" target="_blank" rel="noopener">LayerZero</a><span>digital-asset-interoperability.com — messages, volume; <a href="https://digital-asset-interoperability.com/usage" target="_blank" rel="noopener">active users</a></span></div><span class="quality-chip medium">medium</span></div>
+            <div class="source-row"><div><a href="https://canton.thetie.io/" target="_blank" rel="noopener">Canton</a><span>canton.thetie.io — daily/total active users, burned tokens</span></div><span class="quality-chip medium">medium</span></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 10px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">AI</h3>
+          <div class="source-list">
+            <div class="source-row"><div><a href="https://app.virtuals.io/" target="_blank" rel="noopener">Virtuals</a><span>app.virtuals.io — funds raised for builders; <a href="https://www.virtuals.io/" target="_blank" rel="noopener">total agent jobs, revenue, aGDP</a>; <a href="https://dune.com/virtual_protocol/virtual-protocol-on-base/4d3ae4ed-16c3-49ce-a390-e63ee19b817c" target="_blank" rel="noopener">wallets, DEX volume, trading revenue (Dune)</a></span></div><span class="quality-chip medium">medium</span></div>
+          </div>
+        </div>
+
+        <div style="padding:12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,0.03);">
+          <strong style="display:block;margin-bottom:8px;font-size:13px;">Token Value Accrual — Methodology Notes</strong>
+          <p style="color:var(--muted);margin:0 0 8px;font-size:12px;line-height:1.5;">Holders revenue tracks protocol fees that flow to token holders via buybacks, burns, or staking payouts. Source for all projects: <a href="https://defillama.com/holders-revenue" target="_blank" rel="noopener">DefiLlama</a>.</p>
+          <p style="color:var(--muted);margin:0;font-size:12px;line-height:1.5;"><strong>Uniswap note:</strong> V1 &amp; V4: no revenue for UNI holders. V2: from 28 Dec 2025, 17% of fees on Ethereum shared to buy back and burn UNI; from 8 Mar 2026, extended to Optimism, Arbitrum, Base, Zora, XLayer. V3: from 28 Dec 2025, a portion of fees collected to buy back and burn UNI on Ethereum; from 8 Mar 2026, on Optimism, Arbitrum, Base, WC, Zora, XLayer; from 2 Jun 2026, on Polygon, BSC, Celo. (V2 &amp; V3 buy-and-burn tracked combined in the Uniswap V3 adapter on DefiLlama.)</p>
+        </div>
+
       </div>
     </section>
 
