@@ -312,7 +312,7 @@ RECORDS = [
         "project": "Centrifuge",
         "record": "Centrifuge",
         "sector": "Tokenization",
-        "protocol_slug": "centrifuge-prime",
+        "protocol_slug": "centrifuge-protocol",
         "fee_slug": "centrifuge",
         "confidence": "high",
         "notes": "Centrifuge RWA tokenization TVL and fees; asset-class detail needs RWA.xyz source.",
@@ -355,7 +355,7 @@ BORROW_RECORDS = [
     {"protocol_slug": "kamino-lend", "project": "Kamino", "record": "Kamino", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; Solana lending pools."},
     {"protocol_slug": "euler-v2", "project": "Euler", "record": "Euler V2", "sector": "Lending", "confidence": "high", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; not daily new-borrow flow."},
     {"protocol_slug": "maple", "project": "Maple", "record": "Maple Finance", "sector": "Lending", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; institutional credit pools."},
-    {"protocol_slug": "centrifuge-prime", "project": "Centrifuge", "record": "Centrifuge", "sector": "Tokenization", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."},
+    {"protocol_slug": "centrifuge-protocol", "project": "Centrifuge", "record": "Centrifuge", "sector": "Tokenization", "confidence": "medium", "notes": "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."},
 ]
 
 
