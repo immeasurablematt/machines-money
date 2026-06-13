@@ -87,6 +87,7 @@ project = "Hyperliquid"
 record = "Hyperliquid Spot Orderbook"
 sector = "Derivatives"
 protocol_slug = "hyperliquid-spot-orderbook"
+fee_slug = "hyperliquid-spot-orderbook"
 confidence = "medium"
 notes = "Spot-orderbook record; keep separate from HLP and perps."
 

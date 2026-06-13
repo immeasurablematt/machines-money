@@ -51,7 +51,7 @@ jobs:
         run: |
           SNAP_DIR="docs/dashboard/snapshots"
           if [ -d "$SNAP_DIR" ]; then
-            ls "$SNAP_DIR" | sort -r | tail -n +8 | xargs -r -I{} rm -rf "$SNAP_DIR/{}"
+            ls "$SNAP_DIR" | sort -r | tail -n +32 | xargs -r -I{} rm -rf "$SNAP_DIR/{}"
           fi
 
       - name: Push refreshed data to data branch

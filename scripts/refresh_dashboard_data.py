@@ -353,6 +353,85 @@ def append_dune_active_wallet_rows(metric_rows: list[dict[str, Any]], warnings: 
         )
 
 
+def compute_rolling_30d_perp_volume(
+    current_rows: list[dict[str, Any]],
+    warnings: list[str],
+) -> list[dict[str, Any]]:
+    """Sum 24H native perp volume across daily snapshots into a rolling 30D total.
+
+    Uses today's freshly-fetched 24H Perps Volume rows as the anchor, then
+    accumulates up to 29 additional days from historical snapshot CSVs.
+    The day count in each row's notes reflects actual readings available;
+    accuracy converges to a true 30-day window as the snapshot archive grows.
+    """
+    today_str = date.today().isoformat()
+
+    # Seed from today's live data (snapshots not yet written when this runs).
+    totals: dict[str, dict[str, Any]] = {}
+    for row in current_rows:
+        if row["metric"] != "24H Perps Volume":
+            continue
+        proj = row["project"]
+        val = float(row["value"])
+        if proj not in totals or val > totals[proj].get("_today_val", 0.0):
+            totals[proj] = {"sum": val, "days": 1, "template": row, "_today_val": val}
+
+    if not totals:
+        return []
+
+    # Walk historical snapshots newest-first; today's not written yet so won't appear.
+    snap_files = sorted(SNAPSHOT_DIR.glob("dashboard-data-*.csv"), reverse=True)
+    files_read = 0
+    for snap_path in snap_files:
+        if files_read >= 29:  # today + 29 history = 30 days max
+            break
+        if snap_path.stem == f"dashboard-data-{today_str}":
+            continue
+        files_read += 1
+        try:
+            with snap_path.open(newline="") as fh:
+                for snap_row in csv.DictReader(fh):
+                    if snap_row.get("metric") != "24H Perps Volume":
+                        continue
+                    proj = snap_row["project"]
+                    if proj not in totals:
+                        continue
+                    try:
+                        val = float(snap_row["value"])
+                    except (TypeError, ValueError):
+                        continue
+                    totals[proj]["sum"] += val
+                    totals[proj]["days"] += 1
+        except Exception as exc:  # noqa: BLE001
+            warnings.append(f"Snapshot read error ({snap_path.name}): {exc.__class__.__name__}")
+
+    result: list[dict[str, Any]] = []
+    for proj, data in totals.items():
+        t = data["template"]
+        days = data["days"]
+        record = {
+            "project": t["project"],
+            "record": t["record"],
+            "sector": t["sector"],
+            "confidence": t["confidence"],
+            "notes": (
+                f"Rolling {days}-day perp volume from native API daily snapshots"
+                f" (target: 30 days). Source: {t['source_name']}."
+            ),
+        }
+        append_row(
+            result,
+            record=record,
+            metric="30D Derivatives Volume",
+            value=data["sum"],
+            period="30D",
+            source_name=t["source_name"],
+            source=t["source"],
+            notes=record["notes"],
+        )
+    return result
+
+
 def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     warnings: list[str] = []
     metric_rows: list[dict[str, Any]] = []
@@ -609,6 +688,13 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"Hyperliquid native perps volume unavailable: {exc.__class__.__name__}")
 
+    # TODO (Issue 3c): Jupiter 24H native perp volume.
+    # The official Jupiter Perps Dune dashboard (dune.com/jupiterexchange/jupiter-perps)
+    # indexes Jupiter perpetuals volume on Solana.  Once the Dune table name is confirmed,
+    # add a DUNE_JUPITER_PERPS_VOLUME_SQL constant (similar to DUNE_DEX_ACTIVE_WALLETS_SQL)
+    # and call execute_dune_sql() here to append a "24H Perps Volume" row for Jupiter.
+    # That row will automatically flow into compute_rolling_30d_perp_volume() below.
+
     for record in BORROW_RECORDS:
         url_path = f"protocol/{record['protocol_slug']}"
         try:
@@ -678,6 +764,7 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
 
     append_market_rows(metric_rows, warnings)
     append_dune_active_wallet_rows(metric_rows, warnings)
+    metric_rows.extend(compute_rolling_30d_perp_volume(metric_rows, warnings))
 
     metric_rows.sort(key=lambda row: (row["metric"], -row["value"], row["project"], row["record"]))
     return metric_rows, warnings
