@@ -34,6 +34,7 @@
       --shadow: 0 16px 42px rgba(0, 0, 0, 0.44), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
     }
 
+    html { scroll-behavior: smooth; }
     * { box-sizing: border-box; }
 
     body {
@@ -980,6 +981,7 @@
       <table>
         <thead>
           <tr>
+            <th>#</th>
             <th>Project</th>
             <th>Sector</th>
             <th>Market Cap</th>
@@ -1378,6 +1380,33 @@
       });
     }
 
+    function updateCategoryCardStats() {
+      const sectorTotals = {};
+      let totalMcap = 0, totalRevenue = 0;
+      projects.forEach(p => {
+        if (!sectorTotals[p.sector]) sectorTotals[p.sector] = { fees: 0, tvl: 0 };
+        sectorTotals[p.sector].fees += p.fees || 0;
+        sectorTotals[p.sector].tvl += p.tvl || 0;
+        totalMcap += p.marketCap || 0;
+        totalRevenue += p.revenue || 0;
+      });
+      categoryCards.forEach(card => {
+        const em = card.querySelector("em");
+        if (!em) return;
+        const sector = card.dataset.sector;
+        const metric = card.dataset.metric;
+        if (sector && sectorTotals[sector]) {
+          const { fees, tvl } = sectorTotals[sector];
+          if (fees > 0) em.textContent = `${money(fees)} 30D fees`;
+          else if (tvl > 0) em.textContent = `${money(tvl)} TVL`;
+        } else if (metric === "marketCap" && totalMcap > 0) {
+          em.textContent = `${money(totalMcap)} total mcap`;
+        } else if (metric === "revenue" && totalRevenue > 0) {
+          em.textContent = `${money(totalRevenue)} 30D revenue`;
+        }
+      });
+    }
+
     function renderFilters() {
       [...new Set(projects.map(project => project.sector))].sort().forEach(sector => {
         const option = document.createElement("option");
@@ -1386,6 +1415,7 @@
         sectorFilter.appendChild(option);
       });
       renderProjectFilter();
+      updateCategoryCardStats();
     }
 
     function renderProjectFilter() {
@@ -1429,7 +1459,7 @@
       document.getElementById("projectCount").textContent = projects.length.toLocaleString();
       document.getElementById("totalMarketCap").textContent = money(totalMarketCap);
       document.getElementById("totalTvl").textContent = money(totalTvl);
-      document.getElementById("snapshotDate").textContent = meta.generated_at || rawRows[0]?.pulled_date || "-";
+      document.getElementById("snapshotDate").textContent = relativeDate(meta.generated_at || rawRows[0]?.pulled_date);
       document.getElementById("coverageNote").textContent = `${usageCount}/${projects.length} have active-wallet rows`;
       const freshLabel = relativeDate(meta.generated_at || rawRows[0]?.pulled_date);
       document.getElementById("refreshStatus").textContent =
@@ -1703,10 +1733,15 @@
 
     function renderTable() {
       const data = filteredProjects();
-      projectRows.innerHTML = data.map(project => {
+      if (!data.length) {
+        projectRows.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px 16px;">No projects match — try clearing the search or changing the filter.</td></tr>`;
+        return;
+      }
+      projectRows.innerHTML = data.map((project, index) => {
         const tokenOnly = !project.tvl && !project.fees && !project.revenue;
         return `
         <tr${tokenOnly ? ' class="token-only"' : ""}>
+          <td style="color:var(--dim);font-size:11px;text-align:right;padding-right:6px;">${index + 1}</td>
           <td>${escapeHtml(project.project)}</td>
           <td>${escapeHtml(project.sector)}</td>
           <td class="num">${formatValue(project.marketCap)}</td>
@@ -1785,6 +1820,13 @@
       "Infra": "fees",
       "AI": "fees"
     };
+    function scrollToDashboard() {
+      const el = document.getElementById("dashboard");
+      if (!el) return;
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    }
+
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
         track("category_click", card.dataset.metric || card.dataset.sector);
@@ -1792,6 +1834,7 @@
           sectorFilter.value = "all";
           projectFilter.value = "all";
           setMetric(card.dataset.metric);
+          scrollToDashboard();
           return;
         }
         if (card.dataset.sector) {
@@ -1803,6 +1846,7 @@
           }
           renderProjectFilter();
           render();
+          scrollToDashboard();
         }
       });
     });
