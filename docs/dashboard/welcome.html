@@ -256,8 +256,9 @@
 
     function moveCrosshair(evt) {
       if (!scales) return;
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
       const rect = svg.getBoundingClientRect();
-      const relX = (evt.clientX - rect.left) / (rect.width || W) * W;
+      const relX = (clientX - rect.left) / (rect.width || W) * W;
       const i = Math.max(0, Math.min(n - 1, Math.round((relX - ML) / ((W - ML - MR) / (n - 1)))));
       const g = svg.querySelector("#xhair");
       if (!g) return;
@@ -280,8 +281,11 @@
         <rect x="${boxX}" y="${MT+6}" width="${boxW}" height="${boxH}" rx="8" fill="rgba(3,16,15,0.92)" stroke="rgba(152,252,228,0.28)"/>
         ${lines.map((t,k) => `<text x="${boxX+12}" y="${MT+28+k*18}" fill="${k===0?"rgba(255,255,255,0.6)":"#fff"}" font-size="${k===0?12:13}" font-weight="${k===0?500:700}">${t}</text>`).join("")}`;
     }
+    const clearXhair = () => { const g = svg.querySelector("#xhair"); if (g) g.innerHTML = ""; };
     svg.addEventListener("mousemove", moveCrosshair);
-    svg.addEventListener("mouseleave", () => { const g = svg.querySelector("#xhair"); if (g) g.innerHTML = ""; });
+    svg.addEventListener("mouseleave", clearXhair);
+    svg.addEventListener("touchmove", moveCrosshair, { passive: true });
+    svg.addEventListener("touchend", clearXhair);
 
     function render() {
       const wrap = document.getElementById("chartLegend");
