@@ -6,7 +6,6 @@ on:
     paths:
       - "docs/dashboard/free.html"
       - "docs/dashboard/welcome.html"
-      - "docs/dashboard/generated-dashboard-data.js"
       - "scripts/build_free_dashboard_bundle.sh"
       - ".github/workflows/free-dashboard-pages.yml"
   workflow_dispatch: {}
@@ -28,6 +27,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Overlay data from data branch
+        run: |
+          git fetch origin data
+          git archive origin/data -- docs/dashboard/generated-dashboard-data.js 2>/dev/null | tar -x || true
 
       - name: Build free dashboard static bundle
         run: bash scripts/build_free_dashboard_bundle.sh site
