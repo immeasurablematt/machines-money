@@ -642,7 +642,19 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     protocols_by_slug = {item.get("slug"): item for item in protocols}
     tvl_by_slug = {slug: item.get("tvl") for slug, item in protocols_by_slug.items()}
 
+    # Validate all protocol slugs up front so missing ones surface as explicit warnings.
     for record in RECORDS:
+        if record["protocol_slug"] not in protocols_by_slug:
+            warnings.append(
+                f"SLUG NOT FOUND in DefiLlama protocols: '{record['protocol_slug']}' "
+                f"({record['record']}) — TVL and TVL growth will be missing for this record."
+            )
+
+    for record in RECORDS:
+        if tvl_by_slug.get(record["protocol_slug"]) is None and record["protocol_slug"] in protocols_by_slug:
+            warnings.append(
+                f"TVL is null/zero in DefiLlama protocols for '{record['protocol_slug']}' ({record['record']})."
+            )
         append_row(
             metric_rows,
             record=record,
@@ -679,7 +691,12 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
             try:
                 data = fetch_json(source_url(url_path))
             except urllib.error.HTTPError as exc:
-                if exc.code not in (400, 404):
+                if exc.code in (400, 404):
+                    warnings.append(
+                        f"FEE SLUG NOT FOUND: '{fee_slug}' returned HTTP {exc.code} "
+                        f"for {record['record']} ({metric}) — check slug against DefiLlama /fees page."
+                    )
+                else:
                     warnings.append(f"{metric} unavailable for {record['record']}: HTTP {exc.code}")
                 continue
             except Exception as exc:  # noqa: BLE001 - retain source warning in generated metadata.
