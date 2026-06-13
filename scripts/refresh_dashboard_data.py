@@ -645,9 +645,12 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
     for record in RECORDS:
         slug = record.get("protocol_slug")
         if slug and slug not in protocols_by_slug:
+            term = record["project"].lower()[:5]
+            similar = sorted(s for s in protocols_by_slug if term in s.lower())[:6]
+            similar_str = ", ".join(f"'{s}'" for s in similar) if similar else "none found"
             warnings.append(
                 f"SLUG NOT FOUND in DefiLlama protocols: '{slug}' "
-                f"({record['record']}) — TVL and TVL growth will be missing for this record."
+                f"({record['record']}) — TVL missing. Possible matches: {similar_str}"
             )
 
     for record in RECORDS:
