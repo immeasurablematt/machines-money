@@ -644,6 +644,10 @@
       background: rgba(80, 210, 193, 0.08);
     }
 
+    #project-sources .source-row { align-items: start; }
+    #project-sources .source-row span:not(.quality-chip) { text-transform: none; font-weight: 400; line-height: 1.45; font-size: 11px; color: var(--muted); }
+    #project-sources .source-row span:not(.quality-chip) a { color: var(--mint-bright); font-weight: 500; }
+
     .quality-chip.medium {
       color: var(--orange);
       border-color: rgba(255, 185, 109, 0.24);
@@ -1004,7 +1008,7 @@
       <div style="padding:14px;display:grid;gap:18px;">
 
         <div>
-          <h3 style="margin:0 0 10px;font-size:14px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;font-size:11px;letter-spacing:0.04em;">Spot</h3>
+          <h3 style="margin:0 0 10px;font-size:11px;color:var(--mint-bright);text-transform:uppercase;font-weight:720;letter-spacing:0.04em;">Spot</h3>
           <div class="source-list">
             <div class="source-row"><div><a href="https://defillama.com/protocol/uniswap" target="_blank" rel="noopener">Uniswap</a><span>DefiLlama — fees, volume, active users; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a>; <a href="https://defillama.com/holders-revenue" target="_blank" rel="noopener">holders revenue</a></span></div><span class="quality-chip high">high</span></div>
             <div class="source-row"><div><a href="https://defillama.com/protocol/curve-finance" target="_blank" rel="noopener">Curve</a><span>DefiLlama — fees, volume; <a href="https://tokenterminal.com/explorer/projects/curve/metrics/user-dau" target="_blank" rel="noopener">active users (Token Terminal)</a>; <a href="https://defillama.com/fees" target="_blank" rel="noopener">fee market share</a>; <a href="https://defillama.com/dexs" target="_blank" rel="noopener">volume market share</a></span></div><span class="quality-chip high">high</span></div>
@@ -1662,10 +1666,9 @@
       }
 
       const project = projects.find(item => item.project === selectedProject);
-      const records = (project?.records || []).slice().sort((a, b) => {
-        const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
-        return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
-      });
+      const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
+      const metricIdx = m => { const i = metricOrder.indexOf(m); return i === -1 ? metricOrder.length : i; };
+      const records = (project?.records || []).slice().sort((a, b) => metricIdx(a.metric) - metricIdx(b.metric) || b.value - a.value);
       const productRows = records.filter(row => !(row.notes || "").includes("Token-level market metric"));
       projectDetailTitle.textContent = selectedProject;
       projectDetailSubtitle.textContent = project?.sector || "Project detail";
