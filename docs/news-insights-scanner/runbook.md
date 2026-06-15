@@ -8,6 +8,8 @@
 
 The scanner turns a broad X-list feed into a short Machines & Money review queue. It should save Ian from reading every tweet himself: scan the recent list activity, drop low-signal posts, and retain only the most useful announcements, stats/charts, and deep-dive/article candidates. It is not newsletter copy and it is not Research Dossier. Only a high-priority single-project deep dive should emit an optional dossier seed.
 
+Routing rule: if Matthew asks for a Boros/Turtle/Nova-style output, Friday Feature brief, source map, metrics/source ledger, current videos, or project deep dive from a single X account link, do not run this scanner. Use the Research Dossier workflow in `docs/research-dossier/weekly-run-prereqs.md` and the `machines-money-research-dossier` skill.
+
 ## Default Manual Run
 
 From the repo root:

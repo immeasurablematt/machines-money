@@ -1,0 +1,58 @@
+[
+  {
+    "chainCirculating": {
+      "Ethereum": {
+        "circulatingPrevDay": {
+          "peggedUSD": 77542914.15133177
+        },
+        "circulatingPrevMonth": {
+          "peggedUSD": 79863281.60548742
+        },
+        "circulatingPrevWeek": {
+          "peggedUSD": 90099420.4474327
+        },
+        "current": {
+          "peggedUSD": 77868478.1309266
+        }
+      },
+      "Tempo": {
+        "circulatingPrevDay": {
+          "peggedUSD": 0
+        },
+        "circulatingPrevMonth": {
+          "peggedUSD": 0
+        },
+        "circulatingPrevWeek": {
+          "peggedUSD": 0
+        },
+        "current": {
+          "peggedUSD": 0
+        }
+      }
+    },
+    "chains": [
+      "Ethereum",
+      "Tempo"
+    ],
+    "circulating": {
+      "peggedUSD": 77868478.1309266
+    },
+    "circulatingPrevDay": {
+      "peggedUSD": 77542914.15133177
+    },
+    "circulatingPrevMonth": {
+      "peggedUSD": 79863281.60548742
+    },
+    "circulatingPrevWeek": {
+      "peggedUSD": 90099420.4474327
+    },
+    "gecko_id": "infinifi-usd",
+    "id": "298",
+    "name": "infiniFi USD",
+    "pegMechanism": "crypto-backed",
+    "pegType": "peggedUSD",
+    "price": 0.9989276278558775,
+    "priceSource": "defillama",
+    "symbol": "IUSD"
+  }
+]

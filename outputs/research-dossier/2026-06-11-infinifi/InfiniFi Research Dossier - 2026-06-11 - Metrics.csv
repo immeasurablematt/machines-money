@@ -1,0 +1,18 @@
+Metric,Value,Period / as of,Source URL,Source relationship,Confidence,Notes
+DefiLlama TVL,77935616,2026-06-11,https://api.llama.fi/protocol/infinifi,third_party,high,Protocol TVL is value deposited in accounting contract per DefiLlama methodology.
+DefiLlama TVL 7d change,0.4%,2026-06-05 to 2026-06-11,https://api.llama.fi/protocol/infinifi,third_party,high,Calculated from DefiLlama daily TVL series.
+DefiLlama TVL 30d change,-1.96%,2026-05-13 to 2026-06-11,https://api.llama.fi/protocol/infinifi,third_party,high,Calculated from DefiLlama daily TVL series.
+DefiLlama TVL 365d change,303.75%,2025-06-12 to 2026-06-11,https://api.llama.fi/protocol/infinifi,third_party,high,Shows growth since early public data period but off peak.
+DefiLlama gross protocol revenue / fees,14773,24h ending 2026-06-11,https://api.llama.fi/summary/fees/infinifi,third_party,high,Includes performance fees from profit events safety buffer movement and user yield/loss per DefiLlama methodology.
+DefiLlama gross protocol revenue / fees,101626,7d ending 2026-06-11,https://api.llama.fi/summary/fees/infinifi,third_party,high,Use as recent activity metric.
+DefiLlama gross protocol revenue / fees,454282,30d ending 2026-06-11,https://api.llama.fi/summary/fees/infinifi,third_party,high,Use as recent activity metric.
+DefiLlama annualized 1y gross protocol revenue / fees,8464807,as of 2026-06-11,https://api.llama.fi/summary/fees/infinifi,third_party,medium,Annualized field from DefiLlama summary.
+IUSD circulation,77868478.13,2026-06-11,https://stablecoins.llama.fi/stablecoins?includePrices=true,third_party,high,Matched infiniFi USD gecko_id infinifi-usd.
+IUSD price,0.9989276279,2026-06-11,https://stablecoins.llama.fi/stablecoins?includePrices=true,third_party,high,DefiLlama stablecoin price.
+IUSD 7d circulating change,-13.61%,2026-06-04 to 2026-06-11,https://stablecoins.llama.fi/stablecoins?includePrices=true,third_party,high,Calculated from current and circulatingPrevWeek fields.
+Average APY tracked by DefiLlama,7.38%,2026-06-11,https://defillama.com/protocol/infinifi,third_party,medium,Search result says 7 yield pools tracked.
+X followers,41694,2026-06-11,https://x.com/infiniFi,native_social,high,From X API user public_metrics.
+X posts reviewed,341,last 180 days to 2026-06-11,https://x.com/infiniFi,native_social,high,From X API account timeline.
+GitHub stars,11,2026-06-11,https://github.com/InfiniFi-Labs/infinifi-protocol,native,high,Repo metadata from GitHub API.
+GitHub last pushed,2026-06-04,2026-06-11 pull,https://github.com/InfiniFi-Labs/infinifi-protocol,native,high,Indicates current public code activity.
+Audits listed by DefiLlama,2,2026-06-11,https://api.llama.fi/protocol/infinifi,third_party,medium,DefiLlama also lists three audit links; reconcile before publication.

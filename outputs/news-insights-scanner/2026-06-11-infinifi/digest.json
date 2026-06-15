@@ -1,0 +1,64 @@
+{
+  "captured_at": "2026-06-11T12:55:41+00:00",
+  "ingestion_path": "manual",
+  "items": [
+    {
+      "author_handle": "infiniFi",
+      "captured_at": "2026-06-11T12:55:41+00:00",
+      "classification": "Adoption Stat",
+      "confidence": "medium",
+      "duplicate_count": 1,
+      "evidence_urls": [
+        "https://t.co/tMaepzjy2C",
+        "https://t.co/v9b7Zl9zuP",
+        "https://x.com/infiniFi/status/2064796652813136073",
+        "https://x.com/infiniFi/status/2064796652813136073/photo/1",
+        "https://twitter.com/infiniFi/status/2060438800501809568"
+      ],
+      "metrics": [],
+      "notes": "Needs manual verification before reuse.",
+      "post_id": "2064796652813136073",
+      "post_url": "https://x.com/infiniFi/status/2064796652813136073",
+      "posted_at": "2026-06-10T19:47:38.000Z",
+      "priority": "High",
+      "project_names": [
+        "New"
+      ],
+      "recommended_action": "verify",
+      "run_id": "news-insights-20260611T125541Z-32b9b4ba",
+      "scores": {
+        "editorial_value": 3,
+        "evidence_quality": 5,
+        "relevance": 5,
+        "timeliness": 5
+      },
+      "selection_reasons": [
+        "concrete announcement language",
+        "source link captured",
+        "primary/dashboard source link",
+        "core Machines & Money theme"
+      ],
+      "selection_score": 9,
+      "source_list_id": "x-account:infiniFi",
+      "summary": "New funding stablecoins have been added to help you access siUSD positions through @OdysseyFi directly inside the infiniFi app. https://t.co/tMaepzjy2C https...",
+      "verification_status": "needs_verification",
+      "why_it_matters": "A dated metric that may support a chart, traction note, or Truth Within Trends angle."
+    }
+  ],
+  "lookback_hours": 24,
+  "run_id": "news-insights-20260611T125541Z-32b9b4ba",
+  "selection_audit": {
+    "candidate_count": 1,
+    "drop_reasons": {
+      "below_selection_cutoff": 0,
+      "retweet": 1
+    },
+    "dropped_count": 1,
+    "reviewed_tweet_count": 2,
+    "selected_count": 1,
+    "top_n": 12
+  },
+  "source_list_id": "x-account:infiniFi",
+  "verification_status": "needs_verification",
+  "warnings": []
+}
