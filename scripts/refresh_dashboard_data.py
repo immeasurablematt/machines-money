@@ -18,7 +18,7 @@ import time
 import tomllib
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -882,8 +882,12 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
     Powers the welcome-page area charts. Failure is non-fatal: the page
     falls back to stat cards until history is available.
     """
-    by_date: dict[int, float] = {}
+    def point_day(timestamp: int | float) -> str:
+        return datetime.fromtimestamp(float(timestamp), tz=timezone.utc).date().isoformat()
+
+    by_day: dict[str, float] = {}
     for record in RECORDS:
+        record_by_day: dict[str, float] = {}
         try:
             detail = fetch_json(source_url(f"protocol/{record['protocol_slug']}"))
         except Exception:  # noqa: BLE001
@@ -892,18 +896,20 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
             ts = point.get("date")
             value = point.get("totalLiquidityUSD")
             if ts and value:
-                by_date[int(ts)] = by_date.get(int(ts), 0.0) + float(value)
+                record_by_day[point_day(ts)] = float(value)
+        for day, value in record_by_day.items():
+            by_day[day] = by_day.get(day, 0.0) + value
         time.sleep(0.1)
-    if not by_date:
+    if not by_day:
         warnings.append("Aggregate TVL history unavailable")
         return None
 
     try:
         all_defi = fetch_json("https://api.llama.fi/v2/historicalChainTvl")
-        all_by_date = {int(p["date"]): float(p["tvl"]) for p in all_defi if p.get("tvl")}
+        all_by_day = {point_day(p["date"]): float(p["tvl"]) for p in all_defi if p.get("date") and p.get("tvl")}
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"All-DeFi TVL history unavailable: {exc.__class__.__name__}")
-        all_by_date = {}
+        all_by_day = {}
 
     market_context = {}
     try:
@@ -940,7 +946,7 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
             out: dict[str, float] = {}
             for point in data.get("market_caps") or []:
                 if len(point) == 2 and point[1]:
-                    out[date.fromtimestamp(point[0] / 1000).isoformat()] = float(point[1])
+                    out[point_day(point[0] / 1000)] = float(point[1])
             return out
 
         try:
@@ -961,15 +967,14 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
     else:
         warnings.append("Market-cap history skipped: set COINGECKO_DEMO_API_KEY")
 
-    dates = sorted(by_date)[-365:]
-    iso_dates = [date.fromtimestamp(ts).isoformat() for ts in dates]
+    dates = sorted(by_day)[-365:]
     return {
         "market_context": market_context,
-        "defi20_mcap": [round(defi20_mcap_by_date.get(d, 0), 2) for d in iso_dates],
-        "btc_mcap": [round(btc_mcap_by_date.get(d, 0), 2) for d in iso_dates],
-        "dates": iso_dates,
-        "defi20_tvl": [round(by_date[ts], 2) for ts in dates],
-        "all_defi_tvl": [round(all_by_date.get(ts, 0), 2) for ts in dates],
+        "defi20_mcap": [round(defi20_mcap_by_date.get(d, 0), 2) for d in dates],
+        "btc_mcap": [round(btc_mcap_by_date.get(d, 0), 2) for d in dates],
+        "dates": dates,
+        "defi20_tvl": [round(by_day[d], 2) for d in dates],
+        "all_defi_tvl": [round(all_by_day.get(d, 0), 2) for d in dates],
         "source": "DefiLlama protocol TVL histories summed across DeFi20 records; all-DeFi from historicalChainTvl.",
     }
 
