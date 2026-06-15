@@ -1,0 +1,165 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>InfiniFi Research Dossier - 2026-06-11</title></head><body>
+<h1>InfiniFi Research Dossier</h1>
+<p><em>Machines &amp; Money Friday Feature Research Brief</em></p>
+<p>Project: InfiniFi</p>
+<p>Token/ticker: iUSD / siUSD / liUSD position tokens; no separate governance token confirmed for this dossier</p>
+<p>X handle: https://x.com/infiniFi</p>
+<p>Website/app: https://infinifi.xyz/ and https://app.infinifi.xyz/</p>
+<p>Docs: https://docs.infinifi.xyz/</p>
+<p>Prepared for: Ian</p>
+<p>Research date: 2026-06-11</p>
+<h2>Source Key</h2>
+<ul>
+<li><strong>[S1] InfiniFi docs hub: https://docs.infinifi.xyz/ - pulled 2026-06-11.</li>
+<li><strong>[S2] Deposit quickstart: https://docs.infinifi.xyz/deposit-quickstart - pulled 2026-06-11.</li>
+<li><strong>[S3] Vaults docs: https://docs.infinifi.xyz/vaults - pulled 2026-06-11.</li>
+<li><strong>[S4] Slashing mechanics: https://docs.infinifi.xyz/slashing-mechanics - pulled 2026-06-11.</li>
+<li><strong>[S5] Contract addresses: https://docs.infinifi.xyz/dev-docs/contracts - pulled 2026-06-11.</li>
+<li><strong>[S6] Changelog: https://docs.infinifi.xyz/dev-docs/changelog - pulled 2026-06-11.</li>
+<li><strong>[S7] DefiLlama protocol API: https://api.llama.fi/protocol/infinifi - pulled 2026-06-11.</li>
+<li><strong>[S8] DefiLlama fees API: https://api.llama.fi/summary/fees/infinifi - pulled 2026-06-11.</li>
+<li><strong>[S9] DefiLlama stablecoins API: https://stablecoins.llama.fi/stablecoins?includePrices=true - pulled 2026-06-11.</li>
+<li><strong>[S10] DefiLlama protocol page: https://defillama.com/protocol/infinifi - reviewed 2026-06-11.</li>
+<li><strong>[S11] GitHub protocol repo: https://github.com/InfiniFi-Labs/infinifi-protocol - pulled 2026-06-11.</li>
+<li><strong>[S12] Certora formal verification post: https://www.certora.com/blog/ensuring-fair-redemptions-in-infinifi-with-formal-verification - published 2025-06-30.</li>
+<li><strong>[S13] Blockworks 0xResearch explainer: https://blockworks.com/news/yield-protocol-infinifi-banking-onchain - published 2025-06-24; background only because it is older than 6 months.</li>
+<li><strong>[S14] InfiniFi X account API: https://x.com/infiniFi - pulled 2026-06-11; 341 posts reviewed over the last 180 days.</li>
+<li><strong>[S15] Odyssey native siUSD positions X post: https://x.com/infiniFi/status/2060438800501809568 - posted 2026-05-29.</li>
+<li><strong>[S16] Apyx yield integration X post: https://x.com/infiniFi/status/2059673692481745314 - posted 2026-05-27.</li>
+<li><strong>[S17] Morpho/Merkl rewards X post: https://x.com/infiniFi/status/2062616816489222265 - posted 2026-06-04.</li>
+<li><strong>[S18] Edge Podcast transcript: https://www.youtube.com/watch?v=rc_Vz95Jcgw - transcript pulled 2026-06-11.</li>
+</ul>
+<h2>Executive Summary</h2>
+<p>InfiniFi is an onchain yield and reserve-management protocol for stablecoin deposits. The simple version: users deposit USDC to mint iUSD, then either hold iUSD for redemption flexibility, stake it into siUSD for liquid yield, or lock it into liUSD positions for higher yield and first-loss exposure. The product pitch is &quot;higher yields, no leverage,&quot; but the more useful explanation is that InfiniFi turns a bank-like duration mismatch into a transparent onchain system where users choose their liquidity/risk bucket. [S1][S2][S4]</p>
+<p>The article-worthy angle is not just stablecoin APY. It is programmable fractional-reserve banking with visible liabilities, visible reserves, yield-source routing, and an explicit loss waterfall. Senior liquid users get lower yield and more protection; locked users accept first-loss risk and receive higher rewards. That makes InfiniFi a cleaner way to discuss the core question behind stablecoin yield: where does the yield come from, who absorbs losses first, and how clean is the exit? [S1][S3][S4][S13]</p>
+<p>Current scale is meaningful but off its highs. DefiLlama showed about $77.9M TVL on 2026-06-11, up roughly 304% from 2025-06-12 but down about 55% over the prior 90 days. DefiLlama stablecoin data showed about $77.9M IUSD circulating at a $0.9989 price. DefiLlama fees data showed about $14.8K in 24h gross protocol revenue/fees, $101.6K over 7 days, and $454.3K over 30 days. [S7][S8][S9]</p>
+<p>The product is actively expanding distribution. The last six months of X activity surfaced integrations and campaigns around Odyssey, EtherFi, Euler, Katana, Pendle, Morpho/Merkl, Apyx, Seamless, Curve/Frax, and LayerZero bridging. Treat these as current product/distribution signals, not final publication facts unless corroborated by app/docs or partner sources. [S14][S15][S16][S17]</p>
+<h2>Ian&#x27;s Four Questions</h2>
+<ol>
+<li>What does the project do?</li>
+</ol>
+<p>InfiniFi accepts USDC deposits and issues iUSD receipt tokens. Users can stake iUSD into siUSD for liquid returns or lock iUSD into duration-specific liUSD positions for higher yield and governance/allocation rights. The protocol then allocates capital across liquid and illiquid yield sources such as Aave, Spark, Cap, f(x), Morpho, Sentora, Fasanara, Maple, New Silver, and other listed vaults. [S1][S2][S3]</p>
+<ol>
+<li>Why is this important and unique?</li>
+</ol>
+<p>InfiniFi is trying to make the risk-transfer logic of banking legible onchain. Traditional banks pool deposits and invest across liquid and illiquid assets, but users cannot easily see the asset-liability mismatch. InfiniFi exposes the buckets and loss waterfall: locked iUSD is the junior tranche and absorbs losses before senior siUSD/iUSD users. This is more specific than &quot;yield aggregator&quot; and more interesting than a simple stablecoin vault. [S3][S4][S13]</p>
+<ol>
+<li>How can this help people?</li>
+</ol>
+<p>For users, InfiniFi offers a way to choose between liquid stablecoin yield and higher-yield locked exposure. For DeFi apps and partners, it can function as yield infrastructure: users can hold or route siUSD/iUSD through other apps while InfiniFi manages the underlying yield stack. For researchers, it is a concrete case study in onchain credit, reserve transparency, duration matching, and how DeFi handles bank-run style risks without pretending they do not exist. [S1][S3][S4][S15]</p>
+<ol>
+<li>How are we actively using it?</li>
+</ol>
+<p>Lowest-risk active use is research-only first: open the app, inspect live net APY, review the vault/source mix, compare siUSD and lock APYs, inspect the contract addresses, and follow the deposit path without signing. A real test would require USDC on Ethereum mainnet plus ETH for gas, then depositing USDC to mint iUSD, staking for siUSD, or locking into liUSD. Codex did not connect a wallet or perform any transaction. [S2][S3][S5]</p>
+<h2>Metrics And Sources</h2>
+<p>The formatted metrics table, source map, source ledger, raw API backups, X timeline backup, and video transcript backups are saved in the local companion folder:</p>
+<p>`outputs/research-dossier/2026-06-11-infinifi/`</p>
+<h2>Freshness Notes</h2>
+<ul>
+<li>Core docs, deposit guide, vault docs, slashing docs, contracts, DefiLlama, stablecoin data, GitHub, and X were pulled on 2026-06-11. [S1]-[S11][S14]</li>
+<li>DefiLlama TVL and fees change continuously; use the pulled date in any article. [S7][S8]</li>
+<li>The website was behind Cloudflare from direct terminal fetch, so docs/app/search-index sources were used instead of raw homepage HTML. [S1][S2][S10]</li>
+<li>Current YouTube transcripts were pulled where available. Older founder interviews exist but were not used as primary sources because the dossier standard excludes audio/video older than 6 months. [S18]</li>
+<li>Blockworks is older than 6 months and should be used only as background framing, not current product truth. [S13]</li>
+</ul>
+<h2>What The Project Does</h2>
+<p>InfiniFi has three user-facing position types. iUSD is the receipt token from depositing USDC. siUSD is the staked token for liquid yield and instant conversion back to iUSD. liUSD-xw is a locked position token that earns illiquid returns and governance/allocation rights over a chosen duration. [S1][S2][S5]</p>
+<p>The mechanism is a yield allocation stack. InfiniFi routes protocol assets into a mix of liquid and illiquid vaults, while user liabilities are separated by liquidity preference. The docs list liquid sources including Aave USDC, Cap stcUSD, Spark sUSDC, and a Multi Farm, plus illiquid sources such as Cap stcUSD, f(x) fxSAVE, FalconX Institutional, Morpho infiniFi Ecosystem Vault, Sentora, sGHO, STRCx, Fasanara funds, Maple Institutional, and New Silver. [S3]</p>
+<p>The core business question is whether InfiniFi can keep producing above-market stablecoin returns while keeping the senior tranche credible and the risk disclosures understandable. That is where the project becomes interesting for readers: the APY is the surface; the real story is how risk is allocated and disclosed. [S3][S4][S8]</p>
+<h2>Differentiating Features</h2>
+<ul>
+<li>Explicit tranche structure: siUSD is senior/liquid and Locked-iUSD is junior/first-loss. [S4]</li>
+<li>Onchain reserve and liability framing: users can inspect deposited assets, minted iUSD, vault composition, and contract addresses instead of trusting opaque banking reports. [S3][S5][S13]</li>
+<li>Multiple yield-source buckets: the vault page lists DeFi, tokenized credit, institutional lending, and RWA-style sources in the same allocation stack. [S3]</li>
+<li>Partner distribution strategy: recent X activity points to integrations with Odyssey, EtherFi, Euler, Katana, Pendle, Morpho/Merkl, and Apyx. [S14][S15][S16][S17]</li>
+<li>Formal verification/security posture: Certora described a redemption queue fairness issue, the fix, and post-fix verification; DefiLlama lists audits. [S7][S12]</li>
+</ul>
+<h2>Metrics Readout</h2>
+<p>Protocol scale:</p>
+<ul>
+<li>DefiLlama TVL: about $77.9M as of 2026-06-11. [S7]</li>
+<li>TVL was up about 304% versus 2025-06-12, but down about 55% versus 90 days prior. [S7]</li>
+<li>IUSD circulating supply: about $77.9M as of 2026-06-11. [S9]</li>
+<li>IUSD price: about $0.9989 as of 2026-06-11. [S9]</li>
+</ul>
+<p>Revenue/activity:</p>
+<ul>
+<li>DefiLlama gross protocol revenue/fees: about $14.8K over 24h, $101.6K over 7d, and $454.3K over 30d. [S8]</li>
+<li>DefiLlama methodology says fees include performance fees from profit events, safety-buffer movement, and final user yield or loss; protocol revenue is only performance fees. Use precise labels when publishing. [S8]</li>
+<li>DefiLlama search/index data showed 7 tracked yield pools and 7.38% average APY. [S10]</li>
+</ul>
+<p>Distribution/social:</p>
+<ul>
+<li>X account: 41,694 followers as of 2026-06-11. [S14]</li>
+<li>X timeline reviewed: 341 account posts over the prior 180 days. [S14]</li>
+<li>Notable recent signals: Odyssey siUSD positions in-app, Apyx-issued yields integrated after Risk Council review, and Morpho/Merkl incentive campaigns. [S15][S16][S17]</li>
+</ul>
+<h2>Current Activity And Announcements</h2>
+<p>InfiniFi&#x27;s recent activity is mostly about distribution and yield-source expansion. The highest-signal posts in the six-month X pull included Apyx yield integration, Odyssey in-app siUSD strategy access, Euler collateral support for fixed-maturity InfiniFi positions, Katana/LayerZero bridging, Pendle pools, Morpho/Merkl reward programs, and Curve/Frax liquidity. [S14]-[S17]</p>
+<p>The most important recent item for Ian is the Odyssey integration because it changes the user path: users can open Odyssey siUSD positions directly inside the InfiniFi app instead of treating Odyssey as an external leg. That supports the &quot;yield infrastructure inside other apps&quot; angle. [S15]</p>
+<p>The Apyx post is also useful because it shows the protocol expanding beyond basic DeFi lending into dividend/preferred-equity-style yield sources after Risk Council review. That is compelling, but it should be verified against app/docs or partner materials before Ian cites it as a hard integration fact. [S16]</p>
+<h2>Video / Transcript Takeaways</h2>
+<p>The current Edge Podcast transcript is useful for the broader narrative around private credit moving onchain. The relevant frame is that not every private-credit asset belongs onchain; the asset has to be compatible with liquidity expectations and transparent risk management. That maps directly to InfiniFi&#x27;s core tension: users want liquid stablecoin UX, but some yield sources are not liquid on demand. [S18]</p>
+<p>Older InfiniFi founder interviews and explainers exist, including videos about duration assets and prior TVL milestones, but they are older than the dossier freshness window and should not be used as current evidence. They can help Matthew or Ian understand the origin story, but the final article should lean on current docs, current metrics, and current integrations.</p>
+<h2>Yield Analysis</h2>
+<p>The best way to explain InfiniFi yield is not &quot;magic higher APY.&quot; It is a duration and risk allocation engine:</p>
+<ol>
+<li>Users deposit USDC and receive iUSD. [S2]</li>
+<li>Users choose a liquidity/risk bucket: hold iUSD, stake into siUSD, or lock into liUSD. [S1][S2]</li>
+<li>InfiniFi allocates assets across liquid and illiquid vaults. [S3]</li>
+<li>Locked users absorb losses first and receive higher yield; senior users get more liquidity and more protection. [S4]</li>
+</ol>
+<p>What needs verification before publication:</p>
+<ul>
+<li>Current live app APY for siUSD and each lock duration.</li>
+<li>Current allocation weights by vault/source, not just the list of possible vaults.</li>
+<li>Whether any listed institutional/RWA vault has current size, redemption queue, borrower concentration, or historical loss data available.</li>
+<li>Whether recent Apyx, Odyssey, EtherFi, Euler, Katana, Morpho, and Pendle integrations are all live in-app or partly announced/partner-side.</li>
+</ul>
+<h2>How To Use The Platform</h2>
+<p>Lowest-risk path:</p>
+<ol>
+<li>Open https://app.infinifi.xyz/ and review net APY, siUSD, iUSD, lock options, and vault/source pages before connecting a wallet. [S1][S2][S3]</li>
+<li>Review docs for the deposit path and contract addresses. [S2][S5]</li>
+<li>Compare the senior/liquid siUSD option against locked liUSD terms. [S1][S4]</li>
+<li>If Ian wants a real test, use only a small amount of USDC on Ethereum mainnet, confirm gateway/contract addresses, and inspect the generated transaction before signing. [S2][S5]</li>
+<li>Do not deposit until current app APY, redemption path, lock terms, and underlying vault allocation are understood. Codex did not connect a wallet. [S2][S4]</li>
+</ol>
+<h2>Risk And Verification Notes</h2>
+<ul>
+<li>Duration mismatch risk: InfiniFi intentionally routes capital across liquid and illiquid assets, so exit liquidity matters. [S3][S4]</li>
+<li>Junior tranche risk: Locked-iUSD absorbs realized losses before senior/liquid users; this is the source of higher yield and should not be hidden. [S4]</li>
+<li>Redemption queue/fairness risk: Certora found and described a high-severity queue-bypass issue that has since been fixed and re-verified. This is a positive security-process signal, but also shows the protocol&#x27;s economic logic is complex. [S12]</li>
+<li>Metric label risk: DefiLlama &quot;fees&quot; include user yield/loss and safety-buffer movement under its methodology; do not casually call all of it protocol revenue. [S8]</li>
+<li>TVL trend risk: the protocol has grown sharply since early data, but TVL is materially below the 90-day prior level. The article should mention both facts rather than only the growth headline. [S7]</li>
+<li>Integration risk: X posts are strong activity signals, but partner integrations should be verified in the app or partner docs before being presented as live product facts. [S14]-[S17]</li>
+</ul>
+<h2>Open Questions For Ian</h2>
+<ul>
+<li>Is the article angle &quot;stablecoin yield infrastructure&quot; or &quot;transparent onchain banking&quot;?</li>
+<li>What live APY should be used for siUSD and each lock duration on publication day?</li>
+<li>What is the current vault allocation by source, and how much is DeFi lending versus institutional/RWA/private-credit exposure?</li>
+<li>How much junior tranche protection exists today relative to senior/liquid liabilities?</li>
+<li>Are Odyssey, Apyx, EtherFi, Euler, Katana, Pendle, Morpho/Merkl, and Curve/Frax integrations all live and usable from the current app?</li>
+<li>Does InfiniFi have a public dashboard for reserves, queue state, tranche composition, and historical yield by source?</li>
+<li>Which risk disclosure should Ian quote when explaining what happens in a loss event?</li>
+</ul>
+<h2>Draft Article Angles</h2>
+<ol>
+<li>&quot;Onchain Banking Without The Black Box&quot;: InfiniFi recreates bank-style maturity transformation, but makes reserves, liabilities, and the loss waterfall visible. [S1][S3][S4][S13]</li>
+<li>&quot;Stablecoin Yield Needs A Risk Stack&quot;: InfiniFi is a practical case study in matching user liquidity preferences with different yield sources and first-loss rules. [S3][S4][S8]</li>
+<li>&quot;Yield Infrastructure For DeFi Apps&quot;: Recent integrations suggest InfiniFi may become a yield back end that other apps route into, not just a destination app. [S14]-[S17]</li>
+<li>&quot;The APY Is Not The Story&quot;: The interesting part is not whether siUSD pays 6%, 8%, or 10%; it is whether users can understand the source of yield, the exit path, and who absorbs losses first. [S3][S4][S18]</li>
+</ol>
+<h2>Quality Gate Before Delivery</h2>
+<ul>
+<li>Every material claim above has a dated source link.</li>
+<li>Metrics include value, period/source, pulled date, and confidence in the companion CSV.</li>
+<li>Missing live app details are marked as open questions, not guessed.</li>
+<li>Current video/transcript material was searched and saved; older video was not used as primary evidence.</li>
+<li>Project-native docs and metrics were prioritized over social posts.</li>
+<li>X posts are treated as announcement/activity context unless corroborated elsewhere.</li>
+<li>Codex did not connect wallets, sign messages, trade, stake, deposit, or withdraw.</li>
+</ul>
+</body></html>

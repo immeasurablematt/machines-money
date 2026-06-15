@@ -1,0 +1,11 @@
+Source,URL,Category,Relationship,Freshness / date,What it can answer,Confidence,Use in dossier,Notes
+infiniFi docs hub,https://docs.infinifi.xyz/,docs,native,pulled 2026-06-11,What the protocol does and token model,high,yes,Primary starting point.
+Deposit quickstart,https://docs.infinifi.xyz/deposit-quickstart,official_site_app,native,pulled 2026-06-11,How Ian can test without relying on marketing copy,high,yes,Use for active-use path.
+Vaults docs,https://docs.infinifi.xyz/vaults,native_metrics,native,pulled 2026-06-11,Yield source inventory and active vaults,high,yes,Generated daily from protocol API per docs.
+Slashing mechanics,https://docs.infinifi.xyz/slashing-mechanics,risk_docs,native,pulled 2026-06-11,What breaks first and loss waterfall,high,yes,Important for risk explanation.
+DefiLlama protocol and fees APIs,https://api.llama.fi/protocol/infinifi,dashboard_api,third_party,pulled 2026-06-11,TVL and revenue activity,high,yes,Main metrics backbone.
+DefiLlama stablecoins API,https://stablecoins.llama.fi/stablecoins?includePrices=true,dashboard_api,third_party,pulled 2026-06-11,IUSD circulation and peg,high,yes,Native stablecoin supply proxy.
+X account timeline,https://x.com/infiniFi,social_x,native,pulled 2026-06-11,Current integrations announcements and distribution,medium,yes,Use as activity context only.
+YouTube current videos,https://www.youtube.com/watch?v=rc_Vz95Jcgw,video_transcript,third_party,pulled 2026-06-11,Current private-credit/onchain-yield narrative,medium,yes,Transcript saved.
+Older founder videos,https://www.youtube.com/watch?v=_vOJULi0uKg,video_transcript,third_party,older than 6 months,Background only,medium,no,Do not use as primary source under dossier freshness rule.
+GitHub protocol repo,https://github.com/InfiniFi-Labs/infinifi-protocol,contracts_github_audits,native,pulled 2026-06-11,Codebase activity and contracts,high,yes,Useful technical source.

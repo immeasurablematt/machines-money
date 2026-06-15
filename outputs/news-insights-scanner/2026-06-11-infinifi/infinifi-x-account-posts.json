@@ -1,0 +1,30 @@
+{
+  "posts": [
+    {
+      "author_handle": "infiniFi",
+      "post_id": "2064796652813136073",
+      "post_url": "https://x.com/infiniFi/status/2064796652813136073",
+      "posted_at": "2026-06-10T19:47:38.000Z",
+      "text": "New funding stablecoins have been added to help you access siUSD positions through @OdysseyFi directly inside the infiniFi app. https://t.co/tMaepzjy2C https://t.co/v9b7Zl9zuP",
+      "urls": [
+        {
+          "source_kind": "linked",
+          "url": "https://x.com/infiniFi/status/2064796652813136073/photo/1"
+        },
+        {
+          "source_kind": "linked",
+          "url": "https://twitter.com/infiniFi/status/2060438800501809568"
+        }
+      ]
+    },
+    {
+      "author_handle": "infiniFi",
+      "post_id": "2064792995375747097",
+      "post_url": "https://x.com/infiniFi/status/2064792995375747097",
+      "posted_at": "2026-06-10T19:33:06.000Z",
+      "text": "RT @Dolomite_io: \ud83c\udf82 The DeFi Roundtable turns 3 this Friday with episode 36.\n\nThat's three years of bringing builders, traders, and founders\u2026",
+      "urls": []
+    }
+  ],
+  "source_list_id": "x-account:infiniFi"
+}

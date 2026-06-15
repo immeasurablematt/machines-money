@@ -31,11 +31,13 @@ Current project folders:
 
 ## Verified Setup
 
-- Chrome automation can access the user's logged-in Google account.
-- Google Drive folder creation works.
-- Google Sheets creation and editing works.
-- Google Docs creation and editing works.
+- Preferred delivery path: Google Drive connector with write/import permissions.
+- Fallback delivery path: Codex in-app browser with the user signed into Google there.
+- Do not use the user's personal Chrome session for Drive or Docs delivery unless the user explicitly asks for that specific fallback.
+- Google Drive folder creation works in the Codex in-app browser after Google sign-in.
+- Google Docs creation and editing works in the Codex in-app browser after Google sign-in.
 - The Sheet and Doc were created under the user's personal Google account, not a service account.
+- If the connector can read but not write, ask the user to complete OAuth in the Codex browser or reauth the Google Drive connector with write/import scopes. Do not move to personal Chrome.
 
 ## Still Needed Before First Full Research Run
 
@@ -138,3 +140,46 @@ Do not publish the dossier until the source map is complete enough that an obvio
 11. Fill the dossier, source ledger, Source Map tab, metrics tables, and transcript/source backups.
 12. Run the quality gate.
 13. Update the queue row with status, dossier link, project folder link, headline metrics, top differentiator, and open questions.
+
+## Single-Project Link Flow
+
+When Matthew gives only an X account link or project link and asks for a project deep dive, run Research Dossier, not the broad X List News & Insights Scanner.
+
+Use this path for prompts like:
+
+- "run skill on https://x.com/<project>"
+- "do a dossier on <project>"
+- "build the Boros/Turtle/Nova-style output for <project>"
+- "put the final deliverable in the Research Dossiers Drive folder"
+
+Do not run the X digest skill unless the user explicitly asks for a digest, scanner, list scan, or 24-hour news shortlist.
+
+For a single-project link:
+
+1. Normalize the project name, X handle, website/app, docs, and likely DefiLlama slug.
+2. Create local output under `outputs/research-dossier/YYYY-MM-DD-<project-slug>/`.
+3. Build Source Map, Source Ledger, Metrics, raw API backups, and transcript backups before writing synthesis.
+4. Draft the dossier Markdown using the existing dossier sections.
+5. Render the Markdown to clean Google-Docs-friendly HTML:
+
+   ```bash
+   python3 scripts/render_research_dossier_html.py "outputs/research-dossier/YYYY-MM-DD-<project-slug>/<Project> Research Dossier - YYYY-MM-DD.md"
+   ```
+
+6. Deliver the Google Doc from the rendered HTML, not from raw Markdown. The final Doc must have real Google Docs headings and lists; visible `#`, `##`, `**`, backticks, or typed list markers in the body are a formatting failure.
+7. Verify with Google Docs readback:
+   - title paragraph present,
+   - H1 is `HEADING_1`,
+   - main sections are `HEADING_2`,
+   - bullets/numbered items are real list items,
+   - no temporary focus-test text remains.
+8. Verify Drive placement by listing the project folder.
+
+## Drive Delivery Rules
+
+- Parent folder: `https://drive.google.com/drive/u/0/folders/1WZvk7DcWMRzb823c26vI7BI2ZCw7sjCO`
+- Create one project folder per dossier, for example `InfiniFi`.
+- Place the formatted Google Doc in the project folder.
+- When upload/write scopes are available, also add the companion table workbook, raw Markdown, CSVs, JSON backups, and transcripts to the same project folder.
+- If upload/write scopes are missing, still create the formatted Google Doc through the Codex in-app browser after user OAuth. Report which companion files remain local.
+- Do not claim Drive delivery until the folder listing or document readback proves the file exists in the project folder.
