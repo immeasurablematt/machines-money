@@ -139,7 +139,34 @@
   <script>
     const rows = (window.dashboardRows || []).map(r => ({...r, value: Number(r.value) || 0}));
     const meta = window.dashboardMeta || {};
-    const hist = window.dashboardAggregateHistory || null;
+
+    function normalizeHistory(input) {
+      if (!input || !Array.isArray(input.dates)) return null;
+      const byDay = new Map();
+      input.dates.forEach((day, i) => {
+        const point = {
+          day,
+          defi20_mcap: Number(input.defi20_mcap?.[i]) || 0,
+          btc_mcap: Number(input.btc_mcap?.[i]) || 0,
+          defi20_tvl: Number(input.defi20_tvl?.[i]) || 0,
+          all_defi_tvl: Number(input.all_defi_tvl?.[i]) || 0,
+        };
+        const score = (point.all_defi_tvl > 0 ? 4 : 0) + (point.defi20_tvl > 1e9 ? 2 : 0) + (point.defi20_mcap > 0 && point.btc_mcap > 0 ? 1 : 0);
+        const existing = byDay.get(day);
+        if (!existing || score >= existing.score) byDay.set(day, {...point, score});
+      });
+      const points = [...byDay.values()].sort((a, b) => a.day.localeCompare(b.day));
+      return {
+        ...input,
+        dates: points.map(p => p.day),
+        defi20_mcap: points.map(p => p.defi20_mcap),
+        btc_mcap: points.map(p => p.btc_mcap),
+        defi20_tvl: points.map(p => p.defi20_tvl),
+        all_defi_tvl: points.map(p => p.all_defi_tvl),
+      };
+    }
+
+    const hist = normalizeHistory(window.dashboardAggregateHistory);
 
     function money(v) {
       if (!Number.isFinite(v) || v <= 0) return "—";
@@ -198,7 +225,7 @@
        vals: altcoinVals, dash: "2 3", area: false,
        fmt: pct, tip: v => "of Altcoins " + pct(v)},
     ];
-    const seriesOn = { tvl: true, share: true, altcoin: true };
+    const seriesOn = { tvl: true, share: true, altcoin: false };
     const usable = seriesDefs.filter(sd => sd.vals.filter(v => v !== null && v > 0).length > 1);
 
     const W = 1000, H = 360, ML = 74, MR = 60, MT = 26, MB = 36;
@@ -221,11 +248,19 @@
       });
 
       const active = usable.filter(sd => seriesOn[sd.key]);
-      // right axis: one shared percent scale across active percent series
       const pctActive = active.filter(sd => sd.kind === "pct");
-      let pctMin = Infinity, pctMax = -Infinity;
-      pctActive.forEach(sd => sd.vals.forEach(v => { if (v !== null) { pctMin = Math.min(pctMin, v); pctMax = Math.max(pctMax, v); } }));
-      const yPct = v => H - MB - (v - pctMin) / (pctMax - pctMin || 1) * (H - MT - MB);
+      const pctDomains = {};
+      pctActive.forEach(sd => {
+        const vals = sd.vals.filter(v => Number.isFinite(v) && v > 0);
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const span = max - min || Math.max(max * 0.02, 0.1);
+        pctDomains[sd.key] = [Math.max(0, min - span * 0.08), max + span * 0.08];
+      });
+      const yPctFor = sd => {
+        const [min, max] = pctDomains[sd.key] || [0, 1];
+        return v => H - MB - (v - min) / (max - min || 1) * (H - MT - MB);
+      };
 
       active.forEach(sd => {
         const pts = sd.vals.map((v,i) => ({v, i})).filter(p => p.v !== null && p.v > 0);
@@ -239,7 +274,7 @@
             parts.push(`<text x="${ML-8}" y="${gy+4}" text-anchor="end" fill="${sd.stroke}" font-size="12">${money(max - g * (max - min) / 3)}</text>`);
           }
         } else {
-          y = yPct;
+          y = yPctFor(sd);
         }
         scales.perSeries[sd.key] = y;
         let path = "";
@@ -251,11 +286,15 @@
         parts.push(`<path d="${path}" fill="none" stroke="${sd.stroke}" stroke-width="2.2" stroke-dasharray="${sd.dash}"/>`);
       });
 
-      if (pctActive.length && pctMax > pctMin - 1) {
+      if (pctActive.length) {
+        const axisSeries = pctActive[0];
+        const [pctMin, pctMax] = pctDomains[axisSeries.key] || [0, 1];
         for (let g = 0; g <= 3; g++) {
           const gy = MT + g * (H - MT - MB) / 3;
-          parts.push(`<text x="${W-MR+8}" y="${gy+4}" fill="rgba(255,255,255,0.6)" font-size="12">${pct(pctMax - g * (pctMax - pctMin) / 3)}</text>`);
+          parts.push(`<text x="${W-MR+8}" y="${gy+4}" fill="${axisSeries.stroke}" font-size="12">${pct(pctMax - g * (pctMax - pctMin) / 3)}</text>`);
         }
+        const axisLabel = axisSeries.key === "share" ? "% DeFi TVL" : "% Altcoin Market";
+        parts.push(`<text x="${W-MR+8}" y="${MT-8}" fill="${axisSeries.stroke}" font-size="11">${axisLabel}</text>`);
       }
       if (!active.length) {
         parts.push(`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="15">Toggle a series back on above.</text>`);
