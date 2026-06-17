@@ -66,6 +66,14 @@ confidence = "high"
 notes = "PT/YT volume and vePENDLE yield require separate source discovery."
 
 [[records]]
+project = "Pendle"
+record = "Pendle Boros"
+sector = "Derivatives"
+fee_slug = "boros"
+confidence = "medium"
+notes = "Boros fees; same project as Pendle so it aggregates into Pendle's totals (Ian: Pendle values should include Boros). Boros perp volume needs a confirmed DefiLlama derivatives module before adding."
+
+[[records]]
 project = "Hyperliquid"
 record = "Hyperliquid Exchange"
 sector = "Derivatives"
@@ -456,6 +464,14 @@ record = "Centrifuge"
 sector = "Tokenization"
 confidence = "medium"
 notes = "Outstanding borrows (current stock) from DefiLlama borrowed TVL; RWA loan pools."
+
+[[borrow_records]]
+protocol_slug = "curve-finance"
+project = "Curve"
+record = "Curve Finance"
+sector = "Spot"
+confidence = "medium"
+notes = "Outstanding borrows (current stock) from DefiLlama borrowed TVL; crvUSD lending markets. (Ian: include Curve in borrows.)"
 
 
 # ── Dune DEX wallet projects ───────────────────────────────────────────────

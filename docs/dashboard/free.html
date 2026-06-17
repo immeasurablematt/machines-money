@@ -1185,9 +1185,9 @@
       {id: "fdv",          label: "FDV",            frames: ["current"], frame: "current", title: "What Is Priced In",        subtitle: "Which projects already carry the biggest future expectations",   unit: "USD",     type: "token"},
       {id: "volume",       label: "Token Volume",   frames: ["24h"],     frame: "24h",     title: "Where Traders Are Active", subtitle: "Near-term token demand, speculation, and rotation",             unit: "USD",     type: "token"},
       {id: "wallets",      label: "Active Wallets", frames: ["7d"],      frame: "7d",      title: "Where Users Show Up",      subtitle: "Available wallet rows; useful for questions, not conclusions",  unit: "wallets", type: "usage"},
-      {id: "fees",         label: "Fees",           frames: ["30d"],     frame: "30d",     title: "Who Gets Paid",            subtitle: "Protocols turning activity into fees over the past month",      unit: "USD",     type: "product"},
-      {id: "revenue",      label: "Revenue",        frames: ["30d"],     frame: "30d",     title: "Who Keeps Revenue",        subtitle: "Projects retaining more economics from real usage",             unit: "USD",     type: "product"},
-      {id: "dexVolume",    label: "DEX Volume",     frames: ["30d"],     frame: "30d",     title: "Where Swaps Happen",       subtitle: "Trading venues with the most recent flow",                      unit: "USD",     type: "product"},
+      {id: "fees",         label: "Fees",           frames: ["30d","7d","24h"], frame: "30d", title: "Who Gets Paid",            subtitle: "Protocols turning activity into fees",                          unit: "USD",     type: "product"},
+      {id: "revenue",      label: "Revenue",        frames: ["30d","7d","24h"], frame: "30d", title: "Who Keeps Revenue",        subtitle: "Projects retaining economics from real usage",                  unit: "USD",     type: "product"},
+      {id: "dexVolume",    label: "DEX Volume",     frames: ["30d","7d","24h"], frame: "30d", title: "Where Swaps Happen",       subtitle: "Trading venues with the most recent flow",                      unit: "USD",     type: "product"},
       {id: "derivVolume",  label: "Perps Volume",   frames: ["30d"],     frame: "30d",     title: "Where Leverage Trades",    subtitle: "Perp venues with the most notional volume this month",          unit: "USD",     type: "product"},
       {id: "borrows",      label: "Borrows",        frames: ["current"], frame: "current", title: "Where Credit Is Drawn",    subtitle: "Outstanding borrows right now (stock, not daily flow)",         unit: "USD",     type: "product"},
       {id: "stableSupply", label: "Stablecoins",    frames: ["current"], frame: "current", title: "Stablecoin Footprints",    subtitle: "Circulating supply of tracked stablecoin products",             unit: "USD",     type: "product"},
@@ -1287,6 +1287,18 @@
       return metricConfig.find(item => item.id === activeMetric) || metricConfig[0];
     }
 
+    // Map a metric + timeframe to the aggregated project property. 30D (and any metric
+    // without windows) falls through to the base key. Lets the Fees/Revenue/DEX timeframe
+    // tabs read the 24H/7D data the pipeline already collects (Ian: show 24H and 7D too).
+    const FRAME_KEY = {
+      fees:      { "7d": "fees7d",      "24h": "fees24h" },
+      revenue:   { "7d": "revenue7d",   "24h": "revenue24h" },
+      dexVolume: { "7d": "dexVolume7d", "24h": "dexVolume24h" },
+    };
+    function metricValueKey(config, frame) {
+      return (FRAME_KEY[config.id] && FRAME_KEY[config.id][frame]) || config.id;
+    }
+
     function availableFramesForMetric(config = activeMetricConfig()) {
       return config.frames || [config.frame];
     }
@@ -1312,6 +1324,9 @@
         "7D Fees": "fees7d",
         "24H Fees": "fees24h",
         "7D Revenue": "revenue7d",
+        "24H Revenue": "revenue24h",
+        "7D DEX Volume": "dexVolume7d",
+        "24H DEX Volume": "dexVolume24h",
         "7D Fee Growth": "feeGrowth7d",
         "30D Fee Growth": "feeGrowth30d",
         "7D TVL Growth": "tvlGrowth7d",
@@ -1320,17 +1335,35 @@
         "30D Token Performance": "perf30d",
         "1Y Token Performance": "perf1y",
       };
+      // Protocol/product metrics are additive across a project's records (e.g. Uniswap
+      // V2+V3+V4 fees, Aave V3+V4 TVL) — these must SUM, not take the max, or the project
+      // total reads as just its largest single record (the wrong-Uniswap-fees bug).
+      // Token and rate metrics are single-valued (one governance-token row, or a %) and
+      // must NOT sum.
+      const additiveKeys = new Set([
+        "tvl", "fees", "revenue", "dexVolume", "derivVolume", "borrows", "stableSupply",
+        "fees7d", "fees24h", "revenue7d", "revenue24h", "dexVolume7d", "dexVolume24h",
+      ]);
       const projects = {};
       rawRows.forEach(row => {
         if (!projects[row.project]) {
           projects[row.project] = { project: row.project, sector: row.sector, records: [] };
         }
-        projects[row.project].records.push(row);
+        const project = projects[row.project];
+        project.records.push(row);
+        // Classify a project by its governance token's sector (Market Cap row). Fixes
+        // multi-sector projects like Jupiter showing under Derivatives in token views.
+        if (row.metric === "Market Cap") project.sector = row.sector;
         const key = metricMap[row.metric];
-        if (key) projects[row.project][key] = Math.max(projects[row.project][key] || 0, row.value);
+        if (key) {
+          project[key] = additiveKeys.has(key)
+            ? (project[key] || 0) + row.value
+            : Math.max(project[key] || 0, row.value);
+        }
         const extKey = extMap[row.metric];
-        if (extKey !== undefined && projects[row.project][extKey] === undefined) {
-          projects[row.project][extKey] = row.value;
+        if (extKey !== undefined) {
+          if (additiveKeys.has(extKey)) project[extKey] = (project[extKey] || 0) + row.value;
+          else if (project[extKey] === undefined) project[extKey] = row.value;
         }
       });
       return Object.values(projects);
@@ -1510,10 +1543,15 @@
 
     function renderChart() {
       const config = activeMetricConfig();
+      // Show every project in the filtered view (the DeFi20 is 20 projects). Previously
+      // capped at 12, which hid EtherFi/LayerZero/Pendle/Falcon/Maple/Kamino/Centrifuge/Euler
+      // from the unfiltered "DeFi20 Pulse" view (Ian's top-12 cutoff report).
+      // Read the active timeframe's value (e.g. 7D fees) and re-sort so bars order by what's shown.
+      const valueKey = metricValueKey(config, activeFrame);
       const data = filteredProjects()
-        .map(project => ({...project, value: project[config.id] || 0}))
+        .map(project => ({...project, value: project[valueKey] || 0}))
         .filter(project => project.value > 0)
-        .slice(0, 12);
+        .sort((a, b) => b.value - a.value);
 
       document.getElementById("chartTitle").textContent = config.title;
       document.getElementById("chartSubtitle").textContent = config.subtitle;
@@ -1924,7 +1962,7 @@
 
       const project = projects.find(item => item.project === selectedProject);
       const records = (project?.records || []).slice().sort((a, b) => {
-        const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
+        const metricOrder = ["Market Cap", "FDV", "Token Price", "24H Token Volume", "24H Token Performance", "7D Token Performance", "30D Token Performance", "1Y Token Performance", "TVL", "7D TVL Growth", "Outstanding Borrows", "Stablecoin Supply", "Current APY", "24H Fees", "7D Fees", "30D Fees", "24H Fee Share", "7D Fee Share", "30D Fee Share", "7D Fee Growth", "30D Fee Growth", "24H Revenue", "7D Revenue", "30D Revenue", "30D Holders Revenue", "24H DEX Volume", "7D DEX Volume", "30D DEX Volume", "30D DEX Volume Share", "24H Perps Volume", "30D Derivatives Volume", "30D Derivatives Volume Share", "7D Active Wallets"];
         return metricOrder.indexOf(a.metric) - metricOrder.indexOf(b.metric) || b.value - a.value;
       });
       const productRows = records.filter(row => !(row.notes || "").includes("Token-level market metric"));
@@ -2027,13 +2065,8 @@
       "Infra": "fees",
       "AI": "fees"
     };
-    function scrollToDashboard() {
-      const el = document.getElementById("dashboard");
-      if (!el) return;
-      const y = el.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-    }
-
+    // Clicking a category card updates the view in place. It used to auto-scroll the page
+    // down to the chart, which Ian flagged as annoying — removed.
     categoryCards.forEach(card => {
       card.addEventListener("click", () => {
         track("category_click", card.dataset.metric || card.dataset.sector);
@@ -2041,7 +2074,6 @@
           sectorFilter.value = "all";
           projectFilter.value = "all";
           setMetric(card.dataset.metric);
-          scrollToDashboard();
           return;
         }
         if (card.dataset.sector) {
@@ -2053,7 +2085,6 @@
           }
           renderProjectFilter();
           render();
-          scrollToDashboard();
         }
       });
     });
