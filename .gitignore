@@ -19,3 +19,4 @@ docs/dashboard/generated-dashboard-data.js
 docs/dashboard/generated-dashboard-data.csv
 docs/dashboard/snapshots/
 docs/dashboard/last-good/
+.claude/settings.local.json
