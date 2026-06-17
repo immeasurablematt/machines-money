@@ -61,6 +61,9 @@
     .about-card strong { display:block; margin-bottom:6px; }
     .about-card p { color:var(--muted); margin:0; font-size:13px; line-height:1.5; }
     .cta-row { text-align:center; margin-top:40px; }
+    .hero-cta { display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 4px; }
+    .hero-cta .secondary { margin-left:0; }
+    .hero-cta .cta, .hero-cta .secondary { padding:13px 24px; font-size:15px; }
     .cta { display:inline-flex; align-items:center; border:1px solid rgba(152,252,228,0.22); border-radius:8px; background:var(--mint); color:#061515; padding:12px 22px; font-size:14px; font-weight:750; }
     .secondary { display:inline-flex; margin-left:10px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,0.04); color:var(--ink); padding:12px 22px; font-size:14px; font-weight:700; }
     footer { margin-top:48px; color:var(--dim); font-size:12px; text-align:center; }
@@ -83,6 +86,10 @@
       <div>
         <h1>Your Gateway To The Onchain Economy</h1>
         <p class="lede" id="heroLede">Real-time insights to help you spot opportunities across DeFi's most influential applications.</p>
+        <div class="cta-row hero-cta">
+          <a class="cta" href="dashboard.html" data-track="cta_dashboard">Open the live dashboard</a>
+          <a class="secondary" href="https://machinesandmoney.beehiiv.com" data-track="cta_newsletter">Read the newsletter</a>
+        </div>
         <p class="join-kicker">Join the newsletter for everyday onchain investors.</p>
         <div class="signup">
           <script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="c1d43cc7-0e5d-418c-900a-686c0e356964"></script>
@@ -126,11 +133,6 @@
         <div class="about-card"><strong>The team</strong><p>More faces to come — the full team page lands once everyone's back at their desks.</p></div>
       </div>
     </section>
-
-    <div class="cta-row">
-      <a class="cta" href="dashboard.html" data-track="cta_dashboard">Open the live dashboard</a>
-      <a class="secondary" href="https://machinesandmoney.beehiiv.com" data-track="cta_newsletter">Read the newsletter</a>
-    </div>
 
     <footer>Data: DefiLlama, CoinGecko, Dune — sources and caveats shown per metric in the dashboard. Not financial advice.</footer>
   </div>
