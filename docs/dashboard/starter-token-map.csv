@@ -1,6 +1,6 @@
 project,sector,token_symbol,coingecko_id,status,metric_role,notes
 Uniswap,Spot,UNI,uniswap,verified_search,governance_token,"Ian confirmed UNI."
-Jupiter,Spot and Derivatives,JUP,jupiter-exchange-solana,verified_search,governance_token,"CoinGecko search returned Jupiter / JUP."
+Jupiter,Spot,JUP,jupiter-exchange-solana,verified_search,governance_token,"CoinGecko search returned Jupiter / JUP. Index sector is Spot per spec; perps tracked as a metric, not a sector home."
 Curve,Spot,CRV,curve-dao-token,verified_search,governance_token,"CoinGecko search returned Curve DAO / CRV."
 Curve,Spot,veCRV,,product_metric,locked_governance_position,"Track as locked/governance/tokenomics metric, not ordinary market-cap token."
 Curve,Spot,crvUSD,,product_metric,stablecoin_product,"Track supply, peg, APY/yield context where available; market price is only a sanity check."

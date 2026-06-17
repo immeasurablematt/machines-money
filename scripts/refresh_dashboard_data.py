@@ -156,10 +156,17 @@ def coingecko_source_url(ids: list[str]) -> str:
 
 
 def append_market_rows(metric_rows: list[dict[str, Any]], warnings: list[str]) -> None:
+    # Only governance tokens carry project-level market metrics (price, market cap, FDV,
+    # token volume, performance). Stablecoin/yield products (e.g. USDe) have a coingecko_id
+    # but their "market cap" is supply — surfacing it would mislabel the project's token
+    # market cap (this is the Ethena ENA-vs-USDe bug). Supply is tracked separately via
+    # STABLECOIN_RECORDS.
     token_rows = [
         row
         for row in read_token_map()
-        if row.get("coingecko_id") and row.get("status") == "verified_search"
+        if row.get("coingecko_id")
+        and row.get("status") == "verified_search"
+        and row.get("metric_role") == "governance_token"
     ]
     if not token_rows:
         warnings.append("CoinGecko market data skipped: no verified token mappings")
@@ -568,6 +575,34 @@ def build_rows() -> tuple[list[dict[str, Any]], list[str]]:
                 allow_negative=True,
             )
 
+    # Fee market share against ALL DefiLlama-tracked protocols, for 24H/7D/30D
+    # (per spec: share computed from the same overview response, no extra call).
+    # Record-level — project-level totals are summed in the dashboard JS.
+    for window, total_field in (("24H", "total24h"), ("7D", "total7d"), ("30D", "total30d")):
+        fee_category_total = sum(
+            item.get(total_field) or 0
+            for item in fees_by_module.values()
+            if isinstance(item, dict)
+        )
+        if not fee_category_total:
+            continue
+        for record in RECORDS:
+            fee_slug = record.get("fee_slug")
+            overview_item = fees_by_module.get(fee_slug) if fee_slug else None
+            if not overview_item or not overview_item.get(total_field):
+                continue
+            append_row(
+                metric_rows,
+                record=record,
+                metric=f"{window} Fee Share",
+                value=overview_item[total_field] / fee_category_total * 100,
+                unit="%",
+                period=window,
+                source_name="DefiLlama fees overview",
+                source=source_url("overview/fees"),
+                notes=f"Share of all DefiLlama-tracked fees over {window}; record-level, summed per project in the dashboard.",
+            )
+
     try:
         dex_data = fetch_json(
             source_url(
@@ -955,7 +990,9 @@ def collect_aggregate_history(warnings: list[str]) -> dict[str, Any] | None:
             warnings.append(f"Bitcoin mcap history unavailable: {exc.__class__.__name__}")
         token_ids = sorted({
             row["coingecko_id"] for row in read_token_map()
-            if row.get("coingecko_id") and row.get("status") == "verified_search"
+            if row.get("coingecko_id")
+            and row.get("status") == "verified_search"
+            and row.get("metric_role") == "governance_token"
         })
         for coin_id in token_ids:
             try:
